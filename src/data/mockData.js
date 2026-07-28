@@ -303,13 +303,26 @@ export const INITIAL_SETTINGS = {
   trainerName: "Coach Marcus",
   trainerEmail: "marcus@gymcrm.com",
   trainerPhone: "+91 99999 88888",
-  gymName: "Coach Marcus Studio",
-  gymAddress: "Park Avenue, New Delhi, India",
+  trainerSpeciality: "Strength & Conditioning",
+  trainerBio: "Over 10 years of personal training experience helping athletes reach their absolute peak performance.",
+  trainerPhoto: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&q=80&w=150",
+  gymName: "Apex Strength India",
+  gymAddress: "Connaught Place, New Delhi, Delhi 110001",
   gymCurrency: "₹",
+  gymLogo: "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&q=80&w=100",
+  businessHours: {
+    weekdays: "06:00 AM - 10:00 PM",
+    weekends: "08:00 AM - 04:00 PM"
+  },
   membershipPlans: [
     { id: "plan_1", name: "Standard Monthly", fee: 3500, duration: 1 },
     { id: "plan_2", name: "Premium Elite", fee: 5000, duration: 6 },
     { id: "plan_3", name: "VIP Personal Training", fee: 12000, duration: 12 }
+  ],
+  trainers: [
+    { id: "trainer_1", name: "Coach Marcus", email: "marcus@gymcrm.com", phone: "+91 99999 88888", role: "Head Trainer", speciality: "Strength & Conditioning", joinDate: "2024-01-15", status: "Active" },
+    { id: "trainer_2", name: "Rohan Das", email: "rohan@gymcrm.com", phone: "+91 98888 77777", role: "Nutrition Coach", speciality: "Dietetics & Fat Loss", joinDate: "2025-03-10", status: "Active" },
+    { id: "trainer_3", name: "Ananya Iyer", email: "ananya@gymcrm.com", phone: "+91 97777 66666", role: "Yoga Trainer", speciality: "Mindfulness & Flexibility", joinDate: "2025-06-01", status: "Active" }
   ],
   notificationsEnabled: true,
   smsRemindersEnabled: true,

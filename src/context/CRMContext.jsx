@@ -472,6 +472,48 @@ export const CRMProvider = ({ children }) => {
     setNotifications([]);
   };
 
+  const restoreDatabase = (backupData) => {
+    if (!backupData) return false;
+    try {
+      if (backupData.clients) {
+        setClients(backupData.clients);
+        localStorage.setItem("gym_clients", JSON.stringify(backupData.clients));
+      }
+      if (backupData.workouts) {
+        setWorkouts(backupData.workouts);
+        localStorage.setItem("gym_workouts", JSON.stringify(backupData.workouts));
+      }
+      if (backupData.diets) {
+        setDiets(backupData.diets);
+        localStorage.setItem("gym_diets", JSON.stringify(backupData.diets));
+      }
+      if (backupData.attendance) {
+        setAttendance(backupData.attendance);
+        localStorage.setItem("gym_attendance", JSON.stringify(backupData.attendance));
+      }
+      if (backupData.payments) {
+        setPayments(backupData.payments);
+        localStorage.setItem("gym_payments", JSON.stringify(backupData.payments));
+      }
+      if (backupData.measurements) {
+        setMeasurements(backupData.measurements);
+        localStorage.setItem("gym_measurements", JSON.stringify(backupData.measurements));
+      }
+      if (backupData.settings) {
+        setSettings(backupData.settings);
+        localStorage.setItem("gym_settings", JSON.stringify(backupData.settings));
+      }
+      if (backupData.notifications) {
+        setNotifications(backupData.notifications);
+        localStorage.setItem("gym_notifications", JSON.stringify(backupData.notifications));
+      }
+      return true;
+    } catch (e) {
+      console.error(e);
+      return false;
+    }
+  };
+
   return (
     <CRMContext.Provider
       value={{
@@ -497,7 +539,8 @@ export const CRMProvider = ({ children }) => {
         recordClientPayment,
         updateGymSettings,
         markNotificationAsRead,
-        clearAllNotifications
+        clearAllNotifications,
+        restoreDatabase
       }}
     >
       {children}
