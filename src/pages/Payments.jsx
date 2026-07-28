@@ -10,7 +10,6 @@ import {
   CheckCircle,
   FileText,
   Printer,
-  Bell,
   XCircle,
   ArrowUpRight,
   TrendingUp,
@@ -24,23 +23,9 @@ import {
   Coins,
   Send,
   RefreshCw,
-  FileDown
+  FileDown,
+  X
 } from "lucide-react";
-import {
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-  BarChart,
-  Bar,
-  PieChart,
-  Pie,
-  Cell,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend
-} from "recharts";
 import { toast } from "sonner";
 
 const Payments = () => {
@@ -72,7 +57,7 @@ const Payments = () => {
     method: "UPI",
     status: "Paid",
     date: new Date().toISOString().split("T")[0],
-    dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+    dueDate: new Date(Date.now() + 30 * 24 * 60 * 65 * 1000).toISOString().split("T")[0],
     notes: ""
   });
 
@@ -228,46 +213,6 @@ const Payments = () => {
     return result;
   }, [processedPayments, searchQuery, filterStatus, filterMethod]);
 
-  // Analytics Chart Data
-  const monthlyChartData = useMemo(() => {
-    // Generate actual stats based on logged transactions per month
-    const months = ["Feb", "Mar", "Apr", "May", "Jun", "Jul"];
-    const stats = { Feb: 18000, Mar: 24500, Apr: 29000, May: 32000, Jun: 38000, Jul: 0 };
-    
-    // Add dynamically computed Jul revenue
-    stats["Jul"] = metrics.monthlyRevenue || 34500;
-
-    return months.map(m => ({ name: m, revenue: stats[m] }));
-  }, [metrics.monthlyRevenue]);
-
-  const methodStatsData = useMemo(() => {
-    const modes = { UPI: 0, Card: 0, Cash: 0, "Bank Transfer": 0 };
-    processedPayments.forEach((p) => {
-      if (p.status === "Paid") {
-        const m = p.method || "Cash";
-        if (modes[m] !== undefined) {
-          modes[m] += p.amount;
-        } else {
-          modes["Cash"] += p.amount;
-        }
-      }
-    });
-    return Object.entries(modes).map(([name, value]) => ({ name, value }));
-  }, [processedPayments]);
-
-  const membershipStatsData = useMemo(() => {
-    const plans = {};
-    processedPayments.forEach((p) => {
-      if (p.status === "Paid") {
-        plans[p.membershipPlan] = (plans[p.membershipPlan] || 0) + p.amount;
-      }
-    });
-    return Object.entries(plans).map(([name, amount]) => ({ name, amount }));
-  }, [processedPayments]);
-
-  // UI styling constants
-  const PIE_COLORS = ["#3B82F6", "#10B981", "#EC4899", "#F59E0B"];
-
   // Helper actions: Record Payment Submit
   const handleRecordPaymentSubmit = (e) => {
     e.preventDefault();
@@ -414,22 +359,22 @@ Generated on ${new Date().toLocaleString("en-IN")}
   }, [processedPayments]);
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-300">
+    <div className="space-y-6 animate-in fade-in duration-300 pb-12">
       
       {/* Header Banner */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-100 dark:border-zinc-800 pb-5 no-print">
         <div className="text-left">
-          <h1 className="text-2xl font-extrabold font-display text-slate-800 dark:text-zinc-55 flex items-center gap-2">
-            Billing & Collections Dashboard
+          <h1 className="text-2xl sm:text-3xl font-black font-display text-slate-805 dark:text-zinc-50 flex items-center gap-2">
+            Billing Ledger
           </h1>
           <p className="text-slate-400 dark:text-zinc-500 text-xs mt-0.5">
-            Log transactions, renew memberships, print receipts, and track revenue analytics.
+            Log transactions, renew memberships, print receipts, and track revenue metrics.
           </p>
         </div>
         <div className="flex flex-wrap gap-2 w-full md:w-auto">
           <button
             onClick={() => setPaymentModalOpen(true)}
-            className="flex-1 md:flex-initial flex items-center justify-center gap-1.5 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow transition cursor-pointer"
+            className="flex-1 md:flex-initial flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-750 text-white font-bold text-xs rounded-2xl shadow transition cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Record Payment</span>
@@ -444,9 +389,9 @@ Generated on ${new Date().toLocaleString("en-IN")}
               }
               setRenewalModalOpen(true);
             }}
-            className="flex-1 md:flex-initial flex items-center justify-center gap-1.5 px-4 py-2.5 bg-slate-905 hover:bg-slate-850 dark:bg-zinc-800 dark:hover:bg-zinc-750 text-white dark:text-zinc-200 font-bold text-xs rounded-xl shadow transition cursor-pointer border border-slate-700 dark:border-zinc-700"
+            className="flex-1 md:flex-initial flex items-center justify-center gap-2 px-5 py-2.5 bg-white hover:bg-slate-50 dark:bg-zinc-900 dark:hover:bg-zinc-850 text-slate-700 dark:text-zinc-350 font-bold text-xs rounded-2xl shadow cursor-pointer border border-slate-205 dark:border-zinc-800 transition"
           >
-            <RefreshCw className="w-4 h-4" />
+            <RefreshCw className="w-4 h-4 text-blue-500" />
             <span>Renew Membership</span>
           </button>
         </div>
@@ -478,37 +423,37 @@ Generated on ${new Date().toLocaleString("en-IN")}
         })}
       </div>
 
-      {/* --- TAB 1: OVERVIEW & ANALYTICS --- */}
+      {/* --- TAB 1: OVERVIEW --- */}
       {activeTab === "overview" && (
         <div className="space-y-6">
           
           {/* Key Metrics Cards Grid */}
           <div className="grid grid-cols-2 lg:grid-cols-6 gap-4 text-left">
             {[
-              { title: "Total Revenue", val: `₹${metrics.totalReceived.toLocaleString("en-IN")}`, desc: "Cumulative paid logs", icon: DollarSign, color: "text-emerald-600 bg-emerald-500/5 border-emerald-100/50" },
-              { title: "Outstanding Dues", val: `₹${metrics.outstandingPayments.toLocaleString("en-IN")}`, desc: "Unpaid active balances", icon: AlertTriangle, color: "text-rose-500 bg-rose-500/5 border-rose-100/50" },
+              { title: "Total Revenue", val: `₹${metrics.totalReceived.toLocaleString("en-IN")}`, desc: "Cumulative paid logs", icon: DollarSign, color: "text-emerald-650 bg-emerald-500/5 border-emerald-100/50" },
+              { title: "Outstanding Dues", val: `₹${metrics.outstandingPayments.toLocaleString("en-IN")}`, desc: "Unpaid active balances", icon: AlertTriangle, color: "text-rose-600 bg-rose-500/5 border-rose-100/50" },
               { title: "Monthly Revenue", val: `₹${metrics.monthlyRevenue.toLocaleString("en-IN")}`, desc: "Active month receipts", icon: Calendar, color: "text-blue-600 bg-blue-500/5 border-blue-100/50" },
-              { title: "Paid Invoices", val: `${metrics.paidInvoicesCount} Paid`, desc: "Settled transaction invoices", icon: CheckCircle, color: "text-teal-600 bg-teal-500/5 border-teal-100/50" },
-              { title: "Due Renewals", val: `${metrics.activeRenewals} Due`, desc: "Expiring within 30 days", icon: Clock, color: "text-amber-500 bg-amber-500/5 border-amber-100/50" },
-              { title: "Overdue Count", val: `${metrics.overdueInvoicesCount} Late`, desc: "Lapsed past deadline dates", icon: Coins, color: "text-purple-600 bg-purple-500/5 border-purple-100/50" }
+              { title: "Paid Invoices", val: `${metrics.paidInvoicesCount} Paid`, desc: "Settled invoices", icon: CheckCircle, color: "text-teal-650 bg-teal-500/5 border-teal-100/50" },
+              { title: "Due Renewals", val: `${metrics.activeRenewals} Due`, desc: "Expires in 30 days", icon: Clock, color: "text-amber-600 bg-amber-500/5 border-amber-100/50" },
+              { title: "Overdue Count", val: `${metrics.overdueInvoicesCount} Late`, desc: "Lapsed past deadline", icon: Coins, color: "text-purple-600 bg-purple-500/5 border-purple-100/50" }
             ].map((stat, idx) => {
               const Icon = stat.icon;
               return (
                 <div
                   key={idx}
-                  className="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 rounded-2xl p-4 sm:p-5 hover:shadow-md transition relative flex flex-col justify-between"
+                  className="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 rounded-3xl p-4 sm:p-5 hover:shadow-md transition relative flex flex-col justify-between"
                 >
                   <div className="flex justify-between items-start">
-                    <span className="text-[10px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-wider">{stat.title}</span>
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${stat.color}`}>
-                      <Icon className="w-4 h-4" />
+                    <span className="text-[10px] font-black text-slate-400 dark:text-zinc-550 uppercase tracking-wider">{stat.title}</span>
+                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${stat.color} shrink-0`}>
+                      <Icon className="w-4.5 h-4.5" />
                     </div>
                   </div>
                   <div className="mt-4">
-                    <h3 className="text-lg sm:text-xl font-black font-display text-slate-900 dark:text-zinc-155 leading-none">
+                    <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-zinc-50 leading-none">
                       {stat.val}
                     </h3>
-                    <p className="text-[9.5px] font-medium text-slate-450 dark:text-zinc-500 mt-1.5 leading-snug">
+                    <p className="text-[9px] text-slate-400 dark:text-zinc-500 mt-2 font-semibold leading-normal">
                       {stat.desc}
                     </p>
                   </div>
@@ -517,160 +462,87 @@ Generated on ${new Date().toLocaleString("en-IN")}
             })}
           </div>
 
-          {/* Analytics charts grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Recent Transactions Feed Table */}
+          <div className="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-850 rounded-3xl p-5 shadow-sm text-left">
+            <div className="flex justify-between items-center mb-5 pb-3 border-b border-slate-100 dark:border-zinc-850">
+              <div>
+                <h3 className="text-sm font-extrabold text-slate-805 dark:text-zinc-100">
+                  Recent Transactions Feed
+                </h3>
+                <p className="text-xs text-slate-450 mt-0.5">Showing latest gym membership collections and ledger updates</p>
+              </div>
+              <span className="text-[9px] bg-emerald-500/10 text-emerald-550 border border-emerald-500/20 px-2.5 py-0.5 rounded-full font-black uppercase">
+                Active Feed
+              </span>
+            </div>
             
-            {/* Chart 1: Cashflow Area Chart */}
-            <div className="lg:col-span-2 bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 rounded-3xl p-5 shadow-sm">
-              <div className="flex justify-between items-center mb-5 border-b border-slate-50 dark:border-zinc-850 pb-3">
-                <div className="text-left">
-                  <h3 className="text-sm font-bold text-slate-805 dark:text-zinc-200">Monthly Cashflow Progression</h3>
-                  <p className="text-[10px] text-slate-400">Month-on-month settled payments trend (₹)</p>
-                </div>
-                <span className="text-[10px] bg-blue-50 dark:bg-blue-900/10 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full font-black">FY 2026</span>
-              </div>
-              <div className="h-56">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={monthlyChartData}>
-                    <defs>
-                      <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.2}/>
-                        <stop offset="95%" stopColor="#3B82F6" stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-                    <XAxis dataKey="name" stroke="#94a3b8" fontSize={10} tickLine={false} />
-                    <YAxis stroke="#94a3b8" fontSize={10} tickLine={false} tickFormatter={(v) => `₹${v/1000}k`} />
-                    <Tooltip formatter={(value) => `₹${value.toLocaleString("en-IN")}`} />
-                    <Area type="monotone" dataKey="revenue" stroke="#3B82F6" strokeWidth={2.5} fillOpacity={1} fill="url(#colorRev)" />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-
-            {/* Chart 2: Method Distribution Donut */}
-            <div className="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 rounded-3xl p-5 shadow-sm flex flex-col justify-between">
-              <div className="flex justify-between items-center mb-3 border-b border-slate-50 dark:border-zinc-850 pb-3">
-                <div className="text-left">
-                  <h3 className="text-sm font-bold text-slate-805 dark:text-zinc-200">Revenue by Payment Method</h3>
-                  <p className="text-[10px] text-slate-400">Total collections by mode</p>
-                </div>
-              </div>
-              <div className="h-44 my-2">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie data={methodStatsData} dataKey="value" nameKey="name" innerRadius={40} outerRadius={60} paddingAngle={4}>
-                      {methodStatsData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip formatter={(value) => `₹${value.toLocaleString("en-IN")}`} />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-              <div className="grid grid-cols-2 gap-2 text-[10px] text-slate-500 font-bold text-left pt-2 border-t border-slate-50 dark:border-zinc-850/80">
-                {methodStatsData.map((m, idx) => (
-                  <div key={idx} className="flex items-center gap-1.5 animate-in fade-in duration-300">
-                    <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: PIE_COLORS[idx % PIE_COLORS.length] }} />
-                    <span className="truncate text-slate-600 dark:text-zinc-400">{m.name}: ₹{m.value.toLocaleString("en-IN")}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Chart 3: Plan Yield distribution */}
-            <div className="lg:col-span-3 bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 rounded-3xl p-5 shadow-sm text-left">
-              <h3 className="text-sm font-bold text-slate-805 dark:text-zinc-200 mb-4">Membership Plan Revenue Contribution</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="md:col-span-2 h-44">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={membershipStatsData} layout="vertical" barSize={14}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
-                      <XAxis type="number" stroke="#94a3b8" fontSize={9} />
-                      <YAxis dataKey="name" type="category" stroke="#94a3b8" fontSize={9} width={100} tickLine={false} />
-                      <Tooltip formatter={(value) => `₹${value.toLocaleString("en-IN")}`} />
-                      <Bar dataKey="amount" fill="#3B82F6" radius={[0, 4, 4, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-                <div className="flex flex-col justify-center space-y-4 border-l border-slate-100 dark:border-zinc-850 pl-6">
-                  <div>
-                    <span className="text-[10px] text-slate-400 font-bold block uppercase tracking-wider">Top Performing Plan</span>
-                    <span className="text-sm font-black text-slate-800 dark:text-zinc-150 block mt-1">
-                      {[...membershipStatsData].sort((a,b) => b.amount - a.amount)[0]?.name || "Standard Monthly"}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-400 font-bold block uppercase tracking-wider">Average Ticket Size</span>
-                    <span className="text-sm font-black text-blue-600 dark:text-blue-400 block mt-1">
-                      ₹{(processedPayments.reduce((acc, curr) => acc + curr.amount, 0) / (processedPayments.length || 1)).toLocaleString("en-IN", {maximumFractionDigits: 0})}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-          </div>
-
-          {/* Recent Transactions Feed */}
-          <div className="bg-white dark:bg-zinc-900 border border-slate-205 dark:border-zinc-800 rounded-3xl p-5 shadow-sm text-left">
-            <div className="flex justify-between items-center mb-4 pb-2 border-b border-slate-50 dark:border-zinc-850">
-              <h3 className="text-xs font-black text-slate-450 uppercase tracking-widest">
-                Recent Gym Payments Feed
-              </h3>
-              <span className="text-[10px] text-slate-400 font-medium">Showing latest collections</span>
-            </div>
-            <div className="space-y-3">
-              {processedPayments.slice(0, 5).map((log) => (
-                <div key={log.id} className="p-3.5 bg-slate-50/50 dark:bg-zinc-950/20 border border-slate-100 dark:border-zinc-850 rounded-2xl hover:bg-white dark:hover:bg-zinc-900 transition duration-200 flex justify-between items-center flex-wrap gap-2">
-                  <div className="flex items-center gap-3">
-                    <img src={log.clientPhoto} className="w-9 h-9 rounded-full object-cover shrink-0 shadow-sm border border-slate-200 dark:border-zinc-800" />
-                    <div>
-                      <h4 className="font-extrabold text-slate-805 dark:text-zinc-150 text-xs">{log.clientName}</h4>
-                      <span className="text-[9.5px] text-slate-400 dark:text-zinc-500 font-bold block mt-0.5">{log.membershipPlan} • {log.invoiceNumber}</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div className="text-right shrink-0">
-                      <span className="text-xs font-black text-slate-800 dark:text-zinc-205">₹{log.amount.toLocaleString("en-IN")}</span>
-                      <span className="text-[9px] text-slate-400 block mt-0.2">{formatDate(log.date)}</span>
-                    </div>
-                    <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase shrink-0 ${
-                      log.status === "Paid" ? "bg-emerald-500/10 text-emerald-500" :
-                      log.status === "Pending" ? "bg-amber-500/10 text-amber-500" :
-                      log.status === "Expired" ? "bg-zinc-500/10 text-zinc-500" :
-                      "bg-rose-500/10 text-rose-500"
-                    }`}>
-                      {log.status}
-                    </span>
-                    <button
-                      onClick={() => downloadReceiptFile(log)}
-                      className="p-1.5 hover:bg-slate-200 dark:hover:bg-zinc-800 rounded-lg text-slate-500 transition cursor-pointer"
-                      title="Download receipt text"
-                    >
-                      <Download className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </div>
-              ))}
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="border-b border-slate-100 dark:border-zinc-850 text-slate-400 font-bold uppercase tracking-wider text-[9px] bg-slate-50/50 dark:bg-zinc-950/20">
+                    <th className="py-2.5 px-4">Member</th>
+                    <th className="py-2.5 px-4">Membership Plan</th>
+                    <th className="py-2.5 px-4">Invoice No</th>
+                    <th className="py-2.5 px-4">Billed Date</th>
+                    <th className="py-2.5 px-4">Settled Status</th>
+                    <th className="py-2.5 px-4">Billed Amount</th>
+                    <th className="py-2.5 px-4 text-right">Invoice</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100/60 dark:divide-zinc-850/40">
+                  {processedPayments.slice(0, 8).map((log) => (
+                    <tr key={log.id} className="hover:bg-slate-50/50 dark:hover:bg-zinc-850/15">
+                      <td className="py-3 px-4 flex items-center gap-3">
+                        <img src={log.clientPhoto} className="w-8.5 h-8.5 rounded-xl object-cover shrink-0 shadow-sm border bg-slate-100" />
+                        <div>
+                          <span className="font-extrabold text-slate-800 dark:text-zinc-200 block">{log.clientName}</span>
+                          <span className="text-[9px] text-slate-400 block mt-0.5">{log.clientPhone}</span>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4 font-semibold text-slate-650 dark:text-zinc-400">{log.membershipPlan}</td>
+                      <td className="py-3 px-4 font-mono font-bold text-slate-500">{log.invoiceNumber}</td>
+                      <td className="py-3 px-4 text-slate-400 font-medium">{formatDate(log.date)}</td>
+                      <td className="py-3 px-4">
+                        <span className={`px-2 py-0.5 rounded text-[8.5px] font-black uppercase ${
+                          log.status === "Paid" ? "bg-emerald-500/10 text-emerald-550" :
+                          log.status === "Pending" ? "bg-amber-500/10 text-amber-550" :
+                          log.status === "Expired" ? "bg-zinc-500/10 text-zinc-500" :
+                          "bg-rose-500/10 text-rose-500"
+                        }`}>
+                          {log.status}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 font-black text-slate-850 dark:text-zinc-100">₹{log.amount.toLocaleString("en-IN")}</td>
+                      <td className="py-3 px-4 text-right">
+                        <button
+                          onClick={() => downloadReceiptFile(log)}
+                          className="p-1.5 hover:bg-slate-105 dark:hover:bg-zinc-800 text-slate-450 hover:text-blue-600 rounded-lg transition-colors cursor-pointer"
+                          title="Download receipt text"
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
 
         </div>
       )}
 
-      {/* --- TAB 2: INVOICES DIRECTORY & LEDGER HISTORY --- */}
+      {/* --- TAB 2: INVOICES DIRECTORY --- */}
       {activeTab === "invoices" && (
         <div className="space-y-6">
           
           {/* Advanced Search & Filtering panel */}
-          <div className="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 rounded-3xl p-5 shadow-sm text-left space-y-4 no-print">
+          <div className="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-850 rounded-3xl p-5 shadow-sm text-left space-y-4 no-print">
             <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
               <Search className="w-4 h-4 text-blue-500" /> Filter Invoice Ledger
             </h3>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              
               {/* Search input */}
               <div>
                 <label className="text-[10px] font-black text-slate-450 block mb-1">Search Keyword</label>
@@ -680,8 +552,8 @@ Generated on ${new Date().toLocaleString("en-IN")}
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Invoice #, member, phone..."
-                    className="w-full pl-9 pr-3 py-2 border border-slate-205 dark:border-zinc-800 rounded-xl bg-slate-50 dark:bg-zinc-950 text-xs focus:outline-none text-slate-800 dark:text-zinc-200"
+                    placeholder="Invoice #, member name, phone..."
+                    className="w-full pl-9 pr-3 py-2.5 border border-slate-205 dark:border-zinc-800 rounded-xl bg-slate-50 dark:bg-zinc-950 text-xs focus:outline-none text-slate-805 dark:text-zinc-200"
                   />
                 </div>
               </div>
@@ -692,7 +564,7 @@ Generated on ${new Date().toLocaleString("en-IN")}
                 <select
                   value={filterStatus}
                   onChange={(e) => setFilterStatus(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-205 dark:border-zinc-800 rounded-xl bg-slate-50 dark:bg-zinc-950 text-xs focus:outline-none text-slate-800 dark:text-zinc-200"
+                  className="w-full px-3 py-2.5 border border-slate-205 dark:border-zinc-800 rounded-xl bg-slate-50 dark:bg-zinc-955 text-xs focus:outline-none text-slate-805 dark:text-zinc-200"
                 >
                   <option value="All">All Statuses</option>
                   <option value="Paid">Paid</option>
@@ -708,7 +580,7 @@ Generated on ${new Date().toLocaleString("en-IN")}
                 <select
                   value={filterMethod}
                   onChange={(e) => setFilterMethod(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-205 dark:border-zinc-800 rounded-xl bg-slate-50 dark:bg-zinc-950 text-xs focus:outline-none text-slate-800 dark:text-zinc-200"
+                  className="w-full px-3 py-2.5 border border-slate-205 dark:border-zinc-800 rounded-xl bg-slate-50 dark:bg-zinc-955 text-xs focus:outline-none text-slate-805 dark:text-zinc-200"
                 >
                   <option value="All">All Methods</option>
                   <option value="UPI">UPI</option>
@@ -717,7 +589,6 @@ Generated on ${new Date().toLocaleString("en-IN")}
                   <option value="Bank Transfer">Bank Transfer</option>
                 </select>
               </div>
-
             </div>
 
             {/* Clear filters buttons */}
@@ -728,16 +599,15 @@ Generated on ${new Date().toLocaleString("en-IN")}
                   setFilterStatus("All");
                   setFilterMethod("All");
                 }}
-                className="py-1.5 px-4 bg-red-50 hover:bg-red-500 hover:text-white text-red-500 font-extrabold text-[10px] uppercase rounded-xl transition cursor-pointer border border-red-100/30"
+                className="py-1.5 px-4 bg-rose-50 hover:bg-rose-500 hover:text-white text-rose-500 font-extrabold text-[10px] uppercase rounded-xl transition cursor-pointer border border-rose-100/30"
               >
                 Reset Filters
               </button>
             )}
-
           </div>
 
           {/* Transactions Ledger Table */}
-          <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl overflow-hidden shadow-sm no-print">
+          <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-850 rounded-3xl overflow-hidden shadow-sm no-print">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
@@ -765,15 +635,15 @@ Generated on ${new Date().toLocaleString("en-IN")}
                             <td className="py-4 px-5 text-center">
                               <button
                                 onClick={() => setExpandedPaymentId(isExpanded ? null : p.id)}
-                                className="p-1 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded transition cursor-pointer text-slate-455"
+                                className="p-1 hover:bg-slate-100 dark:hover:bg-zinc-850 rounded transition cursor-pointer text-slate-455"
                               >
                                 {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                               </button>
                             </td>
-                            <td className="py-4 px-4 font-extrabold text-slate-500">{p.invoiceNumber}</td>
+                            <td className="py-4 px-4 font-mono font-bold text-slate-500">{p.invoiceNumber}</td>
                             <td className="py-4 px-4 font-bold">
                               <div className="flex items-center gap-2.5">
-                                <img src={p.clientPhoto} alt={p.clientName} className="w-7 h-7 rounded-full object-cover shadow-sm bg-slate-100 border dark:border-zinc-800" />
+                                <img src={p.clientPhoto} alt={p.clientName} className="w-7 h-7 rounded-xl object-cover shadow-sm bg-slate-100 border dark:border-zinc-800" />
                                 <div>
                                   <span className="text-slate-800 dark:text-zinc-200 block leading-tight">{p.clientName}</span>
                                   <span className="text-[9px] text-slate-400 font-semibold block mt-0.5">{p.clientPhone}</span>
@@ -782,14 +652,14 @@ Generated on ${new Date().toLocaleString("en-IN")}
                             </td>
                             <td className="py-4 px-4 font-semibold text-slate-550 dark:text-zinc-400">{p.membershipPlan}</td>
                             <td className="py-4 px-4 font-black text-slate-800 dark:text-zinc-155">₹{p.amount.toLocaleString("en-IN")}</td>
-                            <td className="py-4 px-4 text-slate-400 font-medium">{formatDate(p.date)}</td>
-                            <td className="py-4 px-4 text-slate-400 font-medium">{formatDate(p.dueDate)}</td>
+                            <td className="py-4 px-4 text-slate-405 font-medium">{formatDate(p.date)}</td>
+                            <td className="py-4 px-4 text-slate-405 font-medium">{formatDate(p.dueDate)}</td>
                             <td className="py-4 px-4 text-center">
                               <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
-                                p.status === "Paid" ? "bg-emerald-500/10 text-emerald-500" :
-                                p.status === "Pending" ? "bg-amber-500/10 text-amber-500" :
+                                p.status === "Paid" ? "bg-emerald-500/10 text-emerald-650" :
+                                p.status === "Pending" ? "bg-amber-500/10 text-amber-650" :
                                 p.status === "Expired" ? "bg-zinc-500/10 text-zinc-500" :
-                                "bg-rose-500/10 text-rose-500"
+                                "bg-rose-500/10 text-rose-650"
                               }`}>
                                 {p.status}
                               </span>
@@ -798,132 +668,43 @@ Generated on ${new Date().toLocaleString("en-IN")}
                             <td className="py-4 px-5 text-right">
                               <div className="flex justify-end gap-1.5">
                                 <button
-                                  onClick={() => setActiveInvoice(p)}
-                                  className="px-2.5 py-1 bg-slate-50 dark:bg-zinc-950 hover:bg-slate-105 border border-slate-150 dark:border-zinc-800 rounded-lg text-[10px] font-bold text-slate-605 dark:text-zinc-400 flex items-center gap-1 cursor-pointer"
+                                  onClick={() => downloadReceiptFile(p)}
+                                  className="p-2 bg-slate-50 hover:bg-slate-150 dark:bg-zinc-800 dark:hover:bg-zinc-750 text-slate-500 dark:text-zinc-400 rounded-xl transition cursor-pointer"
+                                  title="Download receipt text"
                                 >
-                                  <FileText className="w-3.5 h-3.5" />
-                                  <span>Receipt</span>
+                                  <Download className="w-3.5 h-3.5" />
                                 </button>
-                                {(p.status === "Pending" || p.status === "Overdue") && (
+                                {p.status !== "Paid" && p.status !== "Expired" && (
                                   <button
                                     onClick={() => handleSendReminder(p.clientName, p.amount, p.dueDate)}
-                                    className="p-1 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded text-amber-500 cursor-pointer"
-                                    title="Send Reminder Alert"
+                                    className="p-2 bg-blue-50 hover:bg-blue-600 hover:text-white dark:bg-blue-900/10 dark:hover:bg-blue-600 text-blue-600 dark:text-blue-400 rounded-xl transition cursor-pointer"
+                                    title="Send payment alert"
                                   >
-                                    <Bell className="w-4 h-4" />
+                                    <Send className="w-3.5 h-3.5" />
                                   </button>
                                 )}
                               </div>
                             </td>
                           </tr>
 
-                          {/* Expandable Details Sub-view Row */}
+                          {/* Expanded Notes row */}
                           {isExpanded && (
-                            <tr>
-                              <td colSpan={10} className="p-0 bg-slate-50/20 dark:bg-zinc-950/5">
-                                <div className="p-6 border-b border-slate-100 dark:border-zinc-800 flex flex-col md:flex-row gap-6 animate-in slide-in-from-top-2 duration-200">
-                                  {/* Left Side: Membership summary & History list */}
-                                  <div className="flex-1 space-y-4 text-left">
-                                    <div className="grid grid-cols-2 gap-4">
-                                      <div className="p-4 bg-white dark:bg-zinc-900 border border-slate-150 dark:border-zinc-800 rounded-2xl">
-                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Contract Parameters</span>
-                                        <span className="font-extrabold text-slate-805 dark:text-zinc-200 block text-xs">{p.membershipPlan}</span>
-                                        <span className="text-[10px] text-slate-400 block mt-1">Due Date: {formatDate(p.dueDate)}</span>
-                                      </div>
-                                      <div className="p-4 bg-white dark:bg-zinc-900 border border-slate-150 dark:border-zinc-800 rounded-2xl">
-                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Billed Notes</span>
-                                        <p className="text-[10.5px] text-slate-550 dark:text-zinc-400 leading-snug">{p.notes}</p>
-                                      </div>
-                                    </div>
-
-                                    {/* Action buttons inside drawer */}
-                                    <div className="flex flex-wrap gap-2 pt-2">
-                                      <button
-                                        onClick={() => downloadReceiptFile(p)}
-                                        className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-750 text-slate-700 dark:text-zinc-200 text-xs font-bold rounded-xl flex items-center gap-1.5 cursor-pointer border border-slate-200 dark:border-zinc-700"
-                                      >
-                                        <Download className="w-4 h-4" />
-                                        <span>Download Receipt</span>
-                                      </button>
-                                      {p.status !== "Paid" && (
-                                        <button
-                                          onClick={() => handleSendReminder(p.clientName, p.amount, p.dueDate)}
-                                          className="px-3.5 py-2 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 cursor-pointer shadow-sm"
-                                        >
-                                          <Bell className="w-4 h-4" />
-                                          <span>Send Reminder Notification</span>
-                                        </button>
-                                      )}
-                                      <button
-                                        onClick={() => {
-                                          setSelectedClientForRenewal(p.clientId);
-                                          setNewRenewalInput(prev => ({
-                                            ...prev,
-                                            clientId: p.clientId,
-                                            amount: p.amount
-                                          }));
-                                          setRenewalModalOpen(true);
-                                        }}
-                                        className="px-3.5 py-2 bg-slate-900 hover:bg-slate-850 dark:bg-zinc-800 dark:hover:bg-zinc-750 text-white dark:text-zinc-200 text-xs font-bold rounded-xl flex items-center gap-1.5 cursor-pointer border border-slate-700 dark:border-zinc-700"
-                                      >
-                                        <RefreshCw className="w-4 h-4" />
-                                        <span>Renew Membership</span>
-                                      </button>
-                                    </div>
+                            <tr className="bg-slate-50/20 dark:bg-zinc-950/5">
+                              <td colSpan="10" className="py-4 px-8 text-left animate-in slide-in-from-top-1 duration-150">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                  <div>
+                                    <span className="text-[10px] text-slate-400 uppercase font-black tracking-wide block">Client Contact email</span>
+                                    <span className="text-xs font-bold text-slate-700 dark:text-zinc-350 block mt-1">{p.clientEmail}</span>
                                   </div>
-
-                                  {/* Right Side: Virtual Invoice Receipt Box */}
-                                  <div className="w-full md:w-80 shrink-0 bg-white dark:bg-zinc-950 border border-slate-205 dark:border-zinc-800 rounded-3xl p-5 shadow-sm text-left flex flex-col justify-between">
-                                    <div>
-                                      <div className="flex justify-between items-start border-b border-dashed border-slate-200 dark:border-zinc-850 pb-3 mb-3">
-                                        <div>
-                                          <span className="text-[9px] bg-blue-50 dark:bg-blue-900/10 text-blue-600 dark:text-blue-405 font-black px-2 py-0.5 rounded-full uppercase tracking-wider">Statement Receipt</span>
-                                          <h5 className="font-extrabold text-slate-850 dark:text-zinc-200 text-xs mt-2">{settings.gymName}</h5>
-                                        </div>
-                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider">{p.invoiceNumber}</span>
-                                      </div>
-
-                                      <div className="space-y-2 text-[10px] text-slate-600 dark:text-zinc-400">
-                                        <div className="flex justify-between">
-                                          <span>Athlete:</span>
-                                          <span className="font-bold text-slate-805 dark:text-zinc-150">{p.clientName}</span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                          <span>Contact No:</span>
-                                          <span className="font-semibold text-slate-500">{p.clientPhone}</span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                          <span>Transaction Date:</span>
-                                          <span className="font-semibold text-slate-500">{formatDate(p.date)}</span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                          <span>Payment Mode:</span>
-                                          <span className="font-semibold text-slate-500">{p.method}</span>
-                                        </div>
-                                        <div className="flex justify-between border-t border-dashed border-slate-200 dark:border-zinc-800 pt-2 mt-2 text-xs font-black text-slate-800 dark:text-zinc-100">
-                                          <span>Settled Sum:</span>
-                                          <span className="text-blue-600 dark:text-blue-400">₹{p.amount.toLocaleString("en-IN")}</span>
-                                        </div>
-                                      </div>
-                                    </div>
-
-                                    <div className="mt-4 pt-3 border-t border-slate-100 dark:border-zinc-850 flex gap-2">
-                                      <button
-                                        onClick={() => setActiveInvoice(p)}
-                                        className="flex-1 py-1.5 bg-blue-605 text-white hover:bg-blue-700 rounded-xl font-bold text-[10px] shadow cursor-pointer text-center transition"
-                                      >
-                                        View Invoice
-                                      </button>
-                                      <button
-                                        onClick={() => {
-                                          setActiveInvoice(p);
-                                          setTimeout(() => window.print(), 100);
-                                        }}
-                                        className="px-2.5 py-1.5 border border-slate-200 dark:border-zinc-800 rounded-xl text-slate-600 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-zinc-850 cursor-pointer"
-                                      >
-                                        <Printer className="w-3.5 h-3.5" />
-                                      </button>
-                                    </div>
+                                  <div>
+                                    <span className="text-[10px] text-slate-400 uppercase font-black tracking-wide block">Associated Notes</span>
+                                    <p className="text-xs text-slate-650 dark:text-zinc-400 mt-1 leading-relaxed italic">{p.notes}</p>
+                                  </div>
+                                  <div className="text-right">
+                                    <span className="text-[10px] text-slate-400 uppercase font-black tracking-wide block">Status remaining</span>
+                                    <span className="text-xs font-bold text-slate-700 dark:text-zinc-350 block mt-1">
+                                      {p.status === "Paid" ? "Cleared" : p.daysRemaining ? `${p.daysRemaining} days remaining` : "Expired"}
+                                    </span>
                                   </div>
                                 </div>
                               </td>
@@ -934,7 +715,7 @@ Generated on ${new Date().toLocaleString("en-IN")}
                     })
                   ) : (
                     <tr>
-                      <td colSpan={10} className="py-12 text-center text-slate-400 font-semibold">No invoices found matching the current search parameters.</td>
+                      <td colSpan="10" className="py-12 text-center text-slate-400 italic">No matching transactions logged in database.</td>
                     </tr>
                   )}
                 </tbody>
@@ -945,531 +726,333 @@ Generated on ${new Date().toLocaleString("en-IN")}
         </div>
       )}
 
-      {/* --- TAB 3: OUTSTANDING & RENEWALS CENTER --- */}
+      {/* --- TAB 3: OUTSTANDING & RENEWALS --- */}
       {activeTab === "outstanding" && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 text-left no-print">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 text-left no-print animate-in fade-in duration-200">
           
-          {/* Column 1: Outstanding Payments Panel */}
-          <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl p-5 shadow-sm space-y-4">
-            <div>
-              <h3 className="text-sm font-bold text-slate-805 dark:text-zinc-150 flex items-center gap-1.5">
-                <AlertTriangle className="w-4 h-4 text-rose-500" /> Outstanding Balances Ledger
-              </h3>
-              <p className="text-[10px] text-slate-400 mt-0.5">Members with unpaid or overdue billing schedules</p>
+          {/* Column 1: Outstanding balances */}
+          <div className="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-850 rounded-3xl p-5 shadow-sm flex flex-col h-[520px]">
+            <div className="mb-4 pb-2 border-b border-slate-100 dark:border-zinc-850">
+              <span className="text-[10px] font-black text-rose-500 uppercase tracking-wider block">Outstanding dues ledger</span>
+              <h3 className="text-sm font-extrabold text-slate-805 dark:text-zinc-150 mt-1">Pending Invoice Alerts</h3>
             </div>
             
-            <div className="space-y-3 max-h-[500px] overflow-y-auto pr-1">
+            <div className="flex-1 overflow-y-auto space-y-3 pr-1 scrollbar-thin">
               {outstandingInvoicesList.length > 0 ? (
-                outstandingInvoicesList.map((p) => (
-                  <div key={p.id} className="p-3.5 bg-slate-50 dark:bg-zinc-950/15 border border-slate-105 dark:border-zinc-850 rounded-2xl flex justify-between items-center gap-2">
-                    <div className="flex items-center gap-3">
-                      <img src={p.clientPhoto} className="w-9 h-9 rounded-full object-cover shrink-0" />
-                      <div>
-                        <h4 className="font-extrabold text-slate-800 dark:text-zinc-200 text-xs leading-none">{p.clientName}</h4>
-                        <span className="text-[9.5px] text-slate-400 font-bold block mt-1.5">{p.membershipPlan}</span>
-                        <span className="text-[9px] text-rose-500 font-semibold block mt-0.5">Due: {formatDate(p.dueDate)}</span>
+                outstandingInvoicesList.map(item => (
+                  <div key={item.id} className="p-3.5 bg-slate-50/50 dark:bg-zinc-950/20 border border-slate-100 dark:border-zinc-850 rounded-2xl flex justify-between items-start gap-2 hover:bg-white dark:hover:bg-zinc-900 hover:shadow-sm transition duration-150">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <img src={item.clientPhoto} className="w-8.5 h-8.5 rounded-xl object-cover shadow-sm bg-slate-100 border shrink-0" />
+                      <div className="min-w-0">
+                        <span className="font-extrabold text-slate-800 dark:text-zinc-150 text-xs block truncate leading-none mb-1">{item.clientName}</span>
+                        <span className="text-[9px] text-slate-400 block truncate">{item.clientMembership}</span>
+                        <span className="text-[9px] text-rose-500 font-bold block mt-0.5 leading-none">Due: {formatDate(item.dueDate)}</span>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3 shrink-0">
-                      <div className="text-right">
-                        <span className="text-xs font-black text-rose-500 block">₹{p.amount.toLocaleString("en-IN")}</span>
-                        <span className="text-[9.5px] px-1.5 py-0.2 rounded bg-rose-500/10 text-rose-500 font-black uppercase inline-block mt-1">{p.status}</span>
-                      </div>
+                    <div className="text-right shrink-0 flex flex-col items-end gap-1.5">
+                      <span className="text-xs font-black text-slate-850 dark:text-zinc-100">₹{item.amount}</span>
                       <button
-                        onClick={() => handleSendReminder(p.clientName, p.amount, p.dueDate)}
-                        className="p-2 bg-amber-500/10 hover:bg-amber-50 hover:text-white text-amber-500 rounded-xl transition cursor-pointer"
-                        title="Send Reminder SMS & Email"
+                        onClick={() => handleSendReminder(item.clientName, item.amount, item.dueDate)}
+                        className="p-1.5 bg-blue-50 dark:bg-blue-900/10 text-blue-600 dark:text-blue-400 hover:bg-blue-600 hover:text-white rounded-lg transition cursor-pointer shadow-sm border border-blue-50"
+                        title="Send collection warning"
                       >
-                        <Bell className="w-4 h-4" />
+                        <Send className="w-3 h-3" />
                       </button>
                     </div>
                   </div>
                 ))
               ) : (
-                <div className="py-12 text-center text-slate-400 italic text-xs">No outstanding balances currently logged!</div>
+                <div className="text-center py-20 text-slate-400 italic text-xs">All pending fees collection cleared.</div>
               )}
             </div>
           </div>
 
-          {/* Column 2: Membership Expirations & Renewals */}
-          <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl p-5 shadow-sm space-y-4">
-            <div>
-              <h3 className="text-sm font-bold text-slate-850 dark:text-zinc-150 flex items-center gap-1.5">
-                <RefreshCw className="w-4 h-4 text-blue-500" /> Membership Renewal Console
-              </h3>
-              <p className="text-[10px] text-slate-400 mt-0.5">Expired members and those expiring within 30 days</p>
-            </div>
-
-            <div className="space-y-4 max-h-[500px] overflow-y-auto pr-1">
-              
-              {/* Expired Members Sublist */}
-              <div>
-                <span className="text-[9px] font-black text-rose-500 uppercase tracking-widest block mb-2">Expired Memberships</span>
-                <div className="space-y-2">
-                  {expiredMembersList.length > 0 ? (
-                    expiredMembersList.map((c) => (
-                      <div key={c.id} className="p-3 bg-red-500/5 border border-red-200/10 rounded-2xl flex justify-between items-center gap-2 animate-in fade-in duration-300">
-                        <div className="flex items-center gap-3">
-                          <img src={c.photo} className="w-8 h-8 rounded-full object-cover shrink-0 border dark:border-zinc-800" />
-                          <div>
-                            <h4 className="font-extrabold text-slate-800 dark:text-zinc-200 text-xs leading-none">{c.name}</h4>
-                            <span className="text-[9.5px] text-slate-450 dark:text-zinc-400 block mt-1.5">{c.membership}</span>
-                            <span className="text-[9.5px] text-rose-500 font-bold block mt-0.5">Expired On: {formatDate(c.expiryDate)}</span>
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => {
-                            setSelectedClientForRenewal(c.id);
-                            setNewRenewalInput(prev => ({
-                              ...prev,
-                              clientId: c.id,
-                              amount: c.monthlyFees || "3500",
-                              startDate: new Date().toISOString().split("T")[0]
-                            }));
-                            setRenewalModalOpen(true);
-                          }}
-                          className="px-2.5 py-1.5 bg-rose-500 hover:bg-rose-600 text-white rounded-lg font-bold text-[10px] cursor-pointer shadow-sm transition"
-                        >
-                          Renew Now
-                        </button>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="py-4 text-center text-slate-400 italic text-[11px]">No expired memberships.</div>
-                  )}
-                </div>
-              </div>
-
-              {/* Expiring Soon Sublist */}
-              <div>
-                <span className="text-[9px] font-black text-amber-500 uppercase tracking-widest block mb-2">Expiring within 30 days</span>
-                <div className="space-y-2">
-                  {upcomingRenewalsList.length > 0 ? (
-                    upcomingRenewalsList.map((c) => (
-                      <div key={c.id} className="p-3 bg-amber-500/5 border border-amber-200/10 rounded-2xl flex justify-between items-center gap-2 animate-in fade-in duration-300">
-                        <div className="flex items-center gap-3">
-                          <img src={c.photo} className="w-8 h-8 rounded-full object-cover shrink-0 border dark:border-zinc-800" />
-                          <div>
-                            <h4 className="font-extrabold text-slate-800 dark:text-zinc-200 text-xs leading-none">{c.name}</h4>
-                            <span className="text-[9.5px] text-slate-450 dark:text-zinc-400 block mt-1.5">{c.membership}</span>
-                            <span className="text-[9.5px] text-amber-500 font-bold block mt-0.5">Expires On: {formatDate(c.expiryDate)}</span>
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => {
-                            setSelectedClientForRenewal(c.id);
-                            setNewRenewalInput(prev => ({
-                              ...prev,
-                              clientId: c.id,
-                              amount: c.monthlyFees || "3500",
-                              startDate: c.expiryDate || new Date().toISOString().split("T")[0]
-                            }));
-                            setRenewalModalOpen(true);
-                          }}
-                          className="px-2.5 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-bold text-[10px] cursor-pointer shadow-sm transition"
-                        >
-                          Renew Plan
-                        </button>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="py-4 text-center text-slate-400 italic text-[11px]">No memberships expiring soon.</div>
-                  )}
-                </div>
-              </div>
-
-            </div>
-          </div>
-
-        </div>
-      )}
-
-      {/* --- INVOICE RECEIPT DRAWER OVERLAY --- */}
-      {activeInvoice && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setActiveInvoice(null)} />
-          <div className="relative bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl max-w-sm w-full p-6 shadow-2xl animate-in scale-in duration-200 text-left">
-            <button
-              onClick={() => setActiveInvoice(null)}
-              className="absolute top-4 right-4 p-1 hover:bg-slate-105 rounded-lg text-slate-400 cursor-pointer"
-            >
-              <XCircle className="w-5 h-5" />
-            </button>
-
-            <div className="text-center border-b pb-4 mb-4 dark:border-zinc-800">
-              <div className="w-10 h-10 bg-blue-605 rounded-full flex items-center justify-center text-white mx-auto mb-2 shadow-sm shadow-blue-500/20">
-                <CreditCard className="w-5 h-5" />
-              </div>
-              <h2 className="text-sm font-black text-slate-850 dark:text-zinc-150">{settings.gymName}</h2>
-              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{activeInvoice.invoiceNumber}</span>
-            </div>
-
-            <div className="space-y-2.5 text-xs text-slate-600 dark:text-zinc-400">
-              <div className="flex justify-between">
-                <span>Athlete Name:</span>
-                <span className="font-extrabold text-slate-800 dark:text-zinc-100">{activeInvoice.clientName}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Email Address:</span>
-                <span className="font-semibold text-slate-500">{activeInvoice.clientEmail}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Contact Number:</span>
-                <span className="font-semibold text-slate-500">{activeInvoice.clientPhone}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Billing Date:</span>
-                <span className="font-semibold text-slate-700 dark:text-zinc-300">{formatDate(activeInvoice.date)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Due Date:</span>
-                <span className="font-semibold text-slate-700 dark:text-zinc-300">{formatDate(activeInvoice.dueDate)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Payment Mode:</span>
-                <span className="font-semibold text-slate-700 dark:text-zinc-300">{activeInvoice.method}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Subscription Plan:</span>
-                <span className="font-semibold text-slate-700 dark:text-zinc-300">{activeInvoice.membershipPlan}</span>
-              </div>
-              {activeInvoice.notes && (
-                <div className="bg-slate-50 dark:bg-zinc-950 p-2.5 rounded-lg text-[10px] text-slate-500 dark:text-zinc-400 italic mt-1 leading-normal">
-                  Note: "{activeInvoice.notes}"
-                </div>
-              )}
-              <div className="flex justify-between border-t border-dashed dark:border-zinc-800 pt-2.5 mt-2.5 font-black text-slate-850 dark:text-zinc-100 text-sm">
-                <span>Grand Total:</span>
-                <span className="text-blue-600 dark:text-blue-400">₹{activeInvoice.amount.toLocaleString("en-IN")}</span>
-              </div>
-            </div>
-
-            <div className="mt-6 flex gap-2">
-              <button
-                onClick={() => downloadReceiptFile(activeInvoice)}
-                className="flex-1 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-750 text-slate-700 dark:text-zinc-200 rounded-xl text-xs font-bold shadow flex items-center justify-center gap-1.5 cursor-pointer transition border border-slate-200 dark:border-zinc-700"
-              >
-                <Download className="w-3.5 h-3.5" />
-                <span>Download Receipt</span>
-              </button>
-              <button
-                onClick={() => {
-                  window.print();
-                }}
-                className="px-3.5 py-2 bg-blue-605 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow flex items-center justify-center cursor-pointer transition"
-              >
-                <Printer className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* --- RECORD PAYMENT DIALOG MODAL --- */}
-      {paymentModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 no-print animate-in fade-in duration-200">
-          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setPaymentModalOpen(false)} />
-          <form onSubmit={handleRecordPaymentSubmit} className="relative bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl max-w-sm w-full p-6 shadow-2xl text-left">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-sm font-black text-slate-800 dark:text-zinc-100 font-display">Record Member Payment</h3>
-              <button type="button" onClick={() => setPaymentModalOpen(false)} className="text-slate-400 hover:text-slate-655"><XCircle className="w-5 h-5" /></button>
+          {/* Column 2: Expired memberships */}
+          <div className="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-850 rounded-3xl p-5 shadow-sm flex flex-col h-[520px]">
+            <div className="mb-4 pb-2 border-b border-slate-100 dark:border-zinc-850">
+              <span className="text-[10px] font-black text-rose-500 uppercase tracking-wider block">Expired membership list</span>
+              <h3 className="text-sm font-extrabold text-slate-805 dark:text-zinc-150 mt-1">Requires Immediate Renewal</h3>
             </div>
             
-            <div className="space-y-3.5">
+            <div className="flex-1 overflow-y-auto space-y-3 pr-1 scrollbar-thin">
+              {expiredMembersList.length > 0 ? (
+                expiredMembersList.map(item => (
+                  <div key={item.id} className="p-3.5 bg-slate-50/50 dark:bg-zinc-950/20 border border-slate-100 dark:border-zinc-850 rounded-2xl flex justify-between items-start gap-2 hover:bg-white dark:hover:bg-zinc-900 hover:shadow-sm transition duration-150">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <img src={item.photo} className="w-8.5 h-8.5 rounded-xl object-cover shadow-sm bg-slate-100 border shrink-0" />
+                      <div className="min-w-0">
+                        <span className="font-extrabold text-slate-800 dark:text-zinc-150 text-xs block truncate leading-none mb-1">{item.name}</span>
+                        <span className="text-[9px] text-slate-400 block truncate">{item.membership}</span>
+                        <span className="text-[9px] text-rose-500 font-bold block mt-0.5 leading-none">Expired: {formatDate(item.expiryDate)}</span>
+                      </div>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <button
+                        onClick={() => {
+                          setNewRenewalInput(prev => ({
+                            ...prev,
+                            clientId: item.id
+                          }));
+                          setRenewalModalOpen(true);
+                        }}
+                        className="px-2.5 py-1 bg-white hover:bg-blue-600 hover:text-white text-blue-600 dark:bg-zinc-900 dark:hover:bg-blue-600 dark:text-blue-400 border border-slate-205 dark:border-zinc-800 rounded-xl text-[10px] font-extrabold transition shadow-sm cursor-pointer"
+                      >
+                        Renew
+                      </button>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-20 text-slate-400 italic text-xs">No expired active profiles registered.</div>
+              )}
+            </div>
+          </div>
+
+          {/* Column 3: Upcoming Renewals */}
+          <div className="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-850 rounded-3xl p-5 shadow-sm flex flex-col h-[520px]">
+            <div className="mb-4 pb-2 border-b border-slate-100 dark:border-zinc-850">
+              <span className="text-[10px] font-black text-amber-600 uppercase tracking-wider block">Upcoming expiration blocks</span>
+              <h3 className="text-sm font-extrabold text-slate-805 dark:text-zinc-150 mt-1">Expiring within 30 Days</h3>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto space-y-3 pr-1 scrollbar-thin">
+              {upcomingRenewalsList.length > 0 ? (
+                upcomingRenewalsList.map(item => (
+                  <div key={item.id} className="p-3.5 bg-slate-50/50 dark:bg-zinc-950/20 border border-slate-100 dark:border-zinc-850 rounded-2xl flex justify-between items-start gap-2 hover:bg-white dark:hover:bg-zinc-900 hover:shadow-sm transition duration-150">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <img src={item.photo} className="w-8.5 h-8.5 rounded-xl object-cover shadow-sm bg-slate-100 border shrink-0" />
+                      <div className="min-w-0">
+                        <span className="font-extrabold text-slate-800 dark:text-zinc-150 text-xs block truncate leading-none mb-1">{item.name}</span>
+                        <span className="text-[9px] text-slate-400 block truncate">{item.membership}</span>
+                        <span className="text-[9px] text-amber-600 font-bold block mt-0.5 leading-none">Expires: {formatDate(item.expiryDate)}</span>
+                      </div>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <button
+                        onClick={() => {
+                          setNewRenewalInput(prev => ({
+                            ...prev,
+                            clientId: item.id
+                          }));
+                          setRenewalModalOpen(true);
+                        }}
+                        className="px-2.5 py-1 bg-white hover:bg-blue-600 hover:text-white text-blue-600 dark:bg-zinc-900 dark:hover:bg-blue-600 dark:text-blue-400 border border-slate-205 dark:border-zinc-800 rounded-xl text-[10px] font-extrabold transition shadow-sm cursor-pointer"
+                      >
+                        Renew
+                      </button>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-20 text-slate-400 italic text-xs">No active memberships expiring soon.</div>
+              )}
+            </div>
+          </div>
+
+        </div>
+      )}
+
+      {/* --- RECORD PAYMENT MODAL POPUP --- */}
+      {paymentModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 no-print">
+          {/* Blurred background overlay */}
+          <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md" onClick={() => setPaymentModalOpen(false)} />
+          <div className="relative bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl max-w-md w-full p-6 shadow-2xl animate-in scale-in duration-300 text-left">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-base font-extrabold text-slate-805 dark:text-zinc-100 font-display">Record Client Payment</h2>
+              <button onClick={() => setPaymentModalOpen(false)} className="p-1 hover:bg-slate-100 rounded-lg text-slate-400 cursor-pointer">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleRecordPaymentSubmit} className="space-y-4">
               <div>
-                <label className="text-[10px] font-black text-slate-455 block mb-1">Select Athlete</label>
+                <label className="text-[10px] font-bold text-slate-400 block mb-1 uppercase tracking-wide">Select Athlete</label>
                 <select
                   value={newPaymentInput.clientId}
                   onChange={(e) => {
                     const cId = e.target.value;
-                    const selectedClient = clients.find(c => c.id === cId);
-                    const fee = selectedClient?.monthlyFees || 3500;
-                    setNewPaymentInput({ ...newPaymentInput, clientId: cId, amount: fee });
+                    const c = clients.find(cl => cl.id === cId);
+                    setNewPaymentInput({ ...newPaymentInput, clientId: cId, amount: c?.monthlyFees || "3500" });
                   }}
-                  className="w-full px-3 py-2 text-xs border border-slate-200 dark:border-zinc-800 rounded-xl bg-slate-50 dark:bg-zinc-950 text-slate-800 dark:text-zinc-200 focus:outline-none"
+                  className="w-full px-3.5 py-2.5 border border-slate-205 dark:border-zinc-800 rounded-2xl bg-slate-50 dark:bg-zinc-950 text-slate-800 dark:text-zinc-200 text-xs focus:outline-none"
                 >
-                  {clients.map((c) => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
-                  ))}
+                  {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               </div>
 
-              <div>
-                <label className="text-[10px] font-black text-slate-455 block mb-1">Billed Amount (₹)</label>
-                <input
-                  type="number"
-                  required
-                  value={newPaymentInput.amount}
-                  onChange={(e) => setNewPaymentInput({ ...newPaymentInput, amount: e.target.value })}
-                  className="w-full px-3 py-2 text-xs border border-slate-202 dark:border-zinc-800 rounded-xl focus:outline-none bg-slate-50 dark:bg-zinc-950 text-slate-800 dark:text-zinc-200"
-                  placeholder="e.g. 3500"
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[10px] font-bold text-slate-400 block mb-1 uppercase tracking-wide">Amount (INR)</label>
+                  <input
+                    type="number"
+                    value={newPaymentInput.amount}
+                    onChange={(e) => setNewPaymentInput({ ...newPaymentInput, amount: e.target.value })}
+                    className="w-full px-3.5 py-2.5 border border-slate-205 dark:border-zinc-800 rounded-2xl bg-slate-50 dark:bg-zinc-955 text-xs text-slate-800 dark:text-zinc-200 focus:outline-none"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold text-slate-400 block mb-1 uppercase tracking-wide">Payment Method</label>
+                  <select
+                    value={newPaymentInput.method}
+                    onChange={(e) => setNewPaymentInput({ ...newPaymentInput, method: e.target.value })}
+                    className="w-full px-3.5 py-2.5 border border-slate-205 dark:border-zinc-800 rounded-2xl bg-slate-50 dark:bg-zinc-955 text-xs text-slate-805 focus:outline-none"
+                  >
+                    <option value="UPI">UPI Transfer</option>
+                    <option value="Card">Credit/Debit Card</option>
+                    <option value="Cash">Cash Handover</option>
+                    <option value="Bank Transfer">Bank Transfer</option>
+                  </select>
+                </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[10px] font-black text-slate-455 block mb-1">Date Logged</label>
+                  <label className="text-[10px] font-bold text-slate-400 block mb-1 uppercase tracking-wide">Billed Date</label>
                   <input
                     type="date"
-                    required
                     value={newPaymentInput.date}
                     onChange={(e) => setNewPaymentInput({ ...newPaymentInput, date: e.target.value })}
-                    className="w-full px-2.5 py-2 text-xs border border-slate-202 dark:border-zinc-800 rounded-xl focus:outline-none bg-slate-50 dark:bg-zinc-950 text-slate-800 dark:text-zinc-200"
+                    className="w-full px-3.5 py-2 border border-slate-205 dark:border-zinc-800 rounded-2xl bg-slate-50 dark:bg-zinc-955 text-xs text-slate-800 dark:text-zinc-200 focus:outline-none"
+                    required
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] font-black text-slate-455 block mb-1">Payment Due Date</label>
-                  <input
-                    type="date"
-                    required
-                    value={newPaymentInput.dueDate}
-                    onChange={(e) => setNewPaymentInput({ ...newPaymentInput, dueDate: e.target.value })}
-                    className="w-full px-2.5 py-2 text-xs border border-slate-202 dark:border-zinc-800 rounded-xl focus:outline-none bg-slate-50 dark:bg-zinc-950 text-slate-805 dark:text-zinc-200"
-                  />
+                  <label className="text-[10px] font-bold text-slate-400 block mb-1 uppercase tracking-wide">Payment Status</label>
+                  <select
+                    value={newPaymentInput.status}
+                    onChange={(e) => setNewPaymentInput({ ...newPaymentInput, status: e.target.value })}
+                    className="w-full px-3.5 py-2.5 border border-slate-205 dark:border-zinc-800 rounded-2xl bg-slate-50 dark:bg-zinc-955 text-xs text-slate-805 focus:outline-none"
+                  >
+                    <option value="Paid">Paid</option>
+                    <option value="Unpaid">Unpaid</option>
+                  </select>
                 </div>
               </div>
 
               <div>
-                <label className="text-[10px] font-black text-slate-455 block mb-1">Payment Method</label>
-                <select
-                  value={newPaymentInput.method}
-                  onChange={(e) => setNewPaymentInput({ ...newPaymentInput, method: e.target.value })}
-                  className="w-full px-3 py-2 text-xs border border-slate-200 dark:border-zinc-800 rounded-xl bg-slate-50 dark:bg-zinc-950 text-slate-805 dark:text-zinc-200 focus:outline-none"
-                >
-                  <option value="UPI">UPI</option>
-                  <option value="Card">Card</option>
-                  <option value="Cash">Cash</option>
-                  <option value="Bank Transfer">Bank Transfer</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="text-[10px] font-black text-slate-455 block mb-1">Billing Status</label>
-                <select
-                  value={newPaymentInput.status}
-                  onChange={(e) => setNewPaymentInput({ ...newPaymentInput, status: e.target.value })}
-                  className="w-full px-3 py-2 text-xs border border-slate-200 dark:border-zinc-800 rounded-xl bg-slate-50 dark:bg-zinc-950 text-slate-805 dark:text-zinc-200 focus:outline-none"
-                >
-                  <option value="Paid">Paid</option>
-                  <option value="Unpaid">Unpaid / Pending</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="text-[10px] font-black text-slate-455 block mb-1">Invoice Notes</label>
-                <input
-                  type="text"
+                <label className="text-[10px] font-bold text-slate-400 block mb-1 uppercase tracking-wide">Ledger Notes</label>
+                <textarea
                   value={newPaymentInput.notes}
                   onChange={(e) => setNewPaymentInput({ ...newPaymentInput, notes: e.target.value })}
-                  className="w-full px-3 py-2 text-xs border border-slate-202 dark:border-zinc-800 rounded-xl focus:outline-none bg-slate-50 dark:bg-zinc-950 text-slate-805 dark:text-zinc-200"
-                  placeholder="e.g. Standard membership fees"
+                  rows={2}
+                  className="w-full px-3.5 py-2 border border-slate-205 dark:border-zinc-800 rounded-2xl bg-slate-50 dark:bg-zinc-955 text-xs text-slate-800 dark:text-zinc-200 focus:outline-none focus:ring-0"
+                  placeholder="Standard monthly subscription fees."
                 />
               </div>
-            </div>
-            
-            <div className="flex gap-2.5 mt-6">
-              <button
-                type="button"
-                onClick={() => setPaymentModalOpen(false)}
-                className="flex-1 py-2 border border-slate-200 dark:border-zinc-800 rounded-xl text-xs font-semibold text-slate-655 dark:text-zinc-400"
-              >
-                Cancel
-              </button>
+
               <button
                 type="submit"
-                className="flex-1 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-sm"
+                className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-xs font-bold shadow-md hover:shadow-lg transition cursor-pointer mt-4"
               >
-                Record Payment
+                Log Payment Receipt
               </button>
-            </div>
-          </form>
+            </form>
+          </div>
         </div>
       )}
 
-      {/* --- RENEW MEMBERSHIP DIALOG MODAL --- */}
+      {/* --- RENEW MEMBERSHIP MODAL POPUP --- */}
       {renewalModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 no-print animate-in fade-in duration-200">
-          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setRenewalModalOpen(false)} />
-          <form onSubmit={handleRenewMembershipSubmit} className="relative bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl max-w-sm w-full p-6 shadow-2xl text-left">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-sm font-black text-slate-800 dark:text-zinc-100 font-display flex items-center gap-1">
-                <RefreshCw className="w-4 h-4 text-blue-500" /> Renew Client Membership
-              </h3>
-              <button type="button" onClick={() => setRenewalModalOpen(false)} className="text-slate-400 hover:text-slate-655"><XCircle className="w-5 h-5" /></button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 no-print">
+          {/* Blurred background overlay */}
+          <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md" onClick={() => setRenewalModalOpen(false)} />
+          <div className="relative bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl max-w-md w-full p-6 shadow-2xl animate-in scale-in duration-300 text-left">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-base font-extrabold text-slate-850 dark:text-zinc-100 font-display">Renew Membership Subscription</h2>
+              <button onClick={() => setRenewalModalOpen(false)} className="p-1 hover:bg-slate-100 rounded-lg text-slate-400 cursor-pointer">
+                <X className="w-5 h-5" />
+              </button>
             </div>
 
-            <div className="space-y-3.5">
+            <form onSubmit={handleRenewMembershipSubmit} className="space-y-4">
               <div>
-                <label className="text-[10px] font-black text-slate-455 block mb-1">Select Member Athlete</label>
+                <label className="text-[10px] font-bold text-slate-400 block mb-1 uppercase tracking-wide">Select Athlete</label>
                 <select
                   value={newRenewalInput.clientId}
                   onChange={(e) => {
                     const cId = e.target.value;
-                    const cObj = clients.find(c => c.id === cId);
-                    
-                    // Match plan details or set defaults
-                    const matchedPlan = settings.membershipPlans.find(p => p.name === cObj?.membership) || settings.membershipPlans[0];
-                    setNewRenewalInput({
-                      ...newRenewalInput,
-                      clientId: cId,
-                      planId: matchedPlan.id,
-                      amount: matchedPlan.fee,
-                      startDate: cObj?.expiryDate || new Date().toISOString().split("T")[0]
-                    });
+                    const c = clients.find(cl => cl.id === cId);
+                    setNewRenewalInput({ ...newRenewalInput, clientId: cId, amount: c?.monthlyFees || "3500" });
                   }}
-                  className="w-full px-3 py-2 text-xs border border-slate-200 dark:border-zinc-800 rounded-xl bg-slate-50 dark:bg-zinc-950 text-slate-850 dark:text-zinc-200 focus:outline-none"
+                  className="w-full px-3.5 py-2.5 border border-slate-205 dark:border-zinc-800 rounded-2xl bg-slate-50 dark:bg-zinc-950 text-slate-800 dark:text-zinc-200 text-xs focus:outline-none"
                 >
-                  {clients.map((c) => (
-                    <option key={c.id} value={c.id}>{c.name} ({c.membership || "Expired"})</option>
-                  ))}
+                  {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               </div>
 
-              <div>
-                <label className="text-[10px] font-black text-slate-455 block mb-1">Choose Membership Package</label>
-                <select
-                  value={newRenewalInput.planId}
-                  onChange={(e) => {
-                    const planId = e.target.value;
-                    const plan = settings.membershipPlans.find(p => p.id === planId);
-                    setNewRenewalInput({
-                      ...newRenewalInput,
-                      planId,
-                      amount: plan?.fee || "3500"
-                    });
-                  }}
-                  className="w-full px-3 py-2 text-xs border border-slate-200 dark:border-zinc-800 rounded-xl bg-slate-50 dark:bg-zinc-950 text-slate-850 dark:text-zinc-200 focus:outline-none"
-                >
-                  {settings.membershipPlans.map((p) => (
-                    <option key={p.id} value={p.id}>{p.name} ({p.duration} Month - ₹{p.fee})</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="text-[10px] font-black text-slate-455 block mb-1">Renewal Amount (₹)</label>
-                <input
-                  type="number"
-                  required
-                  value={newRenewalInput.amount}
-                  onChange={(e) => setNewRenewalInput({ ...newRenewalInput, amount: e.target.value })}
-                  className="w-full px-3 py-2 text-xs border border-slate-202 dark:border-zinc-800 rounded-xl focus:outline-none bg-slate-50 dark:bg-zinc-950 text-slate-850 dark:text-zinc-200"
-                />
-              </div>
-
-              <div>
-                <label className="text-[10px] font-black text-slate-455 block mb-1">Renewal Commencement Date</label>
-                <input
-                  type="date"
-                  required
-                  value={newRenewalInput.startDate}
-                  onChange={(e) => setNewRenewalInput({ ...newRenewalInput, startDate: e.target.value })}
-                  className="w-full px-3 py-2 text-xs border border-slate-202 dark:border-zinc-800 rounded-xl focus:outline-none bg-slate-50 dark:bg-zinc-950 text-slate-850 dark:text-zinc-200"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[10px] font-black text-slate-455 block mb-1">Payment Method</label>
+                  <label className="text-[10px] font-bold text-slate-400 block mb-1 uppercase tracking-wide">Select New Plan</label>
+                  <select
+                    value={newRenewalInput.planId}
+                    onChange={(e) => {
+                      const pId = e.target.value;
+                      const plan = settings.membershipPlans.find(pl => pl.id === pId);
+                      setNewRenewalInput({ ...newRenewalInput, planId: pId, amount: plan?.fee || "3500" });
+                    }}
+                    className="w-full px-3.5 py-2.5 border border-slate-205 dark:border-zinc-800 rounded-2xl bg-slate-50 dark:bg-zinc-955 text-xs text-slate-805 focus:outline-none"
+                  >
+                    {settings.membershipPlans.map(pl => <option key={pl.id} value={pl.id}>{pl.name} ({pl.duration}M)</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold text-slate-400 block mb-1 uppercase tracking-wide">Renewal Fee (INR)</label>
+                  <input
+                    type="number"
+                    value={newRenewalInput.amount}
+                    onChange={(e) => setNewRenewalInput({ ...newRenewalInput, amount: e.target.value })}
+                    className="w-full px-3.5 py-2.5 border border-slate-205 dark:border-zinc-800 rounded-2xl bg-slate-50 dark:bg-zinc-955 text-xs text-slate-808 dark:text-zinc-200 focus:outline-none"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[10px] font-bold text-slate-400 block mb-1 uppercase tracking-wide">Start Date</label>
+                  <input
+                    type="date"
+                    value={newRenewalInput.startDate}
+                    onChange={(e) => setNewRenewalInput({ ...newRenewalInput, startDate: e.target.value })}
+                    className="w-full px-3.5 py-2 border border-slate-205 dark:border-zinc-800 rounded-2xl bg-slate-50 dark:bg-zinc-955 text-xs text-slate-800 dark:text-zinc-200 focus:outline-none"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold text-slate-400 block mb-1 uppercase tracking-wide">Payment Method</label>
                   <select
                     value={newRenewalInput.method}
                     onChange={(e) => setNewRenewalInput({ ...newRenewalInput, method: e.target.value })}
-                    className="w-full px-3 py-2 text-xs border border-slate-200 dark:border-zinc-800 rounded-xl bg-slate-50 dark:bg-zinc-950 text-slate-850 dark:text-zinc-200 focus:outline-none"
+                    className="w-full px-3.5 py-2.5 border border-slate-205 dark:border-zinc-800 rounded-2xl bg-slate-50 dark:bg-zinc-955 text-xs text-slate-805 focus:outline-none"
                   >
-                    <option value="UPI">UPI</option>
-                    <option value="Card">Card</option>
-                    <option value="Cash">Cash</option>
+                    <option value="UPI">UPI Transfer</option>
+                    <option value="Card">Credit/Debit Card</option>
+                    <option value="Cash">Cash Handover</option>
                     <option value="Bank Transfer">Bank Transfer</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="text-[10px] font-black text-slate-455 block mb-1">Payment Status</label>
-                  <select
-                    value={newRenewalInput.status}
-                    onChange={(e) => setNewRenewalInput({ ...newRenewalInput, status: e.target.value })}
-                    className="w-full px-3 py-2 text-xs border border-slate-200 dark:border-zinc-800 rounded-xl bg-slate-50 dark:bg-zinc-950 text-slate-850 dark:text-zinc-200 focus:outline-none"
-                  >
-                    <option value="Paid">Paid (Active)</option>
-                    <option value="Unpaid">Unpaid (Pending)</option>
                   </select>
                 </div>
               </div>
 
               <div>
-                <label className="text-[10px] font-black text-slate-455 block mb-1">Renewal Invoice Notes</label>
-                <input
-                  type="text"
+                <label className="text-[10px] font-bold text-slate-400 block mb-1 uppercase tracking-wide">Renewal Notes</label>
+                <textarea
                   value={newRenewalInput.notes}
                   onChange={(e) => setNewRenewalInput({ ...newRenewalInput, notes: e.target.value })}
-                  className="w-full px-3 py-2 text-xs border border-slate-202 dark:border-zinc-800 rounded-xl focus:outline-none bg-slate-50 dark:bg-zinc-950 text-slate-850 dark:text-zinc-200"
-                  placeholder="e.g. Plan renewal for standard membership"
+                  rows={2}
+                  className="w-full px-3.5 py-2 border border-slate-205 dark:border-zinc-800 rounded-2xl bg-slate-50 dark:bg-zinc-955 text-xs text-slate-800 dark:text-zinc-200 focus:outline-none focus:ring-0"
+                  placeholder="Athlete renewal logged."
                 />
               </div>
-            </div>
 
-            <div className="flex gap-2.5 mt-6">
-              <button
-                type="button"
-                onClick={() => setRenewalModalOpen(false)}
-                className="flex-1 py-2 border border-slate-200 dark:border-zinc-800 rounded-xl text-xs font-semibold text-slate-655 dark:text-zinc-400"
-              >
-                Cancel
-              </button>
               <button
                 type="submit"
-                className="flex-1 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-sm"
+                className="w-full py-3 bg-blue-600 hover:bg-blue-755 text-white rounded-2xl text-xs font-bold shadow-md hover:shadow-lg transition cursor-pointer mt-4"
               >
-                Renew Member
+                Log Subscription Renewal
               </button>
-            </div>
-          </form>
-        </div>
-      )}
-
-      {/* --- PRINT AREA PRINTABLE RECEIPT TEMPLATE --- */}
-      {activeInvoice && (
-        <div className="hidden print-area leading-relaxed text-slate-800 text-left">
-          <div className="text-center border-b pb-4 mb-6">
-            <h1 className="text-xl font-bold">{settings.gymName}</h1>
-            <p className="text-xs text-slate-500">{settings.gymAddress} • Phone: {settings.trainerPhone}</p>
-            <h2 className="text-sm font-semibold uppercase tracking-wider mt-2">Invoice Bill Statement</h2>
-          </div>
-          
-          <div className="grid grid-cols-2 gap-4 text-xs mb-6 pb-4 border-b">
-            <div><strong>Invoice Number:</strong> {activeInvoice.invoiceNumber}</div>
-            <div><strong>Billing Date:</strong> {formatDate(activeInvoice.date)}</div>
-            <div><strong>Billed To:</strong> {activeInvoice.clientName}</div>
-            <div><strong>Payment Method:</strong> {activeInvoice.method}</div>
-            <div><strong>Status:</strong> {activeInvoice.status}</div>
-          </div>
-
-          <table className="w-full text-left text-xs border mb-6">
-            <thead>
-              <tr className="bg-slate-100 font-bold">
-                <th className="p-2 border">Description</th>
-                <th className="p-2 border text-right">Amount</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td className="p-2 border">{activeInvoice.membershipPlan} subscription fee</td>
-                <td className="p-2 border text-right">₹{activeInvoice.amount.toLocaleString("en-IN")}</td>
-              </tr>
-              <tr className="font-bold border-t-2">
-                <td className="p-2 border text-right">Grand Total:</td>
-                <td className="p-2 border text-right">₹{activeInvoice.amount.toLocaleString("en-IN")}</td>
-              </tr>
-            </tbody>
-          </table>
-
-          {activeInvoice.notes && (
-            <div className="text-xs text-slate-500 italic mb-6">
-              <strong>Billing Note:</strong> "{activeInvoice.notes}"
-            </div>
-          )}
-
-          <div className="mt-12 text-center text-[10px] text-slate-400 border-t pt-4">
-            Thank you for training with us! Generated via Gym CRM.
+            </form>
           </div>
         </div>
       )}

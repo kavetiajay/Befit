@@ -161,6 +161,15 @@ const DashboardLayout = ({ children }) => {
           )}
         </div>
         <div className="flex items-center gap-2">
+          {/* Theme Toggle Button */}
+          <button
+            onClick={toggleTheme}
+            className="w-10 h-10 rounded-full bg-slate-100 dark:bg-zinc-800 flex items-center justify-center text-slate-600 dark:text-zinc-400 cursor-pointer"
+            title="Toggle Theme"
+          >
+            {theme === "light" ? <Moon className="w-4.5 h-4.5" /> : <Sun className="w-4.5 h-4.5" />}
+          </button>
+
           {/* Notifications Bell */}
           <Link
             to="/notifications"
