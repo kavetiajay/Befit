@@ -15,28 +15,33 @@ import Payments from "./pages/Payments";
 import Reports from "./pages/Reports";
 import Notifications from "./pages/Notifications";
 import Settings from "./pages/Settings";
+import ClientDashboard from "./pages/client/ClientDashboard";
 
 function App() {
   return (
     <CRMProvider>
       <Router>
-        <DashboardLayout>
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/clients" element={<Clients />} />
-            <Route path="/clients/add" element={<AddClient />} />
-            <Route path="/clients/:id" element={<ClientProfile />} />
-            <Route path="/workouts" element={<WorkoutPlanner />} />
-            <Route path="/diet" element={<DietPlanner />} />
-            <Route path="/attendance" element={<Attendance />} />
-            <Route path="/measurements" element={<Measurements />} />
-            <Route path="/payments" element={<Payments />} />
-            <Route path="/reports" element={<Reports />} />
-            <Route path="/notifications" element={<Notifications />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="*" element={<Navigate to="/" />} />
-          </Routes>
-        </DashboardLayout>
+        <Routes>
+          {/* Client Dashboard Root */}
+          <Route path="/client" element={<ClientDashboard />} />
+          <Route path="/client/dashboard" element={<ClientDashboard />} />
+
+          {/* Trainer Portal routes wrapped in DashboardLayout */}
+          <Route path="/" element={<DashboardLayout><Dashboard /></DashboardLayout>} />
+          <Route path="/trainer/dashboard" element={<DashboardLayout><Dashboard /></DashboardLayout>} />
+          <Route path="/clients" element={<DashboardLayout><Clients /></DashboardLayout>} />
+          <Route path="/clients/add" element={<DashboardLayout><AddClient /></DashboardLayout>} />
+          <Route path="/clients/:id" element={<DashboardLayout><ClientProfile /></DashboardLayout>} />
+          <Route path="/workouts" element={<DashboardLayout><WorkoutPlanner /></DashboardLayout>} />
+          <Route path="/diet" element={<DashboardLayout><DietPlanner /></DashboardLayout>} />
+          <Route path="/attendance" element={<DashboardLayout><Attendance /></DashboardLayout>} />
+          <Route path="/measurements" element={<DashboardLayout><Measurements /></DashboardLayout>} />
+          <Route path="/payments" element={<DashboardLayout><Payments /></DashboardLayout>} />
+          <Route path="/reports" element={<DashboardLayout><Reports /></DashboardLayout>} />
+          <Route path="/notifications" element={<DashboardLayout><Notifications /></DashboardLayout>} />
+          <Route path="/settings" element={<DashboardLayout><Settings /></DashboardLayout>} />
+          <Route path="*" element={<Navigate to="/" />} />
+        </Routes>
       </Router>
       <Toaster position="top-right" richColors theme="system" />
     </CRMProvider>
