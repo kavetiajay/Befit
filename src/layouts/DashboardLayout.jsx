@@ -69,8 +69,6 @@ const DashboardLayout = ({ children }) => {
     { name: "Dashboard", path: "/", icon: LayoutDashboard },
     { name: "Clients", path: "/clients", icon: Users },
     { name: "Attendance", path: "/attendance", icon: CalendarCheck },
-    { name: "Workout Planner", path: "/workouts", icon: Dumbbell },
-    { name: "Diet Planner", path: "/diet", icon: Apple },
     { name: "Measurements", path: "/measurements", icon: Scale },
     { name: "Payments", path: "/payments", icon: CreditCard },
     { name: "Reports", path: "/reports", icon: BarChart3 },

@@ -9,7 +9,8 @@ import {
   Dumbbell,
   Apple,
   CreditCard,
-  CalendarCheck
+  CalendarCheck,
+  UserCheck
 } from "lucide-react";
 import { useCRM } from "../context/CRMContext";
 
@@ -86,7 +87,7 @@ const Dashboard = () => {
   const quickActionsList = [
     {
       label: "Add Member",
-      path: "/clients",
+      path: "/clients/add",
       icon: UserPlus,
       bg: "bg-blue-50 dark:bg-blue-900/15",
       text: "text-blue-600 dark:text-blue-400",
@@ -114,14 +115,23 @@ const Dashboard = () => {
     {
       label: "Assign Workout",
       path: "/workouts",
-      icon: Dumbbell,
+      icon: UserCheck,
       bg: "bg-purple-50 dark:bg-purple-900/15",
       text: "text-purple-600 dark:text-purple-400",
       border: "border-purple-100 dark:border-purple-900/30",
+      desc: "Assign routine to active athlete"
+    },
+    {
+      label: "Workout Planner",
+      path: "/workouts",
+      icon: Dumbbell,
+      bg: "bg-indigo-50 dark:bg-indigo-900/15",
+      text: "text-indigo-600 dark:text-indigo-400",
+      border: "border-indigo-100 dark:border-indigo-900/30",
       desc: "Build customized weekly splits"
     },
     {
-      label: "Assign Diet",
+      label: "Diet Planner",
       path: "/diet",
       icon: Apple,
       bg: "bg-rose-50 dark:bg-rose-900/15",
@@ -196,14 +206,14 @@ const Dashboard = () => {
         <h3 className="text-xs font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-4">
           Quick Operations Console
         </h3>
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
           {quickActionsList.map((action, i) => {
             const Icon = action.icon;
             return (
               <button
                 key={i}
                 onClick={() => navigate(action.path)}
-                className={`flex flex-col items-start p-4 rounded-2xl border ${action.border} bg-slate-50/50 dark:bg-zinc-950/20 hover:bg-white dark:hover:bg-zinc-900 hover:shadow-lg hover:-translate-y-0.5 cursor-pointer transition-all duration-250 group w-full text-left`}
+                className={`flex flex-col items-start p-4 rounded-2xl border ${action.border} bg-slate-50/50 dark:bg-zinc-950/20 hover:bg-white dark:hover:bg-zinc-900 shadow-sm hover:shadow-md hover:-translate-y-1 active:scale-95 active:bg-slate-100 dark:active:bg-zinc-800 transition-all duration-300 cursor-pointer group w-full text-left`}
               >
                 <div className={`p-2.5 rounded-xl ${action.bg} ${action.text} mb-3 group-hover:scale-110 transition duration-200 border border-current/5`}>
                   <Icon className="w-5 h-5" />
@@ -211,7 +221,7 @@ const Dashboard = () => {
                 <span className="text-xs font-extrabold text-slate-805 dark:text-zinc-150 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition">
                   {action.label}
                 </span>
-                <span className="text-[10px] text-slate-400 dark:text-zinc-500 font-medium mt-1 leading-snug hidden sm:block">
+                <span className="text-[10px] text-slate-400 dark:text-zinc-500 font-medium mt-1 leading-snug">
                   {action.desc}
                 </span>
               </button>

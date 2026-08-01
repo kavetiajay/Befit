@@ -26,18 +26,370 @@ import {
   Zap,
   TrendingUp,
   Download,
-  Check
+  Check,
+  Lock
 } from "lucide-react";
 import { toast } from "sonner";
+import { useCRM } from "../../context/CRMContext";
+
+const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+const weeklyWorkouts = {
+  Monday: {
+    name: "Chest",
+    exercises: [
+      { id: "ex_bench", name: "Bench Press", sets: 4, reps: 12, weight: "80 kg", rest: "90s", notes: "Warm up with bar, increase weight incrementally. Focus on barbell control." },
+      { id: "ex_incline", name: "Incline Dumbbell Press", sets: 3, reps: 10, weight: "26 kg DBs", rest: "90s", notes: "Keep elbows at 45 degrees, squeeze pectorals at top contraction point." },
+      { id: "ex_fly", name: "Cable Fly", sets: 3, reps: 15, weight: "15 kg", rest: "60s", notes: "Keep slight bend in elbows, control the negative portion of fly movement." },
+      { id: "ex_pushdown", name: "Tricep Pushdown", sets: 3, reps: 12, weight: "25 kg", rest: "60s", notes: "V-bar attachment. Lock elbows by side, extend arms completely down." }
+    ]
+  },
+  Tuesday: {
+    name: "Back",
+    exercises: [
+      { id: "ex_lat", name: "Lat Pulldown", sets: 4, reps: 12, weight: "60 kg", rest: "90s", notes: "Pull down to upper chest, squeeze shoulder blades together." },
+      { id: "ex_row", name: "Bent-Over Row", sets: 3, reps: 10, weight: "50 kg", rest: "90s", notes: "Keep spine neutral, pull barbell to lower chest." },
+      { id: "ex_pullup", name: "Pull-ups", sets: 3, reps: "Max", weight: "Bodyweight", rest: "120s", notes: "Full range of motion, dead hang to chin over bar." },
+      { id: "ex_facepull", name: "Face Pulls", sets: 3, reps: 15, weight: "20 kg", rest: "60s", notes: "Pull rope towards ears, focus on rear delts and rotator cuffs." }
+    ]
+  },
+  Wednesday: {
+    name: "Legs",
+    exercises: [
+      { id: "ex_squat", name: "Barbell Squats", sets: 4, reps: 10, weight: "100 kg", rest: "120s", notes: "Break parallel, drive through your heels." },
+      { id: "ex_rdl", name: "Romanian Deadlifts", sets: 3, reps: 12, weight: "80 kg", rest: "90s", notes: "Hinge at hips, keep bar close to shins, feel hamstrings stretch." },
+      { id: "ex_press", name: "Leg Press", sets: 3, reps: 15, weight: "160 kg", rest: "90s", notes: "Do not lock out knees at the top of movement." },
+      { id: "ex_calf", name: "Standing Calf Raises", sets: 4, reps: 15, weight: "40 kg", rest: "60s", notes: "Pause at peak contraction, stretch calves fully at bottom." }
+    ]
+  },
+  Thursday: {
+    name: "Shoulders",
+    exercises: [
+      { id: "ex_ohp", name: "Overhead Barbell Press", sets: 4, reps: 8, weight: "45 kg", rest: "90s", notes: "Keep core tight, press directly overhead, lock out elbows." },
+      { id: "ex_latraise", name: "Dumbbell Lateral Raises", sets: 3, reps: 15, weight: "10 kg", rest: "60s", notes: "Raise dumbbells to shoulder height, pinkies slightly up." },
+      { id: "ex_rear", name: "Rear Delt Fly", sets: 3, reps: 12, weight: "8 kg", rest: "60s", notes: "Keep slight bend in elbows, pull shoulder blades apart." },
+      { id: "ex_shrug", name: "Dumbbell Shrugs", sets: 3, reps: 12, weight: "30 kg", rest: "60s", notes: "Squeeze traps at the top, do not roll shoulders." }
+    ]
+  },
+  Friday: {
+    name: "Arms",
+    exercises: [
+      { id: "ex_curl", name: "Barbell Bicep Curls", sets: 3, reps: 12, weight: "30 kg", rest: "60s", notes: "Keep elbows pinned to sides, control negative phase." },
+      { id: "ex_inccurl", name: "Incline Dumbbell Curls", sets: 3, reps: 10, weight: "12 kg", rest: "60s", notes: "Stretch bicep fully at bottom of movement." },
+      { id: "ex_ham", name: "Dumbbell Hammer Curls", sets: 3, reps: 12, weight: "14 kg", rest: "60s", notes: "Neutral grip, target brachialis." },
+      { id: "ex_skull", name: "Skull Crushers", sets: 3, reps: 12, weight: "25 kg", rest: "60s", notes: "Lower EZ bar to forehead, extend elbows upward." }
+    ]
+  },
+  Saturday: {
+    name: "Cardio",
+    exercises: [
+      { id: "ex_hiit", name: "Treadmill HIIT", sets: 1, reps: "20 Mins", weight: "N/A", rest: "N/A", notes: "30s sprint / 60s jog cycles. Maintain maximum effort on sprints." },
+      { id: "ex_rowing", name: "Rowing Machine", sets: 1, reps: "15 Mins", weight: "N/A", rest: "N/A", notes: "Moderate pace, focus on leg drive and back pull." },
+      { id: "ex_rope", name: "Jump Rope", sets: 3, reps: "3 Mins", weight: "N/A", rest: "60s", notes: "Maintain steady rhythm, stay on toes." }
+    ]
+  },
+};
+
+const DIET_PLANS = {
+  "Weight Loss": {
+    calories: "1,800 kcal", protein: "130g", carbs: "160g", fats: "50g", water: "3.5L",
+    days: {
+      Monday: [
+        { type: "Breakfast", label: "🍽 Breakfast", items: "Oats with skimmed milk, 2 boiled eggs, and 1 green apple", kcal: "450 kcal", macros: "P: 30g | C: 50g | F: 12g" },
+        { type: "Mid-Morning Snack", label: "🍎 Mid-Morning Snack", items: "Mixed almonds & walnuts (10-12 pieces) with 1 cup unsweetened green tea", kcal: "150 kcal", macros: "P: 4g | C: 5g | F: 13g" },
+        { type: "Lunch", label: "🍛 Lunch", items: "Grilled chicken breast (150g), 1 cup steamed brown rice, cucumber-carrot salad", kcal: "520 kcal", macros: "P: 42g | C: 48g | F: 8g" },
+        { type: "Evening Snack", label: "☕ Evening Snack", items: "1 cup low-fat Greek yogurt with 1 tsp chia seeds", kcal: "180 kcal", macros: "P: 18g | C: 15g | F: 4g" },
+        { type: "Dinner", label: "🍽 Dinner", items: "Grilled fish (150g) or pan-seared paneer (120g), 1 bowl hot vegetable soup, cucumber salad", kcal: "500 kcal", macros: "P: 36g | C: 42g | F: 13g" }
+      ],
+      Tuesday: [
+        { type: "Breakfast", label: "🍽 Breakfast", items: "Oats with skimmed milk, 2 boiled eggs, and 1 green apple", kcal: "450 kcal", macros: "P: 30g | C: 50g | F: 12g" },
+        { type: "Mid-Morning Snack", label: "🍎 Mid-Morning Snack", items: "Mixed almonds & walnuts (10-12 pieces) with 1 cup unsweetened green tea", kcal: "150 kcal", macros: "P: 4g | C: 5g | F: 13g" },
+        { type: "Lunch", label: "🍛 Lunch", items: "Grilled chicken breast (150g), 1 cup steamed brown rice, cucumber-carrot salad", kcal: "520 kcal", macros: "P: 42g | C: 48g | F: 8g" },
+        { type: "Evening Snack", label: "☕ Evening Snack", items: "1 cup low-fat Greek yogurt with 1 tsp chia seeds", kcal: "180 kcal", macros: "P: 18g | C: 15g | F: 4g" },
+        { type: "Dinner", label: "🍽 Dinner", items: "Pan-seared tofu (150g), 1 bowl hot vegetable soup, spinach salad", kcal: "500 kcal", macros: "P: 36g | C: 42g | F: 13g" }
+      ],
+      Wednesday: [
+        { type: "Breakfast", label: "🍽 Breakfast", items: "Oats with skimmed milk, 2 boiled eggs, and 1 green apple", kcal: "450 kcal", macros: "P: 30g | C: 50g | F: 12g" },
+        { type: "Mid-Morning Snack", label: "🍎 Mid-Morning Snack", items: "Mixed almonds & walnuts (10-12 pieces) with 1 cup unsweetened green tea", kcal: "150 kcal", macros: "P: 4g | C: 5g | F: 13g" },
+        { type: "Lunch", label: "🍛 Lunch", items: "Grilled chicken breast (150g), 1 cup steamed brown rice, cucumber-carrot salad", kcal: "520 kcal", macros: "P: 42g | C: 48g | F: 8g" },
+        { type: "Evening Snack", label: "☕ Evening Snack", items: "1 cup low-fat Greek yogurt with 1 tsp chia seeds", kcal: "180 kcal", macros: "P: 18g | C: 15g | F: 4g" },
+        { type: "Dinner", label: "🍽 Dinner", items: "Grilled fish (150g) or pan-seared paneer (120g), 1 bowl hot vegetable soup, cucumber salad", kcal: "500 kcal", macros: "P: 36g | C: 42g | F: 13g" }
+      ],
+      Thursday: [
+        { type: "Breakfast", label: "🍽 Breakfast", items: "Oats with skimmed milk, 2 boiled eggs, and 1 green apple", kcal: "450 kcal", macros: "P: 30g | C: 50g | F: 12g" },
+        { type: "Mid-Morning Snack", label: "🍎 Mid-Morning Snack", items: "Mixed almonds & walnuts (10-12 pieces) with 1 cup unsweetened green tea", kcal: "150 kcal", macros: "P: 4g | C: 5g | F: 13g" },
+        { type: "Lunch", label: "🍛 Lunch", items: "Grilled chicken breast (150g), 1 cup steamed brown rice, cucumber-carrot salad", kcal: "520 kcal", macros: "P: 42g | C: 48g | F: 8g" },
+        { type: "Evening Snack", label: "☕ Evening Snack", items: "1 cup low-fat Greek yogurt with 1 tsp chia seeds", kcal: "180 kcal", macros: "P: 18g | C: 15g | F: 4g" },
+        { type: "Dinner", label: "🍽 Dinner", items: "Pan-seared tofu (150g), 1 bowl hot vegetable soup, spinach salad", kcal: "500 kcal", macros: "P: 36g | C: 42g | F: 13g" }
+      ],
+      Friday: [
+        { type: "Breakfast", label: "🍽 Breakfast", items: "Oats with skimmed milk, 2 boiled eggs, and 1 green apple", kcal: "450 kcal", macros: "P: 30g | C: 50g | F: 12g" },
+        { type: "Mid-Morning Snack", label: "🍎 Mid-Morning Snack", items: "Mixed almonds & walnuts (10-12 pieces) with 1 cup unsweetened green tea", kcal: "150 kcal", macros: "P: 4g | C: 5g | F: 13g" },
+        { type: "Lunch", label: "🍛 Lunch", items: "Grilled chicken breast (150g), 1 cup steamed brown rice, cucumber-carrot salad", kcal: "520 kcal", macros: "P: 42g | C: 48g | F: 8g" },
+        { type: "Evening Snack", label: "☕ Evening Snack", items: "1 cup low-fat Greek yogurt with 1 tsp chia seeds", kcal: "180 kcal", macros: "P: 18g | C: 15g | F: 4g" },
+        { type: "Dinner", label: "🍽 Dinner", items: "Grilled fish (150g) or pan-seared paneer (120g), 1 bowl hot vegetable soup, cucumber salad", kcal: "500 kcal", macros: "P: 36g | C: 42g | F: 13g" }
+      ],
+      Saturday: [
+        { type: "Breakfast", label: "🍽 Breakfast", items: "Oats with skimmed milk, 2 boiled eggs, and 1 green apple", kcal: "450 kcal", macros: "P: 30g | C: 50g | F: 12g" },
+        { type: "Mid-Morning Snack", label: "🍎 Mid-Morning Snack", items: "Mixed almonds & walnuts (10-12 pieces) with 1 cup unsweetened green tea", kcal: "150 kcal", macros: "P: 4g | C: 5g | F: 13g" },
+        { type: "Lunch", label: "🍛 Lunch", items: "Grilled chicken breast (150g), 1 cup steamed brown rice, cucumber-carrot salad", kcal: "520 kcal", macros: "P: 42g | C: 48g | F: 8g" },
+        { type: "Evening Snack", label: "☕ Evening Snack", items: "1 cup low-fat Greek yogurt with 1 tsp chia seeds", kcal: "180 kcal", macros: "P: 18g | C: 15g | F: 4g" },
+        { type: "Dinner", label: "🍽 Dinner", items: "Pan-seared tofu (150g), 1 bowl hot vegetable soup, spinach salad", kcal: "500 kcal", macros: "P: 36g | C: 42g | F: 13g" }
+      ],
+      Sunday: [
+        { type: "Breakfast", label: "🍽 Breakfast", items: "2 scrambled egg whites, 1 slice whole wheat toast, and 1 fresh orange slice", kcal: "250 kcal", macros: "P: 14g | C: 26g | F: 6g" },
+        { type: "Mid-Morning Snack", label: "🍎 Mid-Morning Snack", items: "1 cup unsweetened green tea with 1 sliced cucumber", kcal: "40 kcal", macros: "P: 1g | C: 8g | F: 0g" },
+        { type: "Lunch", label: "🍛 Lunch", items: "1 bowl mixed vegetable salad with grilled paneer cubes (100g)", kcal: "380 kcal", macros: "P: 22g | C: 18g | F: 20g" },
+        { type: "Evening Snack", label: "☕ Evening Snack", items: "1 medium apple with a few walnuts (4-5 pieces)", kcal: "180 kcal", macros: "P: 3g | C: 25g | F: 8g" },
+        { type: "Dinner", label: "🍽 Dinner", items: "1 bowl light lentil (dal) soup with steamed broccoli and carrots", kcal: "280 kcal", macros: "P: 15g | C: 40g | F: 2g" }
+      ]
+    }
+  },
+  "Muscle Gain": {
+    calories: "2,800 kcal", protein: "160g", carbs: "320g", fats: "85g", water: "4.5L",
+    days: {
+      Monday: [
+        { type: "Breakfast", label: "🍽 Breakfast", items: "Rolled oats (80g), 2 slices of whole wheat toast with peanut butter, 1 banana, and 4 scrambled eggs", kcal: "780 kcal", macros: "P: 42g | C: 95g | F: 28g" },
+        { type: "Mid-Morning Snack", label: "🍎 Mid-Morning Snack", items: "Whey protein shake in low-fat milk, with a handful of walnuts", kcal: "350 kcal", macros: "P: 30g | C: 22g | F: 14g" },
+        { type: "Lunch", label: "🍛 Lunch", items: "Grilled chicken breast (200g), 2 cups steamed white rice, 1 cup cooked dal, and steamed vegetables", kcal: "720 kcal", macros: "P: 52g | C: 85g | F: 16g" },
+        { type: "Evening Snack", label: "☕ Evening Snack", items: "Double turkey breast and cheddar cheese sandwich on whole wheat bread", kcal: "410 kcal", macros: "P: 28g | C: 38g | F: 12g" },
+        { type: "Dinner", label: "🍽 Dinner", items: "Grilled salmon or chicken (200g), 1 large sweet potato, and steamed asparagus", kcal: "540 kcal", macros: "P: 44g | C: 50g | F: 15g" }
+      ],
+      Tuesday: [
+        { type: "Breakfast", label: "🍽 Breakfast", items: "Rolled oats (80g), 2 slices of whole wheat toast with peanut butter, 1 banana, and 4 scrambled eggs", kcal: "780 kcal", macros: "P: 42g | C: 95g | F: 28g" },
+        { type: "Mid-Morning Snack", label: "🍎 Mid-Morning Snack", items: "Whey protein shake in low-fat milk, with a handful of walnuts", kcal: "350 kcal", macros: "P: 30g | C: 22g | F: 14g" },
+        { type: "Lunch", label: "🍛 Lunch", items: "Grilled chicken breast (200g), 2 cups steamed white rice, 1 cup cooked dal, and steamed vegetables", kcal: "720 kcal", macros: "P: 52g | C: 85g | F: 16g" },
+        { type: "Evening Snack", label: "☕ Evening Snack", items: "Double turkey breast and cheddar cheese sandwich on whole wheat bread", kcal: "410 kcal", macros: "P: 28g | C: 38g | F: 12g" },
+        { type: "Dinner", label: "🍽 Dinner", items: "Grilled paneer blocks (200g), 1 large sweet potato, and steamed asparagus", kcal: "540 kcal", macros: "P: 32g | C: 50g | F: 22g" }
+      ],
+      Wednesday: [
+        { type: "Breakfast", label: "🍽 Breakfast", items: "Rolled oats (80g), 2 slices of whole wheat toast with peanut butter, 1 banana, and 4 scrambled eggs", kcal: "780 kcal", macros: "P: 42g | C: 95g | F: 28g" },
+        { type: "Mid-Morning Snack", label: "🍎 Mid-Morning Snack", items: "Whey protein shake in low-fat milk, with a handful of walnuts", kcal: "350 kcal", macros: "P: 30g | C: 22g | F: 14g" },
+        { type: "Lunch", label: "🍛 Lunch", items: "Grilled chicken breast (200g), 2 cups steamed white rice, 1 cup cooked dal, and steamed vegetables", kcal: "720 kcal", macros: "P: 52g | C: 85g | F: 16g" },
+        { type: "Evening Snack", label: "☕ Evening Snack", items: "Double turkey breast and cheddar cheese sandwich on whole wheat bread", kcal: "410 kcal", macros: "P: 28g | C: 38g | F: 12g" },
+        { type: "Dinner", label: "🍽 Dinner", items: "Grilled salmon or chicken (200g), 1 large sweet potato, and steamed asparagus", kcal: "540 kcal", macros: "P: 44g | C: 50g | F: 15g" }
+      ],
+      Thursday: [
+        { type: "Breakfast", label: "🍽 Breakfast", items: "Rolled oats (80g), 2 slices of whole wheat toast with peanut butter, 1 banana, and 4 scrambled eggs", kcal: "780 kcal", macros: "P: 42g | C: 95g | F: 28g" },
+        { type: "Mid-Morning Snack", label: "🍎 Mid-Morning Snack", items: "Whey protein shake in low-fat milk, with a handful of walnuts", kcal: "350 kcal", macros: "P: 30g | C: 22g | F: 14g" },
+        { type: "Lunch", label: "🍛 Lunch", items: "Grilled chicken breast (200g), 2 cups steamed white rice, 1 cup cooked dal, and steamed vegetables", kcal: "720 kcal", macros: "P: 52g | C: 85g | F: 16g" },
+        { type: "Evening Snack", label: "☕ Evening Snack", items: "Double turkey breast and cheddar cheese sandwich on whole wheat bread", kcal: "410 kcal", macros: "P: 28g | C: 38g | F: 12g" },
+        { type: "Dinner", label: "🍽 Dinner", items: "Grilled paneer blocks (200g), 1 large sweet potato, and steamed asparagus", kcal: "540 kcal", macros: "P: 32g | C: 50g | F: 22g" }
+      ],
+      Friday: [
+        { type: "Breakfast", label: "🍽 Breakfast", items: "Rolled oats (80g), 2 slices of whole wheat toast with peanut butter, 1 banana, and 4 scrambled eggs", kcal: "780 kcal", macros: "P: 42g | C: 95g | F: 28g" },
+        { type: "Mid-Morning Snack", label: "🍎 Mid-Morning Snack", items: "Whey protein shake in low-fat milk, with a handful of walnuts", kcal: "350 kcal", macros: "P: 30g | C: 22g | F: 14g" },
+        { type: "Lunch", label: "🍛 Lunch", items: "Grilled chicken breast (200g), 2 cups steamed white rice, 1 cup cooked dal, and steamed vegetables", kcal: "720 kcal", macros: "P: 52g | C: 85g | F: 16g" },
+        { type: "Evening Snack", label: "☕ Evening Snack", items: "Double turkey breast and cheddar cheese sandwich on whole wheat bread", kcal: "410 kcal", macros: "P: 28g | C: 38g | F: 12g" },
+        { type: "Dinner", label: "🍽 Dinner", items: "Grilled salmon or chicken (200g), 1 large sweet potato, and steamed asparagus", kcal: "540 kcal", macros: "P: 44g | C: 50g | F: 15g" }
+      ],
+      Saturday: [
+        { type: "Breakfast", label: "🍽 Breakfast", items: "Rolled oats (80g), 2 slices of whole wheat toast with peanut butter, 1 banana, and 4 scrambled eggs", kcal: "780 kcal", macros: "P: 42g | C: 95g | F: 28g" },
+        { type: "Mid-Morning Snack", label: "🍎 Mid-Morning Snack", items: "Whey protein shake in low-fat milk, with a handful of walnuts", kcal: "350 kcal", macros: "P: 30g | C: 22g | F: 14g" },
+        { type: "Lunch", label: "🍛 Lunch", items: "Grilled chicken breast (200g), 2 cups steamed white rice, 1 cup cooked dal, and steamed vegetables", kcal: "720 kcal", macros: "P: 52g | C: 85g | F: 16g" },
+        { type: "Evening Snack", label: "☕ Evening Snack", items: "Double turkey breast and cheddar cheese sandwich on whole wheat bread", kcal: "410 kcal", macros: "P: 28g | C: 38g | F: 12g" },
+        { type: "Dinner", label: "🍽 Dinner", items: "Grilled paneer blocks (200g), 1 large sweet potato, and steamed asparagus", kcal: "540 kcal", macros: "P: 32g | C: 50g | F: 22g" }
+      ],
+      Sunday: [
+        { type: "Breakfast", label: "🍽 Breakfast", items: "3 scrambled eggs, 1 slice whole wheat peanut butter toast, and 1 fresh banana", kcal: "480 kcal", macros: "P: 26g | C: 42g | F: 18g" },
+        { type: "Mid-Morning Snack", label: "🍎 Mid-Morning Snack", items: "1 bowl low-fat Greek yogurt with mixed berries (blueberries, strawberries)", kcal: "220 kcal", macros: "P: 18g | C: 28g | F: 2g" },
+        { type: "Lunch", label: "🍛 Lunch", items: "Baked cod or grilled chicken (150g), 1 cup quinoa, and mixed grilled seasonal vegetables", kcal: "450 kcal", macros: "P: 38g | C: 35g | F: 8g" },
+        { type: "Evening Snack", label: "☕ Evening Snack", items: "1 fresh red apple with a handful of raw almonds (12-15 pieces)", kcal: "200 kcal", macros: "P: 5g | C: 25g | F: 11g" },
+        { type: "Dinner", label: "🍽 Dinner", items: "Grilled turkey breast (150g), steamed broccoli florets, and baby carrots with olive oil drizzle", kcal: "380 kcal", macros: "P: 35g | C: 22g | F: 12g" }
+      ]
+    }
+  },
+  "Maintenance": {
+    calories: "2,200 kcal", protein: "140g", carbs: "220g", fats: "70g", water: "3.5L",
+    days: {
+      Monday: [
+        { type: "Breakfast", label: "🍽 Breakfast", items: "Oats porridge with raw honey, 2 whole boiled eggs, and 1 fresh banana", kcal: "510 kcal", macros: "P: 22g | C: 72g | F: 12g" },
+        { type: "Mid-Morning Snack", label: "🍎 Mid-Morning Snack", items: "Greek yogurt (150g) with fresh sliced strawberries and honey drizzle", kcal: "180 kcal", macros: "P: 14g | C: 22g | F: 3g" },
+        { type: "Lunch", label: "🍛 Lunch", items: "Grilled chicken wrap or paneer roll in whole wheat tortilla, bell peppers, light yogurt spread", kcal: "580 kcal", macros: "P: 38g | C: 50g | F: 14g" },
+        { type: "Evening Snack", label: "☕ Evening Snack", items: "1 slice whole wheat toast with 1/2 mashed avocado, pinch of salt & pepper", kcal: "210 kcal", macros: "P: 5g | C: 20g | F: 13g" },
+        { type: "Dinner", label: "🍽 Dinner", items: "Grilled salmon fillet (150g), 1 bowl steamed brown rice, and mixed stir-fried vegetables", kcal: "550 kcal", macros: "P: 36g | C: 48g | F: 15g" }
+      ],
+      Tuesday: [
+        { type: "Breakfast", label: "🍽 Breakfast", items: "Oats porridge with raw honey, 2 whole boiled eggs, and 1 fresh banana", kcal: "510 kcal", macros: "P: 22g | C: 72g | F: 12g" },
+        { type: "Mid-Morning Snack", label: "🍎 Mid-Morning Snack", items: "Greek yogurt (150g) with fresh sliced strawberries and honey drizzle", kcal: "180 kcal", macros: "P: 14g | C: 22g | F: 3g" },
+        { type: "Lunch", label: "🍛 Lunch", items: "Grilled chicken wrap or paneer roll in whole wheat tortilla, bell peppers, light yogurt spread", kcal: "580 kcal", macros: "P: 38g | C: 50g | F: 14g" },
+        { type: "Evening Snack", label: "☕ Evening Snack", items: "1 slice whole wheat toast with 1/2 mashed avocado, pinch of salt & pepper", kcal: "210 kcal", macros: "P: 5g | C: 20g | F: 13g" },
+        { type: "Dinner", label: "🍽 Dinner", items: "Grilled salmon fillet (150g), 1 bowl steamed brown rice, and mixed stir-fried vegetables", kcal: "550 kcal", macros: "P: 36g | C: 48g | F: 15g" }
+      ],
+      Wednesday: [
+        { type: "Breakfast", label: "🍽 Breakfast", items: "Oats porridge with raw honey, 2 whole boiled eggs, and 1 fresh banana", kcal: "510 kcal", macros: "P: 22g | C: 72g | F: 12g" },
+        { type: "Mid-Morning Snack", label: "🍎 Mid-Morning Snack", items: "Greek yogurt (150g) with fresh sliced strawberries and honey drizzle", kcal: "180 kcal", macros: "P: 14g | C: 22g | F: 3g" },
+        { type: "Lunch", label: "🍛 Lunch", items: "Grilled chicken wrap or paneer roll in whole wheat tortilla, bell peppers, light yogurt spread", kcal: "580 kcal", macros: "P: 38g | C: 50g | F: 14g" },
+        { type: "Evening Snack", label: "☕ Evening Snack", items: "1 slice whole wheat toast with 1/2 mashed avocado, pinch of salt & pepper", kcal: "210 kcal", macros: "P: 5g | C: 20g | F: 13g" },
+        { type: "Dinner", label: "🍽 Dinner", items: "Grilled salmon fillet (150g), 1 bowl steamed brown rice, and mixed stir-fried vegetables", kcal: "550 kcal", macros: "P: 36g | C: 48g | F: 15g" }
+      ],
+      Thursday: [
+        { type: "Breakfast", label: "🍽 Breakfast", items: "Oats porridge with raw honey, 2 whole boiled eggs, and 1 fresh banana", kcal: "510 kcal", macros: "P: 22g | C: 72g | F: 12g" },
+        { type: "Mid-Morning Snack", label: "🍎 Mid-Morning Snack", items: "Greek yogurt (150g) with fresh sliced strawberries and honey drizzle", kcal: "180 kcal", macros: "P: 14g | C: 22g | F: 3g" },
+        { type: "Lunch", label: "🍛 Lunch", items: "Grilled chicken wrap or paneer roll in whole wheat tortilla, bell peppers, light yogurt spread", kcal: "580 kcal", macros: "P: 38g | C: 50g | F: 14g" },
+        { type: "Evening Snack", label: "☕ Evening Snack", items: "1 slice whole wheat toast with 1/2 mashed avocado, pinch of salt & pepper", kcal: "210 kcal", macros: "P: 5g | C: 20g | F: 13g" },
+        { type: "Dinner", label: "🍽 Dinner", items: "Grilled salmon fillet (150g), 1 bowl steamed brown rice, and mixed stir-fried vegetables", kcal: "550 kcal", macros: "P: 36g | C: 48g | F: 15g" }
+      ],
+      Friday: [
+        { type: "Breakfast", label: "🍽 Breakfast", items: "Oats porridge with raw honey, 2 whole boiled eggs, and 1 fresh banana", kcal: "510 kcal", macros: "P: 22g | C: 72g | F: 12g" },
+        { type: "Mid-Morning Snack", label: "🍎 Mid-Morning Snack", items: "Greek yogurt (150g) with fresh sliced strawberries and honey drizzle", kcal: "180 kcal", macros: "P: 14g | C: 22g | F: 3g" },
+        { type: "Lunch", label: "🍛 Lunch", items: "Grilled chicken wrap or paneer roll in whole wheat tortilla, bell peppers, light yogurt spread", kcal: "580 kcal", macros: "P: 38g | C: 50g | F: 14g" },
+        { type: "Evening Snack", label: "☕ Evening Snack", items: "1 slice whole wheat toast with 1/2 mashed avocado, pinch of salt & pepper", kcal: "210 kcal", macros: "P: 5g | C: 20g | F: 13g" },
+        { type: "Dinner", label: "🍽 Dinner", items: "Grilled salmon fillet (150g), 1 bowl steamed brown rice, and mixed stir-fried vegetables", kcal: "550 kcal", macros: "P: 36g | C: 48g | F: 15g" }
+      ],
+      Saturday: [
+        { type: "Breakfast", label: "🍽 Breakfast", items: "Oats porridge with raw honey, 2 whole boiled eggs, and 1 fresh banana", kcal: "510 kcal", macros: "P: 22g | C: 72g | F: 12g" },
+        { type: "Mid-Morning Snack", label: "🍎 Mid-Morning Snack", items: "Greek yogurt (150g) with fresh sliced strawberries and honey drizzle", kcal: "180 kcal", macros: "P: 14g | C: 22g | F: 3g" },
+        { type: "Lunch", label: "🍛 Lunch", items: "Grilled chicken wrap or paneer roll in whole wheat tortilla, bell peppers, light yogurt spread", kcal: "580 kcal", macros: "P: 38g | C: 50g | F: 14g" },
+        { type: "Evening Snack", label: "☕ Evening Snack", items: "1 slice whole wheat toast with 1/2 mashed avocado, pinch of salt & pepper", kcal: "210 kcal", macros: "P: 5g | C: 20g | F: 13g" },
+        { type: "Dinner", label: "🍽 Dinner", items: "Grilled salmon fillet (150g), 1 bowl steamed brown rice, and mixed stir-fried vegetables", kcal: "550 kcal", macros: "P: 36g | C: 48g | F: 15g" }
+      ],
+      Sunday: [
+        { type: "Breakfast", label: "🍽 Breakfast", items: "2 scrambled eggs, 1 slice of whole wheat toast, and 1 fresh orange", kcal: "220 kcal", macros: "P: 13g | C: 18g | F: 10g" },
+        { type: "Mid-Morning Snack", label: "🍎 Mid-Morning Snack", items: "1 bowl mixed fresh berries (blueberries, raspberries & strawberries)", kcal: "80 kcal", macros: "P: 1g | C: 18g | F: 0g" },
+        { type: "Lunch", label: "🍛 Lunch", items: "120g grilled paneer tikka or tofu block, 1 cup steamed quinoa, and mixed grilled vegetables", kcal: "420 kcal", macros: "P: 25g | C: 35g | F: 18g" },
+        { type: "Evening Snack", label: "☕ Evening Snack", items: "1 cup low-fat Greek yogurt with a light drizzle of honey", kcal: "150 kcal", macros: "P: 14g | C: 15g | F: 3g" },
+        { type: "Dinner", label: "🍽 Dinner", items: "120g grilled chicken breast or tofu chunks soup with steamed broccoli", kcal: "310 kcal", macros: "P: 30g | C: 15g | F: 12g" }
+      ]
+    }
+  }
+};
+
+const WEIGHT_LOSS_WORKOUT_PLAN = {
+  Monday: {
+    muscleGroup: "Chest + Cardio",
+    exercises: [
+      { name: "Bench Press", sets: "4", reps: "12", rest: "60s" },
+      { name: "Incline Dumbbell Press", sets: "3", reps: "12", rest: "60s" },
+      { name: "Chest Fly", sets: "3", reps: "15", rest: "60s" },
+      { name: "Push-Ups", sets: "3", reps: "15", rest: "45s" },
+      { name: "Cable Crossover", sets: "3", reps: "15", rest: "60s" },
+      { name: "Treadmill Jog", sets: "1", reps: "20 Minutes", rest: "-" }
+    ]
+  },
+  Tuesday: {
+    muscleGroup: "Back + Core + Cardio",
+    exercises: [
+      { name: "Lat Pulldown", sets: "4", reps: "12", rest: "60s" },
+      { name: "Seated Cable Row", sets: "3", reps: "12", rest: "60s" },
+      { name: "One Arm Dumbbell Row", sets: "3", reps: "12", rest: "60s" },
+      { name: "Straight Arm Pulldown", sets: "3", reps: "15", rest: "60s" },
+      { name: "Deadlift", sets: "3", reps: "10", rest: "90s" },
+      { name: "Plank (Core)", sets: "3", reps: "45 Seconds", rest: "30s" },
+      { name: "Bicycle Crunch (Core)", sets: "3", reps: "20", rest: "30s" },
+      { name: "Leg Raises (Core)", sets: "3", reps: "15", rest: "30s" },
+      { name: "Cycling (Cardio)", sets: "1", reps: "20 Minutes", rest: "-" }
+    ]
+  },
+  Wednesday: {
+    muscleGroup: "Legs",
+    exercises: [
+      { name: "Squats", sets: "4", reps: "12", rest: "90s" },
+      { name: "Leg Press", sets: "3", reps: "12", rest: "90s" },
+      { name: "Walking Lunges", sets: "3", reps: "15", rest: "60s" },
+      { name: "Leg Extension", sets: "3", reps: "15", rest: "60s" },
+      { name: "Hamstring Curl", sets: "3", reps: "15", rest: "60s" },
+      { name: "Standing Calf Raise", sets: "4", reps: "20", rest: "45s" },
+      { name: "Stair Climber (Cardio)", sets: "1", reps: "20 Minutes", rest: "-" }
+    ]
+  },
+  Thursday: {
+    muscleGroup: "Shoulders + HIIT",
+    exercises: [
+      { name: "Shoulder Press", sets: "4", reps: "12", rest: "65s" },
+      { name: "Lateral Raise", sets: "3", reps: "15", rest: "45s" },
+      { name: "Front Raise", sets: "3", reps: "15", rest: "45s" },
+      { name: "Rear Delt Fly", sets: "3", reps: "15", rest: "45s" },
+      { name: "Upright Row", sets: "3", reps: "12", rest: "60s" },
+      { name: "Burpees (HIIT - Repeat 5 Rounds)", sets: "5 Rounds", reps: "10 per round", rest: "30s" },
+      { name: "Mountain Climbers (HIIT - Repeat 5 Rounds)", sets: "5 Rounds", reps: "30 Seconds per round", rest: "30s" },
+      { name: "High Knees (HIIT - Repeat 5 Rounds)", sets: "5 Rounds", reps: "30 Seconds per round", rest: "30s" },
+      { name: "Jump Rope (HIIT - Repeat 5 Rounds)", sets: "5 Rounds", reps: "1 Minute per round", rest: "60s" }
+    ]
+  },
+  Friday: {
+    muscleGroup: "Arms + Abs",
+    exercises: [
+      { name: "Barbell Curl (Biceps)", sets: "4", reps: "12", rest: "60s" },
+      { name: "Hammer Curl (Biceps)", sets: "3", reps: "12", rest: "60s" },
+      { name: "Concentration Curl (Biceps)", sets: "3", reps: "12", rest: "60s" },
+      { name: "Tricep Pushdown (Triceps)", sets: "4", reps: "12", rest: "60s" },
+      { name: "Overhead Extension (Triceps)", sets: "3", reps: "12", rest: "60s" },
+      { name: "Bench Dips (Triceps)", sets: "3", reps: "15", rest: "45s" },
+      { name: "Russian Twist (Abs)", sets: "3", reps: "20", rest: "30s" },
+      { name: "Hanging Knee Raises (Abs)", sets: "3", reps: "15", rest: "30s" },
+      { name: "Plank (Abs)", sets: "3", reps: "60 Seconds", rest: "45s" },
+      { name: "Incline Walk (Cardio)", sets: "1", reps: "20 Minutes", rest: "-" }
+    ]
+  },
+  Saturday: {
+    muscleGroup: "Full Body Fat Burn",
+    exercises: [
+      { name: "Jump Squats", sets: "1", reps: "15", rest: "45s" },
+      { name: "Push-Ups", sets: "1", reps: "15", rest: "45s" },
+      { name: "Kettlebell Swings", sets: "1", reps: "20", rest: "45s" },
+      { name: "Walking Lunges", sets: "1", reps: "20", rest: "45s" },
+      { name: "Battle Ropes", sets: "1", reps: "30 Seconds", rest: "45s" },
+      { name: "Burpees", sets: "1", reps: "12", rest: "45s" },
+      { name: "Box Step-Ups", sets: "1", reps: "15", rest: "45s" },
+      { name: "Rowing Machine (Cardio)", sets: "1", reps: "20 Minutes", rest: "-" },
+      { name: "Full Body Stretch (Stretching)", sets: "1", reps: "10 Minutes", rest: "-" }
+    ]
+  },
+  Sunday: {
+    muscleGroup: "Rest Day",
+    exercises: []
+  }
+};
 
 const ClientDashboard = () => {
   const navigate = useNavigate();
+  const { clients, workouts } = useCRM();
+
+  // Retrieve the logged-in/active client, falling back to the first client in the system
+  const client = clients?.find(c => c.id === localStorage.getItem("gym_client_id") || c.name === "Ajay Kaveti" || c.email === "ajay@befit.com") || clients?.[0];
 
   const [showRoleDropdown, setShowRoleDropdown] = useState(false);
+  const [activeTab, setActiveTab] = useState("Dashboard");
+  
+  const todayName = daysOfWeek[new Date().getDay()];
+  const [selectedDietDay, setSelectedDietDay] = useState(todayName);
+  const [workoutCompleted, setWorkoutCompleted] = useState(false);
+
+  // AI assistant status state
+  const [aiResponse, setAiResponse] = useState("");
+  const [loadingAi, setLoadingAi] = useState(false);
+
+  // Attendance Heatmap date hover state
+  const [hoveredDate, setHoveredDate] = useState(null);
+
+  // Quick settings state
+  const [waterCount, setWaterCount] = useState(2); // 2 Liters drunk today
+
+  // Exercise completions check list
+  const [exerciseCompletions, setExerciseCompletions] = useState({
+    ex_bench: true,
+    ex_incline: true,
+    ex_fly: false,
+    ex_pushdown: false
+  });
+
+  const [isWorkoutLoading, setIsWorkoutLoading] = useState(false);
+  const [workoutError, setWorkoutError] = useState(null);
 
   useEffect(() => {
     localStorage.setItem("gym_role", "client");
   }, []);
+
+  useEffect(() => {
+    if (activeTab === "My Workout") {
+      setIsWorkoutLoading(true);
+      const timer = setTimeout(() => {
+        setIsWorkoutLoading(false);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [activeTab]);
 
   const handleSwitchRole = (newRole) => {
     localStorage.setItem("gym_role", newRole);
@@ -50,67 +402,8 @@ const ClientDashboard = () => {
       toast.success("Switched to Trainer View Portal 👨‍🏫");
     }
   };
-  
-  // Navigation active tab
-  const [activeTab, setActiveTab] = useState("Dashboard");
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Today's Mission Status state
-  const [missionProgress, setMissionProgress] = useState(75);
-  const [workoutStarted, setWorkoutStarted] = useState(false);
-  const [workoutCompleted, setWorkoutCompleted] = useState(false);
 
-  // AI assistant status state
-  const [aiResponse, setAiResponse] = useState("");
-  const [loadingAi, setLoadingAi] = useState(false);
-
-  // Payments / History expanded state
-  const [selectedInvoice, setSelectedInvoice] = useState(null);
-
-  // Attendance Heatmap date hover state
-  const [hoveredDate, setHoveredDate] = useState(null);
-
-  // Quick settings state
-  const [waterCount, setWaterCount] = useState(2); // 2 Liters drunk today
-
-  // Exercise completions check list
-  const [exerciseCompletions, setExerciseCompletions] = useState({
-    ex1: true,
-    ex2: true,
-    ex3: false,
-    ex4: false
-  });
-
-  const toggleExercise = (key) => {
-    const newVal = !exerciseCompletions[key];
-    setExerciseCompletions(prev => {
-      const updated = { ...prev, [key]: newVal };
-      // Recalculate mission progress dynamically:
-      // Steps (25%), Water (25%), Exercises (50% split)
-      const completedExercisesCount = Object.values(updated).filter(Boolean).length;
-      const exerciseProgress = (completedExercisesCount / 4) * 50;
-      const totalPct = 25 + 15 + exerciseProgress; // base steps + partial water + exercises
-      setMissionProgress(Math.min(Math.round(totalPct), 100));
-      return updated;
-    });
-  };
-
-  const handleStartWorkout = () => {
-    if (workoutCompleted) {
-      toast.info("You've already completed today's workout splits!");
-      return;
-    }
-    setWorkoutStarted(true);
-    toast.success("Today's Chest + Triceps split active. Let's lift!");
-  };
-
-  const handleCompleteWorkout = () => {
-    setWorkoutStarted(false);
-    setWorkoutCompleted(true);
-    setExerciseCompletions({ ex1: true, ex2: true, ex3: true, ex4: true });
-    setMissionProgress(100);
-    toast.success("Workout completed! 100% of Today's Mission cleared. 🏆");
-  };
 
   const triggerAskAi = () => {
     setLoadingAi(true);
@@ -172,13 +465,28 @@ const ClientDashboard = () => {
     { name: "Attendance", icon: Calendar },
     { name: "Progress", icon: Scale },
     { name: "Payments", icon: CreditCard },
-    { name: "Achievements", icon: Trophy }
+    { name: "Achievements", icon: Trophy },
+    { name: "Profile", icon: User }
   ];
 
   const handleLogout = () => {
     toast.error("Signed out from BeFit Companion (demo mode)");
     navigate("/");
   };
+
+  if (!client) {
+    return (
+      <div className="min-h-screen bg-[#080B14] text-slate-100 flex items-center justify-center font-sans p-6">
+        <div className="text-center space-y-4 max-w-sm">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-600 to-cyan-400 flex items-center justify-center text-white mx-auto shadow-lg">
+            <Dumbbell className="w-6 h-6 animate-pulse" />
+          </div>
+          <h2 className="text-lg font-black text-white animate-pulse">Loading Account Details...</h2>
+          <p className="text-xs text-slate-400">We are retrieving your personalized gym profile. Please make sure the trainer database is initialized.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#080B14] text-slate-100 flex font-sans selection:bg-blue-600/35 selection:text-white transition-colors duration-300">
@@ -228,6 +536,10 @@ const ClientDashboard = () => {
         <div className="space-y-4 pt-5 border-t border-[#1e293b]/40">
           <Link
             to="/"
+            onClick={() => {
+              localStorage.setItem("gym_role", "trainer");
+              toast.success("Switched to Trainer View Portal 👨‍🏫");
+            }}
             className="w-full flex items-center gap-3.5 px-4.5 py-3 rounded-2xl text-xs font-black text-purple-400 bg-purple-500/5 border border-purple-500/10 hover:bg-purple-500/10 transition-all cursor-pointer"
           >
             <User className="w-4 h-4 text-cyan-455" />
@@ -243,73 +555,8 @@ const ClientDashboard = () => {
         </div>
       </aside>
 
-      {/* --- MOBILE COLLAPSIBLE DRAWER --- */}
-      {mobileMenuOpen && (
-        <div className="lg:hidden fixed inset-0 z-50 flex">
-          <div className="fixed inset-0 bg-[#080B14]/80 backdrop-blur-md" onClick={() => setMobileMenuOpen(false)} />
-          <div className="relative flex flex-col w-64 max-w-xs bg-[#0b101c] border-r border-[#1e293b]/60 p-5 h-full animate-in slide-in-from-left duration-300 text-left">
-            <button
-              onClick={() => setMobileMenuOpen(false)}
-              className="absolute top-4.5 right-4.5 p-1 rounded-xl bg-[#111827] border border-zinc-800 text-slate-400 hover:bg-zinc-800 transition cursor-pointer"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            {/* Logo */}
-            <div className="flex items-center gap-3 mb-8 mt-2">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-cyan-400 flex items-center justify-center text-white shadow-md">
-                <Dumbbell className="w-4.5 h-4.5" />
-              </div>
-              <span className="font-black text-sm bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-                BeFit App
-              </span>
-            </div>
-
-            {/* Links list */}
-            <nav className="flex-1 space-y-1.5">
-              {sidebarItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = activeTab === item.name;
-                return (
-                  <button
-                    key={item.name}
-                    onClick={() => { setActiveTab(item.name); setMobileMenuOpen(false); }}
-                    className={`w-full flex items-center gap-3.5 px-4 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer text-left ${
-                      isActive
-                        ? "bg-gradient-to-r from-blue-600/20 to-cyan-500/10 text-blue-400 border border-blue-500/20"
-                        : "text-slate-400 hover:bg-zinc-850/40"
-                    }`}
-                  >
-                    <Icon className="w-4.5 h-4.5" />
-                    <span>{item.name}</span>
-                  </button>
-                );
-              })}
-            </nav>
-
-            <div className="pt-4 border-t border-[#1e293b]/50 mt-auto space-y-3">
-              <Link
-                to="/"
-                onClick={() => setMobileMenuOpen(false)}
-                className="w-full flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-black text-purple-400 bg-purple-500/5 border border-purple-500/15"
-              >
-                <User className="w-3.5 h-3.5" />
-                <span>Trainer Portal</span>
-              </Link>
-              <button
-                onClick={handleLogout}
-                className="w-full flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-bold text-rose-500 border border-[#1e293b] hover:bg-rose-500/5 cursor-pointer"
-              >
-                <LogOut className="w-3.5 h-3.5" />
-                <span>Sign Out</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* --- MAIN PAGE VIEWPORT AREA --- */}
-      <main className="flex-1 flex flex-col min-w-0 bg-[#080B14] p-4.5 sm:p-6 lg:p-8 overflow-y-auto max-h-screen">
+      <main className="flex-1 flex flex-col min-w-0 bg-[#080B14] p-4.5 sm:p-6 lg:p-8 pb-20 lg:pb-8 overflow-y-auto max-h-screen">
         
         {/* Mobile Navbar Header */}
         <div className="flex lg:hidden justify-between items-center bg-[#0b101c]/80 border border-[#1e293b]/50 rounded-2xl p-4.5 mb-6 backdrop-blur-md sticky top-0 z-30">
@@ -335,7 +582,7 @@ const ClientDashboard = () => {
               {showRoleDropdown && (
                 <div className="absolute top-10 right-0 w-48 bg-[#0b101c]/95 backdrop-blur-md border border-[#1e293b]/70 rounded-2xl shadow-xl z-50 p-2 divide-y divide-[#1e293b]/30 animate-in fade-in slide-in-from-top-2 duration-200 text-left">
                   <div className="px-3 py-1.5">
-                    <span className="text-[9px] text-slate-500 font-bold block uppercase tracking-wider font-display">Role</span>
+                    <span className="text-[9px] text-slate-550 font-bold block uppercase tracking-wider font-display">Role</span>
                     <span className="text-xs font-black text-white block mt-0.5">Client Portal</span>
                   </div>
                   <div className="py-1">
@@ -357,13 +604,6 @@ const ClientDashboard = () => {
                 </div>
               )}
             </div>
-
-            <button
-              onClick={() => setMobileMenuOpen(true)}
-              className="p-2 bg-[#111827] border border-zinc-800 rounded-xl text-slate-350 cursor-pointer hover:bg-zinc-800 transition animate-in duration-200"
-            >
-              <Menu className="w-5 h-5" />
-            </button>
           </div>
         </div>
 
@@ -380,10 +620,10 @@ const ClientDashboard = () => {
                   Ready to achieve your fitness goals today?
                 </span>
                 <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-white mt-1">
-                  Good Morning, Ajay 👋
+                  Good Morning, {client.name} 👋
                 </h1>
                 <p className="text-xs text-slate-400 max-w-md font-medium leading-relaxed">
-                  Welcome back! You are pacing well on your fat loss milestones. Stay fueled, hydra-charged, and crush today's lift split.
+                  Welcome back! You are pacing well on your {client.goal?.toLowerCase() || 'fitness'} milestones. Stay fueled, hydra-charged, and crush today's lift split.
                 </p>
               </div>
 
@@ -394,15 +634,15 @@ const ClientDashboard = () => {
                   className="flex items-center gap-4 bg-zinc-900/60 backdrop-blur-md border border-[#1e293b]/40 p-4 rounded-2xl relative z-10 shrink-0 shadow-xl hover:bg-zinc-800 transition cursor-pointer text-left"
                 >
                   <img
-                    src="https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&q=80&w=120"
-                    alt="Ajay avatar"
+                    src={client.photo || "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&q=80&w=120"}
+                    alt={client.name}
                     className="w-14 h-14 rounded-xl object-cover border border-blue-500/20"
                   />
                   <div className="text-left text-xs space-y-0.5">
                     <span className="text-[10px] font-black text-slate-500 block uppercase tracking-wider">Client Mode 👤</span>
-                    <span className="font-extrabold text-blue-400 flex items-center gap-1 mt-0.5">🔥 Ajay</span>
+                    <span className="font-extrabold text-blue-400 flex items-center gap-1 mt-0.5">🔥 {client.name.split(' ')[0]}</span>
                     <div className="flex items-center gap-3.5 mt-1.5 text-[10px] font-semibold text-slate-350">
-                      <div>Goal: <strong className="text-white">Fat Loss</strong></div>
+                      <div>Goal: <strong className="text-white">{client.goal || 'General Fitness'}</strong></div>
                     </div>
                   </div>
                 </button>
@@ -438,108 +678,13 @@ const ClientDashboard = () => {
               <div className="absolute -bottom-10 -left-10 w-44 h-44 bg-purple-600/10 rounded-full blur-3xl pointer-events-none" />
             </div>
 
-            {/* Highlighted Today's Mission & AI Coach Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              
-              {/* Today's Mission Card */}
-              <div className="lg:col-span-2 bg-[#111827] border border-[#1e293b]/40 rounded-3xl p-6 relative overflow-hidden text-left flex flex-col justify-between group shadow-xl">
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-[10px] font-black text-rose-500 uppercase tracking-widest bg-rose-500/10 px-2.5 py-1 rounded-full border border-rose-500/20 flex items-center gap-1">
-                      <Target className="w-3.5 h-3.5" /> Today's Mission 🎯
-                    </span>
-                    <span className="text-xs font-black text-white">{missionProgress}% Completed</span>
-                  </div>
-
-                  {/* Splits info grid */}
-                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-3.5 py-3 border-t border-b border-[#1e293b]/35 mt-4">
-                    <div className="p-3 bg-zinc-950/40 rounded-xl border border-zinc-850">
-                      <span className="text-[8.5px] text-slate-500 font-bold block uppercase tracking-wide">Workout</span>
-                      <span className="font-extrabold text-white text-xs block truncate mt-1">Chest + Tri</span>
-                    </div>
-                    <div className="p-3 bg-zinc-950/40 rounded-xl border border-zinc-850">
-                      <span className="text-[8.5px] text-slate-500 font-bold block uppercase tracking-wide">Duration</span>
-                      <span className="font-extrabold text-white text-xs block truncate mt-1">60 Min</span>
-                    </div>
-                    <div className="p-3 bg-zinc-950/40 rounded-xl border border-zinc-850">
-                      <span className="text-[8.5px] text-slate-500 font-bold block uppercase tracking-wide">Protein</span>
-                      <span className="font-extrabold text-cyan-400 text-xs block truncate mt-1">120g Target</span>
-                    </div>
-                    <div className="p-3 bg-zinc-950/40 rounded-xl border border-zinc-850">
-                      <span className="text-[8.5px] text-slate-500 font-bold block uppercase tracking-wide">Water Goal</span>
-                      <span className="font-extrabold text-blue-400 text-xs block truncate mt-1">3 Litres</span>
-                    </div>
-                    <div className="col-span-2 sm:col-span-1 p-3 bg-zinc-950/40 rounded-xl border border-zinc-850">
-                      <span className="text-[8.5px] text-slate-500 font-bold block uppercase tracking-wide">Steps Target</span>
-                      <span className="font-extrabold text-purple-400 text-xs block truncate mt-1">8,000 Steps</span>
-                    </div>
-                  </div>
-
-                  {/* Progress Line */}
-                  <div className="space-y-1.5 mt-4">
-                    <div className="w-full h-2 bg-zinc-950 rounded-full overflow-hidden border border-zinc-900">
-                      <div 
-                        className="h-full bg-gradient-to-r from-blue-600 via-cyan-400 to-purple-500 rounded-full transition-all duration-350"
-                        style={{ width: `${missionProgress}%` }}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-6 flex flex-col sm:flex-row gap-3">
-                  <button 
-                    onClick={handleStartWorkout}
-                    disabled={workoutCompleted}
-                    className="flex-1 py-3 bg-gradient-to-r from-blue-600 via-cyan-500 to-cyan-600 disabled:from-zinc-800 disabled:to-zinc-800 hover:opacity-95 text-white text-xs font-black uppercase rounded-2xl shadow-lg shadow-blue-600/10 tracking-widest cursor-pointer transition active:scale-95 text-center disabled:cursor-not-allowed"
-                  >
-                    {workoutCompleted ? "Mission Completed" : workoutStarted ? "Workout In Progress..." : "Start Workout"}
-                  </button>
-                  {workoutStarted && (
-                    <button
-                      onClick={handleCompleteWorkout}
-                      className="px-6 py-3 bg-[#1e293b] border border-cyan-400/35 hover:bg-[#2e3b4e] text-white text-xs font-black uppercase rounded-2xl cursor-pointer transition"
-                    >
-                      Complete Split
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {/* AI Fitness Coach Glowing Card */}
-              <div className="bg-gradient-to-br from-[#111827] to-[#121021] border border-purple-500/25 rounded-3xl p-6 relative overflow-hidden text-left flex flex-col justify-between shadow-xl group">
-                <div className="space-y-3.5">
-                  <span className="text-[10px] font-black text-purple-400 uppercase tracking-widest bg-purple-500/10 px-2.5 py-1 rounded-full border border-purple-500/20 flex items-center gap-1.5 w-fit">
-                    <Sparkles className="w-3.5 h-3.5 text-purple-400 animate-spin" /> AI Fitness Coach 🤖
-                  </span>
-                  
-                  <p className="text-xs text-slate-350 leading-relaxed font-semibold italic bg-zinc-950/30 p-3 rounded-2xl border border-zinc-900 mt-2">
-                    {aiResponse ? aiResponse : '"Your weight reduced by 1.5kg this month. Keep maintaining your protein intake."'}
-                  </p>
-                </div>
-
-                <div className="mt-5">
-                  <button 
-                    onClick={triggerAskAi}
-                    disabled={loadingAi}
-                    className="w-full py-2.5 bg-purple-600/15 hover:bg-purple-600 text-purple-400 hover:text-white border border-purple-500/20 hover:border-purple-600 rounded-2xl text-xs font-bold transition duration-200 cursor-pointer shadow-sm relative overflow-hidden group flex items-center justify-center gap-2"
-                  >
-                    <span>{loadingAi ? "Analyzing metrics..." : "Ask AI Coach"}</span>
-                  </button>
-                </div>
-                
-                {/* Glowing neon background circle */}
-                <div className="absolute -bottom-8 -right-8 w-24 h-24 bg-purple-600/10 rounded-full blur-2xl group-hover:scale-125 transition-transform" />
-              </div>
-
-            </div>
-
             {/* Quick Fitness Stats Row */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-left">
               {[
                 { title: "Weight Progress", val: "70 kg", sub: "↓ 2kg this month", icon: Scale, color: "from-blue-600 to-cyan-500 text-blue-400" },
                 { title: "Attendance Rate", val: "92%", sub: "Excellent records", icon: Calendar, color: "from-emerald-500 to-teal-400 text-emerald-450" },
                 { title: "Workout Completed", val: "18 Sessions", sub: "Month activity logs", icon: Dumbbell, color: "from-purple-600 to-pink-500 text-purple-400" },
-                { title: "Membership Period", val: "Active Plan", sub: "25 Days Remaining", icon: CreditCard, color: "from-amber-500 to-orange-400 text-amber-500" }
+                { title: "Membership Period", val: "Active Plan", sub: "28 Days Remaining", icon: CreditCard, color: "from-amber-500 to-orange-400 text-amber-500" }
               ].map((card, i) => {
                 const Icon = card.icon;
                 return (
@@ -562,131 +707,36 @@ const ClientDashboard = () => {
               })}
             </div>
 
-            {/* Grid for workout list summary & Diet Summary */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 text-left">
-              
-              {/* Daily splits exercises */}
-              <div className="bg-[#111827] border border-[#1e293b]/45 rounded-3xl p-6 shadow-xl flex flex-col justify-between">
-                <div>
-                  <div className="flex justify-between items-center mb-4 pb-2 border-b border-[#1e293b]/40">
-                    <h3 className="text-xs font-black uppercase text-slate-400 tracking-wider">Today's Workout Splitting</h3>
-                    <span className="text-[10px] text-cyan-400 font-bold">Chest + Triceps</span>
-                  </div>
-
-                  <div className="space-y-2">
-                    {[
-                      { name: "Bench Press", sets: 4, reps: 12, target: "Heavy load bar", key: "ex1" },
-                      { name: "Incline Dumbbell Press", sets: 3, reps: 10, target: "Medium load DB", key: "ex2" },
-                      { name: "Cable Fly", sets: 3, reps: 15, target: "Isolation squeeze", key: "ex3" },
-                      { name: "Tricep Pushdown", sets: 3, reps: 12, target: "V-bar extension", key: "ex4" }
-                    ].map((ex) => (
-                      <div 
-                        key={ex.key} 
-                        onClick={() => toggleExercise(ex.key)}
-                        className="p-3 bg-zinc-950/30 hover:bg-zinc-950/60 border border-zinc-900 rounded-2xl flex items-center justify-between transition duration-150 cursor-pointer"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className={`w-5 h-5 rounded-lg border flex items-center justify-center transition-colors shrink-0 ${
-                            exerciseCompletions[ex.key]
-                              ? "bg-cyan-500 border-cyan-600 text-white"
-                              : "border-zinc-800 text-transparent"
-                          }`}>
-                            <Check className="w-3 h-3" />
-                          </div>
-                          <div>
-                            <span className="font-extrabold text-white text-xs">{ex.name}</span>
-                            <span className="text-[9.5px] text-slate-500 block font-medium mt-0.5">{ex.target}</span>
-                          </div>
-                        </div>
-                        <span className="text-xs font-bold text-slate-400">{ex.sets} Sets × {ex.reps} Reps</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="mt-6">
-                  <button 
-                    onClick={handleStartWorkout}
-                    disabled={workoutCompleted}
-                    className="w-full py-3 bg-[#1e293b] hover:bg-[#2d3a52] text-white border border-[#1e293b] rounded-2xl text-xs font-black uppercase tracking-wider cursor-pointer transition text-center"
-                  >
-                    {workoutCompleted ? "All Sets Cleared" : workoutStarted ? "Start Next Exercise Set" : "Start Workout"}
-                  </button>
-                </div>
-              </div>
-
-              {/* Nutrition trackers */}
-              <div className="bg-[#111827] border border-[#1e293b]/45 rounded-3xl p-6 shadow-xl flex flex-col justify-between">
-                <div>
-                  <div className="flex justify-between items-center mb-4 pb-2 border-b border-[#1e293b]/40">
-                    <h3 className="text-xs font-black uppercase text-slate-400 tracking-wider">Diet & Nutrition Intake</h3>
-                    <span className="text-[10px] text-emerald-400 font-extrabold">Score: 88%</span>
-                  </div>
-
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center mb-5">
-                    <div className="p-2.5 bg-zinc-950/40 rounded-xl border border-zinc-900">
-                      <span className="text-[8px] text-slate-500 font-bold block uppercase">Calories</span>
-                      <span className="font-black text-white text-xs mt-0.5 block">2,400 kcal</span>
-                    </div>
-                    <div className="p-2.5 bg-zinc-950/40 rounded-xl border border-zinc-900">
-                      <span className="text-[8px] text-slate-500 font-bold block uppercase">Protein</span>
-                      <span className="font-black text-emerald-450 text-xs mt-0.5 block">120g</span>
-                    </div>
-                    <div className="p-2.5 bg-zinc-950/40 rounded-xl border border-zinc-900">
-                      <span className="text-[8px] text-slate-500 font-bold block uppercase">Carbs</span>
-                      <span className="font-black text-amber-500 text-xs mt-0.5 block">250g</span>
-                    </div>
-                    <div className="p-2.5 bg-zinc-950/40 rounded-xl border border-zinc-900">
-                      <span className="text-[8px] text-slate-500 font-bold block uppercase">Hydration</span>
-                      <span className="font-black text-blue-400 text-xs mt-0.5 block">{waterCount}L / 3L</span>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2 text-xs">
-                    {[
-                      { meal: "Breakfast", items: "Eggs, Oats porridge with banana, whey scoop" },
-                      { meal: "Lunch", items: "Brown Rice, Protein (Grilled Chicken/Paneer), Mixed Green Salad" },
-                      { meal: "Dinner", items: "Sautéed Broccoli, Salmon fillet / Tofu steaks, sweet potato mash" }
-                    ].map((m, idx) => (
-                      <div key={idx} className="p-3 bg-zinc-950/30 border border-zinc-900 rounded-2xl">
-                        <span className="text-[10px] font-extrabold text-slate-400 block mb-0.5">{m.meal}</span>
-                        <p className="text-slate-205 leading-snug">{m.items}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Hydration quick update counter */}
-                <div className="mt-5 pt-4 border-t border-[#1e293b]/40 flex items-center justify-between">
-                  <span className="text-[11px] text-slate-450 font-bold flex items-center gap-1.5">
-                    <Droplet className="w-4 h-4 text-blue-400 animate-pulse" /> Hydrated target counter
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <button 
-                      onClick={() => setWaterCount(prev => Math.max(prev - 0.5, 0))}
-                      className="px-2.5 py-1 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 rounded text-slate-400 text-xs font-bold cursor-pointer"
-                    >
-                      -0.5L
-                    </button>
-                    <span className="text-xs font-black text-white">{waterCount}L</span>
-                    <button 
-                      onClick={() => {
-                        setWaterCount(prev => Math.min(prev + 0.5, 6));
-                        toast.success("Hydration log tracked successfully.");
-                      }}
-                      className="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 rounded text-white text-xs font-bold cursor-pointer"
-                    >
-                      +0.5L
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-            </div>
-
-            {/* Achievements, Trainer feedback and Membership summary grid */}
+            {/* Highlighted AI Coach & Achievements Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               
+              {/* AI Fitness Coach Glowing Card */}
+              <div className="lg:col-span-2 bg-gradient-to-br from-[#111827] to-[#121021] border border-purple-500/25 rounded-3xl p-6 relative overflow-hidden text-left flex flex-col justify-between shadow-xl group">
+                <div className="space-y-3.5">
+                  <span className="text-[10px] font-black text-purple-400 uppercase tracking-widest bg-purple-500/10 px-2.5 py-1 rounded-full border border-purple-500/20 flex items-center gap-1.5 w-fit">
+                    <Sparkles className="w-3.5 h-3.5 text-purple-400 animate-spin" /> AI Fitness Coach 🤖
+                  </span>
+                  
+                  <h3 className="text-sm font-black text-white mt-1">Real-time Fitness Metrics Advice</h3>
+                  <p className="text-xs text-slate-355 leading-relaxed font-semibold italic bg-zinc-950/30 p-4 rounded-2xl border border-zinc-900 mt-2">
+                    {aiResponse ? aiResponse : '"Your weight reduced by 1.5kg this month. Keep maintaining your protein intake."'}
+                  </p>
+                </div>
+
+                <div className="mt-5">
+                  <button 
+                    onClick={triggerAskAi}
+                    disabled={loadingAi}
+                    className="w-full py-2.5 bg-purple-600/15 hover:bg-purple-600 text-purple-400 hover:text-white border border-purple-500/20 hover:border-purple-600 rounded-2xl text-xs font-bold transition duration-200 cursor-pointer shadow-sm relative overflow-hidden group flex items-center justify-center gap-2"
+                  >
+                    <span>{loadingAi ? "Analyzing metrics..." : "Ask AI Coach"}</span>
+                  </button>
+                </div>
+                
+                {/* Glowing neon background circle */}
+                <div className="absolute -bottom-8 -right-8 w-24 h-24 bg-purple-600/10 rounded-full blur-2xl group-hover:scale-125 transition-transform" />
+              </div>
+
               {/* Badges preview */}
               <div className="bg-[#111827] border border-[#1e293b]/45 rounded-3xl p-6 shadow-xl flex flex-col justify-between text-left">
                 <div>
@@ -728,218 +778,435 @@ const ClientDashboard = () => {
                 </button>
               </div>
 
-              {/* Trainer Feedback */}
-              <div className="bg-[#111827] border border-[#1e293b]/45 rounded-3xl p-6 shadow-xl flex flex-col justify-between text-left">
-                <div>
-                  <div className="flex justify-between items-center mb-4 pb-2 border-b border-[#1e293b]/40">
-                    <h3 className="text-xs font-black uppercase text-slate-400 tracking-wider">Coach Feedback</h3>
-                    <span className="text-[10px] text-purple-400 font-bold">Active Chat</span>
-                  </div>
-
-                  <div className="flex items-center gap-3 mb-4 bg-zinc-950/30 p-3 rounded-2xl border border-zinc-900">
-                    <img 
-                      src="https://images.unsplash.com/photo-1568602471122-7832951cc4c5?auto=format&fit=crop&q=80&w=100" 
-                      alt="Rahul Sharma" 
-                      className="w-10 h-10 rounded-xl object-cover border border-[#1e293b]"
-                    />
-                    <div>
-                      <span className="font-extrabold text-white text-xs block">Rahul Sharma</span>
-                      <span className="text-[9.5px] text-slate-500 block font-bold mt-0.5">Head Gym Coach</span>
-                    </div>
-                  </div>
-
-                  <p className="text-xs text-slate-350 bg-zinc-950/20 border border-zinc-900/60 p-3.5 rounded-2xl italic leading-relaxed">
-                    "Increase cardio intensity and stay consistent. Keep loading the bench sets progressively."
-                  </p>
-                </div>
-
-                <button
-                  onClick={() => toast.success("Chat channel opened with Trainer Rahul Sharma.")}
-                  className="w-full mt-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-xs font-black uppercase tracking-wider transition duration-150 cursor-pointer text-center"
-                >
-                  Message Trainer
-                </button>
-              </div>
-
-              {/* Membership validity */}
-              <div className="bg-gradient-to-br from-[#111827] via-[#0e1422] to-[#121b2d] border border-blue-500/20 rounded-3xl p-6 shadow-xl flex flex-col justify-between text-left relative overflow-hidden group">
-                <div className="space-y-4 relative z-10">
-                  <div className="flex justify-between items-center">
-                    <span className="text-[10px] font-black text-cyan-400 uppercase tracking-widest bg-cyan-400/10 px-2.5 py-1 rounded-full border border-cyan-400/20">
-                      BEFIT PREMIUM ⭐
-                    </span>
-                    <span className="text-xs font-black text-slate-400">Valid</span>
-                  </div>
-
-                  <div className="space-y-3.5 mt-5">
-                    <div className="grid grid-cols-2 gap-3.5 text-xs">
-                      <div>
-                        <span className="text-[9px] text-slate-500 font-bold block uppercase tracking-wider">Expiration Date</span>
-                        <span className="font-extrabold text-white mt-1 block">25 August 2026</span>
-                      </div>
-                      <div>
-                        <span className="text-[9px] text-slate-500 font-bold block uppercase tracking-wider">Days Remaining</span>
-                        <span className="font-extrabold text-cyan-400 mt-1 block">28 Days</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => setActiveTab("Payments")}
-                  className="w-full mt-6 py-2.5 bg-white/5 hover:bg-white/10 text-white border border-[#1e293b] rounded-2xl text-xs font-bold transition duration-150 cursor-pointer text-center relative z-10"
-                >
-                  View Payment History
-                </button>
-                
-                {/* Flares background */}
-                <div className="absolute -bottom-8 -right-8 w-24 h-24 bg-blue-500/5 rounded-full blur-2xl group-hover:scale-125 transition-transform" />
-              </div>
-
             </div>
 
           </div>
         )}
 
         {/* 2. WORKOUT TAB */}
-        {activeTab === "My Workout" && (
-          <div className="space-y-6 text-left animate-in fade-in duration-200">
-            
-            {/* Header info */}
-            <div className="bg-[#111827] border border-[#1e293b]/45 rounded-3xl p-6 shadow-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <div>
-                <h2 className="text-lg font-black text-white">Daily Workout Schedule</h2>
-                <p className="text-xs text-slate-400 mt-1">Mark sets as completed during your physical fitness workouts splits.</p>
-              </div>
-              <div className="flex gap-3 bg-zinc-950/60 p-2 rounded-2xl border border-zinc-850 shrink-0">
-                <span className="text-xs font-bold text-slate-450 block px-3 py-1">Active Routine: Chest + Triceps</span>
-              </div>
-            </div>
+        {activeTab === "My Workout" && (() => {
+          const todayDayName = new Date().toLocaleDateString("en-US", { weekday: "long" }); // e.g. "Monday"
+          const todayDayKey = todayDayName.toLowerCase(); // e.g. "monday"
+          const clientWorkoutPlan = client ? workouts?.[client.id] : null;
+          const todayWorkout = clientWorkoutPlan ? (clientWorkoutPlan[todayDayKey] || clientWorkoutPlan[todayDayName]) : null;
 
-            {/* Exercise splits rows */}
-            <div className="bg-[#111827] border border-[#1e293b]/45 rounded-3xl p-6 shadow-xl space-y-4">
-              <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block border-b pb-2.5 border-zinc-850">
-                Lifting Exercise Splits
-              </span>
-              
-              <div className="space-y-3 text-xs">
-                {[
-                  { id: "ex1", name: "Bench Press", sets: "4 Sets", reps: "12 Reps", targetWeight: "80 kg", desc: "Warm up with bar, increase weight incrementally. Focus on barbell control.", videoUrl: "#" },
-                  { id: "ex2", name: "Incline Dumbbell Press", sets: "3 Sets", reps: "10 Reps", targetWeight: "26 kg DBs", desc: "Keep elbows at 45 degrees, squeeze pectorals at top contraction point.", videoUrl: "#" },
-                  { id: "ex3", name: "Cable Fly", sets: "3 Sets", reps: "15 Reps", targetWeight: "15 kg", desc: "Keep slight bend in elbows, control the negative portion of fly movement.", videoUrl: "#" },
-                  { id: "ex4", name: "Tricep Pushdown", sets: "3 Sets", reps: "12 Reps", targetWeight: "25 kg", desc: "V-bar attachment. Lock elbows by side, extend arms completely down.", videoUrl: "#" }
-                ].map((ex) => (
-                  <div 
-                    key={ex.id} 
-                    onClick={() => toggleExercise(ex.id)}
-                    className="p-4 bg-zinc-950/30 hover:bg-zinc-950/50 border border-zinc-900 rounded-2xl flex flex-col sm:flex-row justify-between sm:items-center gap-4 transition duration-150 cursor-pointer"
-                  >
-                    <div className="flex items-start gap-3.5">
-                      <div className={`w-6 h-6 rounded-xl border flex items-center justify-center transition-colors shrink-0 mt-0.5 ${
-                        exerciseCompletions[ex.id] 
-                          ? "bg-cyan-500 border-cyan-600 text-white" 
-                          : "border-zinc-800 text-transparent"
-                      }`}>
-                        <Check className="w-3.5 h-3.5" />
-                      </div>
+          if (isWorkoutLoading) {
+            return (
+              <div className="py-24 flex flex-col items-center justify-center text-center space-y-4">
+                <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                <h3 className="text-sm font-black text-white animate-pulse">Loading daily planner splits...</h3>
+              </div>
+            );
+          }
+
+          if (workoutError) {
+            return (
+              <div className="py-24 flex flex-col items-center justify-center text-center space-y-4">
+                <span className="text-4xl">⚠️</span>
+                <h3 className="text-base font-black text-white">Failed to load Workout Plan</h3>
+                <p className="text-xs text-rose-455 font-semibold">{workoutError}</p>
+                <button 
+                  onClick={() => setWorkoutError(null)}
+                  className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-extrabold rounded-xl transition cursor-pointer text-xs uppercase tracking-wider"
+                >
+                  Retry Loading
+                </button>
+              </div>
+            );
+          }
+
+          const isSunday = todayDayName === "Sunday";
+          const isRestDay = isSunday || (todayWorkout && (todayWorkout.muscleGroup === "Rest Day" || todayWorkout.muscleGroup?.toLowerCase().includes("rest")));
+
+          if (isRestDay) {
+            return (
+              <div className="space-y-6 text-left animate-in fade-in duration-200">
+                {/* Daily Workout Header */}
+                <div className="bg-gradient-to-br from-[#111827] via-[#0e1422] to-[#141f32] border border-blue-500/20 rounded-3xl p-6 shadow-xl flex flex-col gap-4">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
+                    <div className="space-y-2">
+                      <span className="text-[10px] font-black text-cyan-400 bg-cyan-400/10 px-3 py-1 rounded-full border border-cyan-400/20 uppercase tracking-widest block w-fit">
+                        📅 {(() => {
+                          const d = new Date();
+                          const dayNum = d.getDate();
+                          const monthName = d.toLocaleDateString("en-US", { month: "long" });
+                          const year = d.getFullYear();
+                          return `${dayNum} ${monthName} ${year}`;
+                        })()}
+                      </span>
+                      
                       <div className="space-y-1">
-                        <span className="font-extrabold text-white text-sm">{ex.name}</span>
-                        <p className="text-slate-450 leading-relaxed max-w-xl text-[11px] font-semibold">{ex.desc}</p>
+                        <span className="text-xs text-slate-400 font-extrabold uppercase tracking-wider block">📆 {todayDayName}</span>
+                        <h2 className="text-xl sm:text-2xl font-black text-white">
+                          🏋️ Today's Workout: <span className="text-blue-400">Rest Day</span>
+                        </h2>
                       </div>
-                    </div>
-                    
-                    <div className="flex sm:flex-col items-center sm:items-end justify-between shrink-0 border-t sm:border-t-0 border-zinc-850/60 pt-3 sm:pt-0 gap-1">
-                      <span className="text-xs font-black text-cyan-400">{ex.sets} × {ex.reps}</span>
-                      <span className="text-[10px] text-slate-400 font-bold bg-[#111827] px-2.5 py-0.5 rounded border border-zinc-800 mt-1">Load: {ex.targetWeight}</span>
                     </div>
                   </div>
-                ))}
-              </div>
+                </div>
 
-              <div className="pt-4 flex justify-between items-center text-xs">
-                <span className="text-slate-400">Completions checklist: {Object.values(exerciseCompletions).filter(Boolean).length} / 4 splits</span>
-                {workoutStarted ? (
-                  <button 
-                    onClick={handleCompleteWorkout}
-                    className="px-6 py-2.5 bg-cyan-600 hover:bg-cyan-700 text-white font-extrabold rounded-xl transition cursor-pointer"
+                <div className="bg-[#111827] border border-[#1e293b]/45 rounded-3xl p-8 shadow-xl text-center space-y-4">
+                  <span className="text-5xl block animate-bounce">🏖</span>
+                  <h3 className="text-lg font-black text-white">Rest Day</h3>
+                  <p className="text-xs text-slate-355 max-w-md mx-auto leading-relaxed">
+                    Today is your recovery day. Focus on stretching, hydration, light walking, and proper sleep.
+                  </p>
+                </div>
+              </div>
+            );
+          }
+
+          // Empty state when no workout is assigned or it has no exercises
+          if (!todayWorkout || !todayWorkout.exercises || todayWorkout.exercises.length === 0) {
+            return (
+              <div className="space-y-6 text-left animate-in fade-in duration-200">
+                {/* Daily Workout Header */}
+                <div className="bg-gradient-to-br from-[#111827] via-[#0e1422] to-[#141f32] border border-blue-500/20 rounded-3xl p-6 shadow-xl flex flex-col gap-4">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
+                    <div className="space-y-2">
+                      <span className="text-[10px] font-black text-cyan-400 bg-cyan-400/10 px-3 py-1 rounded-full border border-cyan-400/20 uppercase tracking-widest block w-fit">
+                        📅 {(() => {
+                          const d = new Date();
+                          const dayNum = d.getDate();
+                          const monthName = d.toLocaleDateString("en-US", { month: "long" });
+                          const year = d.getFullYear();
+                          return `${dayNum} ${monthName} ${year}`;
+                        })()}
+                      </span>
+                      
+                      <div className="space-y-1">
+                        <span className="text-xs text-slate-400 font-extrabold uppercase tracking-wider block">📆 {todayDayName}</span>
+                        <h2 className="text-xl sm:text-2xl font-black text-white">
+                          🏋️ Today's Workout
+                        </h2>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Empty State */}
+                <div className="bg-[#111827] border border-[#1e293b]/45 rounded-3xl p-8 shadow-xl text-center space-y-4">
+                  <span className="text-5xl block animate-bounce">🏋️</span>
+                  <h3 className="text-lg font-black text-white">No Workout Assigned</h3>
+                  <p className="text-xs text-slate-355 max-w-md mx-auto leading-relaxed">
+                    You don't have a workout assigned yet. Please contact your trainer or wait until your trainer assigns a workout plan.
+                  </p>
+                  <button
+                    onClick={() => setActiveTab("Dashboard")}
+                    className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-extrabold rounded-xl transition cursor-pointer text-xs uppercase tracking-wider animate-pulse"
                   >
-                    Submit Completed splits
+                    Back to Dashboard
                   </button>
-                ) : (
-                  <button 
-                    onClick={handleStartWorkout}
-                    disabled={workoutCompleted}
-                    className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-zinc-800 text-white font-extrabold rounded-xl transition cursor-pointer disabled:cursor-not-allowed"
-                  >
-                    {workoutCompleted ? "Completed" : "Start Split Timer"}
-                  </button>
+                </div>
+              </div>
+            );
+          }
+
+          const todayWorkoutName = todayWorkout.muscleGroup || "Workout Split";
+          const exercises = todayWorkout.exercises || [];
+
+          // Progress calculation
+          const completedCount = exercises.filter(ex => exerciseCompletions[`${todayDayName}_${ex.name}`]).length;
+          const totalCount = exercises.length;
+          const progressPercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+
+          return (
+            <div className="space-y-6 text-left animate-in fade-in duration-200">
+              
+              {/* Daily Workout Header */}
+              <div className="bg-gradient-to-br from-[#111827] via-[#0e1422] to-[#141f32] border border-blue-500/20 rounded-3xl p-6 shadow-xl flex flex-col gap-4">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
+                  <div className="space-y-2">
+                    <span className="text-[10px] font-black text-cyan-400 bg-cyan-400/10 px-3 py-1 rounded-full border border-cyan-400/20 uppercase tracking-widest block w-fit">
+                      📅 {(() => {
+                        const d = new Date();
+                        const dayNum = d.getDate();
+                        const monthName = d.toLocaleDateString("en-US", { month: "long" });
+                        const year = d.getFullYear();
+                        return `${dayNum} ${monthName} ${year}`;
+                      })()}
+                    </span>
+                    
+                    <div className="space-y-1">
+                      <span className="text-xs text-slate-400 font-extrabold uppercase tracking-wider block">📆 {todayDayName}</span>
+                      <h2 className="text-xl sm:text-2xl font-black text-white">
+                        🏋️ Today's Workout: <span className="text-blue-400">{todayWorkoutName}</span>
+                      </h2>
+                    </div>
+                  </div>
+
+                  {totalCount > 0 && (
+                    <div className="p-4 bg-[#080B14] rounded-2xl border border-zinc-850 shrink-0 text-center min-w-[140px]">
+                      <span className="text-[9px] text-slate-455 font-bold block uppercase tracking-wider">Completion Goal</span>
+                      <span className="text-sm font-black text-cyan-400 block mt-1">{completedCount} / {totalCount} Done</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Trainer Notes */}
+                {todayWorkout.notes && (
+                  <div className="border-t border-[#1e293b]/40 pt-4 mt-2">
+                    <span className="text-[10px] text-slate-400 font-black uppercase tracking-wider block">Trainer Notes</span>
+                    <p className="text-xs text-slate-300 mt-1 leading-relaxed italic">
+                      "{todayWorkout.notes}"
+                    </p>
+                  </div>
                 )}
               </div>
-            </div>
 
-          </div>
-        )}
+              {/* Progress Bar Row */}
+              <div className="bg-[#111827] border border-[#1e293b]/45 rounded-3xl p-6 shadow-xl space-y-3">
+                <div className="flex justify-between items-center text-xs">
+                  <span className="font-extrabold text-slate-400 uppercase tracking-wider">Workout Progress</span>
+                  <span className="font-black text-cyan-400">{progressPercent}%</span>
+                </div>
+                <div className="w-full h-3 bg-zinc-950 rounded-full overflow-hidden border border-zinc-900">
+                  <div 
+                    className="h-full bg-gradient-to-r from-blue-600 via-cyan-400 to-purple-500 rounded-full transition-all duration-300"
+                    style={{ width: `${progressPercent}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* Exercises Checklist */}
+              <div className="bg-[#111827] border border-[#1e293b]/45 rounded-3xl p-6 shadow-xl space-y-4">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block border-b pb-2.5 border-zinc-850">
+                  Exercise Routine Checklist
+                </span>
+
+                <div className="space-y-3.5">
+                  {exercises.map((ex) => {
+                    const exKey = `${todayDayName}_${ex.name}`;
+                    const isCompleted = exerciseCompletions[exKey];
+                    return (
+                      <div 
+                        key={exKey}
+                        onClick={() => {
+                          setExerciseCompletions(prev => {
+                            const next = { ...prev, [exKey]: !prev[exKey] };
+                            if (next[exKey]) {
+                              toast.success(`Completed ${ex.name}! 💪`);
+                            }
+                            return next;
+                          });
+                        }}
+                        className="p-4 bg-zinc-950/30 hover:bg-zinc-950/50 border border-zinc-900 rounded-2xl flex flex-col md:flex-row justify-between md:items-center gap-4 transition duration-150 cursor-pointer"
+                      >
+                        <div className="flex items-start gap-3.5">
+                          <div className={`w-6 h-6 rounded-xl border flex items-center justify-center transition-colors shrink-0 mt-0.5 ${
+                            isCompleted 
+                              ? "bg-cyan-500 border-cyan-600 text-white" 
+                              : "border-zinc-800 text-transparent"
+                          }`}>
+                            <Check className="w-3.5 h-3.5" />
+                          </div>
+                          <div className="space-y-1">
+                            <span className="font-extrabold text-white text-sm block leading-none">{ex.name}</span>
+                            {ex.notes && (
+                              <p className="text-slate-450 leading-relaxed max-w-xl text-[11px] font-semibold mt-1">
+                                <strong className="text-slate-400">Notes:</strong> {ex.notes}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        
+                        <div className="flex flex-wrap md:flex-col items-center md:items-end justify-between shrink-0 border-t md:border-t-0 border-zinc-850/60 pt-3 md:pt-0 gap-2">
+                          <span className="text-xs font-black text-cyan-400">
+                            {ex.sets ? `${ex.sets} Sets` : ""} {ex.reps ? `× ${ex.reps} Reps` : ""}
+                          </span>
+                          <div className="flex gap-2 mt-0.5">
+                            {ex.weight && ex.weight !== "N/A" && (
+                              <span className="text-[9.5px] text-cyan-405 font-bold bg-[#111827] px-2 py-0.5 rounded border border-zinc-800">
+                                Wt: {ex.weight}
+                              </span>
+                            )}
+                            <span className="text-[9.5px] text-slate-404 font-bold bg-[#111827] px-2 py-0.5 rounded border border-zinc-800">
+                              Rest: {ex.rest || ex.restTime || todayWorkout.restTime || todayWorkout.rest || "60s"}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+            </div>
+          );
+        })()}
 
         {/* 3. DIET TAB */}
-        {activeTab === "My Diet" && (
-          <div className="space-y-6 text-left animate-in fade-in duration-200">
-            
-            {/* Calories indicators */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              {[
-                { label: "Target Calories", val: "2,400 kcal", desc: "Energy expenditure limit", icon: Zap, color: "text-amber-500 bg-amber-500/5" },
-                { label: "Total Protein", val: "120 g", desc: "Muscle rebuild blocks", icon: Heart, color: "text-emerald-505 bg-emerald-500/5" },
-                { label: "Total Carbs", val: "250 g", desc: "Glycogen energy fuels", icon: Activity, color: "text-cyan-455 bg-cyan-500/5" },
-                { label: "Diet Compliance", val: "88%", desc: "Nutritional profile compliance", icon: Award, color: "text-purple-500 bg-purple-500/5" }
-              ].map((card, idx) => {
-                const Icon = card.icon;
-                return (
-                  <div key={idx} className="bg-[#111827] border border-[#1e293b]/45 rounded-3xl p-5 shadow-lg flex flex-col justify-between">
-                    <div className="flex justify-between items-center">
-                      <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider">{card.label}</span>
-                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${card.color} shrink-0`}>
-                        <Icon className="w-4 h-4" />
+        {activeTab === "My Diet" && (() => {
+          const getGoalPlanKey = (goal) => {
+            if (!goal) return "Maintenance";
+            const g = goal.toLowerCase();
+            if (g.includes("loss") || g.includes("cut") || g.includes("diet") || g.includes("fat")) return "Weight Loss";
+            if (g.includes("gain") || g.includes("bulk") || g.includes("strength") || g.includes("muscle")) return "Muscle Gain";
+            return "Maintenance";
+          };
+
+          const goalKey = getGoalPlanKey(client.goal);
+          const activePlan = DIET_PLANS[goalKey] || DIET_PLANS["Maintenance"];
+          const dayMeals = activePlan.days[selectedDietDay] || [];
+          
+          // Dynamic calories/macros based on active selection (overridden for Sunday Rest Day)
+          const isSunday = selectedDietDay === "Sunday";
+          const displayCalories = isSunday 
+            ? (goalKey === "Weight Loss" ? "1,240 kcal" : goalKey === "Muscle Gain" ? "1,980 kcal" : "1,580 kcal")
+            : activePlan.calories;
+          const displayProtein = isSunday 
+            ? (goalKey === "Weight Loss" ? "65g" : goalKey === "Muscle Gain" ? "120g" : "90g")
+            : activePlan.protein;
+          const displayCarbs = isSunday 
+            ? (goalKey === "Weight Loss" ? "110g" : goalKey === "Muscle Gain" ? "190g" : "150g")
+            : activePlan.carbs;
+          const displayFats = isSunday 
+            ? (goalKey === "Weight Loss" ? "35g" : goalKey === "Muscle Gain" ? "50g" : "40g")
+            : activePlan.fats;
+          const displayWater = isSunday 
+            ? (goalKey === "Weight Loss" ? "2.5L" : goalKey === "Muscle Gain" ? "3.5L" : "3.0L")
+            : activePlan.water;
+
+          return (
+            <div className="space-y-6 text-left animate-in fade-in duration-200">
+              
+              {/* Today's Header */}
+              <div className="bg-gradient-to-br from-[#111827] via-[#0e1422] to-[#141f32] border border-blue-500/20 rounded-3xl p-6 shadow-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div className="space-y-1">
+                  <span className="text-[10px] font-black text-cyan-400 bg-cyan-400/10 px-2.5 py-1 rounded-full border border-cyan-400/20 uppercase tracking-widest">
+                    {(() => {
+                      const d = new Date();
+                      const dayName = d.toLocaleDateString("en-US", { weekday: "long" });
+                      const dayNum = d.getDate();
+                      const monthName = d.toLocaleDateString("en-US", { month: "long" });
+                      const year = d.getFullYear();
+                      return `${dayName}, ${dayNum} ${monthName} ${year}`;
+                    })()}
+                  </span>
+                  <h2 className="text-xl font-black text-white mt-3.5">Today's Diet Plan</h2>
+                  <p className="text-xs text-slate-400 font-medium">Follow your curated diet blueprint to optimize recovery and gains.</p>
+                </div>
+                
+                <div className="p-4 bg-[#080B14] rounded-2xl border border-zinc-850 shrink-0 text-center">
+                  <span className="text-[9px] text-slate-455 font-bold block uppercase tracking-wider">Hydration Level</span>
+                  <span className="text-sm font-black text-blue-400 block mt-1">{waterCount}L / {displayWater}</span>
+                </div>
+              </div>
+
+              {/* Weekly Schedule Row */}
+              <div className="bg-[#111827] border border-[#1e293b]/45 rounded-3xl p-6 shadow-xl space-y-4">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block border-b pb-2.5 border-zinc-850">
+                  Weekly Nutritional Blueprint
+                </span>
+                <div className="grid grid-cols-2 sm:grid-cols-7 gap-2.5">
+                  {daysOfWeek.map((day) => {
+                    const isToday = day === todayName;
+                    const isSelected = day === selectedDietDay;
+                    const dayIsSunday = day === "Sunday";
+                    const calories = dayIsSunday 
+                      ? (goalKey === "Weight Loss" ? "1,240 kcal" : goalKey === "Muscle Gain" ? "1,980 kcal" : "1,580 kcal")
+                      : activePlan.calories;
+                    return (
+                      <button
+                        key={day}
+                        onClick={() => setSelectedDietDay(day)}
+                        className={`p-3 rounded-2xl border text-center transition duration-200 cursor-pointer flex flex-col items-center justify-between min-h-[90px] ${
+                          isSelected
+                            ? "bg-blue-600/20 border-blue-500 text-blue-400 font-black shadow-md shadow-blue-500/5"
+                            : isToday
+                            ? "bg-zinc-900 border-zinc-800 text-slate-205 border-dashed"
+                            : "bg-zinc-950/40 border-zinc-900 text-slate-550 hover:border-zinc-800"
+                        }`}
+                      >
+                        <span className="text-[10px] uppercase font-bold tracking-wider">{day.slice(0, 3)}</span>
+                        <div className="w-8 h-8 rounded-full bg-zinc-950 flex items-center justify-center my-1.5 border border-zinc-900 text-xs">
+                          🥗
+                        </div>
+                        <span className="text-[9px] font-bold block truncate max-w-[70px] uppercase tracking-tighter text-slate-400">{calories}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Macro Targets Row */}
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-3.5 no-print">
+                {[
+                  { label: "Target Calories", val: displayCalories, desc: "Energy ceiling limit", icon: Zap, color: "text-amber-500 bg-amber-500/5 border-amber-550/10" },
+                  { label: "Total Protein", val: displayProtein, desc: "Lean muscle repair", icon: Heart, color: "text-rose-500 bg-rose-500/5 border-rose-550/10" },
+                  { label: "Total Carbs", val: displayCarbs, desc: "Glycogen restoration", icon: Activity, color: "text-cyan-400 bg-cyan-400/5 border-cyan-455/10" },
+                  { label: "Total Fats", val: displayFats, desc: "Hormone regulation", icon: Award, color: "text-purple-500 bg-purple-500/5 border-purple-550/10" },
+                  { label: "Water Goal", val: displayWater, desc: "Hydration target limit", icon: Droplet, color: "text-blue-400 bg-blue-400/5 border-blue-455/10" }
+                ].map((card, idx) => {
+                  const Icon = card.icon;
+                  return (
+                    <div key={idx} className="bg-[#111827] border border-[#1e293b]/45 rounded-2xl p-4 flex flex-col justify-between text-left">
+                      <div className="flex justify-between items-center">
+                        <span className="text-[9px] font-black text-slate-550 uppercase tracking-wider">{card.label}</span>
+                        <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${card.color} shrink-0`}>
+                          <Icon className="w-3.5 h-3.5" />
+                        </div>
+                      </div>
+                      <div className="mt-4">
+                        <h4 className="text-base font-black text-white">{card.val}</h4>
+                        <p className="text-[9px] text-slate-455 mt-0.5 leading-snug font-semibold">{card.desc}</p>
                       </div>
                     </div>
-                    <div className="mt-5">
-                      <h4 className="text-lg sm:text-xl font-black text-white">{card.val}</h4>
-                      <p className="text-[9px] text-slate-400 mt-1 block font-semibold leading-normal">{card.desc}</p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Diet distribution sheets */}
-            <div className="bg-[#111827] border border-[#1e293b]/45 rounded-3xl p-6 shadow-xl space-y-4">
-              <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block border-b pb-2.5 border-zinc-850">
-                Nutritional Plan Details
-              </span>
-              
-              <div className="divide-y divide-[#1e293b]/35 space-y-4">
-                {[
-                  { meal: "Breakfast (08:00 AM)", items: "4 Boiled Eggs (2 whole, 2 whites), 60g Rolled Oats with warm almond milk, 1 medium banana, 1 scoop Whey Protein isolate.", kcal: "650 kcal", macros: "P: 42g | C: 65g | F: 12g" },
-                  { meal: "Lunch (01:30 PM)", items: "150g Grilled Chicken Breast fillets, 80g Steamed Brown Rice, 1 bowl raw baby spinach & cucumber salad with lemon squeeze.", kcal: "580 kcal", macros: "P: 45g | C: 55g | F: 8g" },
-                  { meal: "Pre-Workout Snack (05:00 PM)", items: "1 slice Whole Wheat Toast with 1 tbsp unsweetened peanut butter, 1 small apple.", kcal: "280 kcal", macros: "P: 8g | C: 35g | F: 10g" },
-                  { meal: "Dinner (08:30 PM)", items: "120g pan-seared Salmon fillet or Grilled Organic Tofu block, 150g mashed sweet potatoes, steamed asparagus tips with garlic.", kcal: "610 kcal", macros: "P: 35g | C: 60g | F: 16g" },
-                  { meal: "Before Bed (10:00 PM)", items: "150g low-fat Greek Yogurt, handful of mixed raw almonds.", kcal: "180 kcal", macros: "P: 15g | C: 8g | F: 10g" }
-                ].map((m, i) => (
-                  <div key={i} className={`pt-4 ${i === 0 ? "pt-0" : ""} flex flex-col sm:flex-row justify-between sm:items-start gap-3.5 text-xs`}>
-                    <div className="space-y-1">
-                      <span className="font-extrabold text-white text-sm block leading-none">{m.meal}</span>
-                      <p className="text-slate-205 leading-relaxed font-semibold max-w-xl mt-1.5">{m.items}</p>
-                    </div>
-                    <div className="text-right shrink-0 border-t sm:border-t-0 border-zinc-850 pt-2.5 sm:pt-0">
-                      <span className="font-black text-white block">{m.kcal}</span>
-                      <span className="text-[10px] text-cyan-400 block mt-0.5">{m.macros}</span>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
-            </div>
 
-          </div>
-        )}
+              {/* Diet Meal Details */}
+              <div className="bg-[#111827] border border-[#1e293b]/45 rounded-3xl p-6 shadow-xl space-y-4">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block border-b pb-2.5 border-zinc-850">
+                  {selectedDietDay === todayName ? "Today's Meals Schedule" : `${selectedDietDay} Meal Blueprint`} — {goalKey} Diet
+                </span>
+                
+                <div className="divide-y divide-[#1e293b]/35 space-y-4">
+                  {dayMeals.map((m, i) => (
+                    <div key={i} className={`pt-4 ${i === 0 ? "pt-0" : ""} flex flex-col sm:flex-row justify-between sm:items-start gap-3.5 text-xs`}>
+                      <div className="space-y-1">
+                        <span className="font-extrabold text-white text-sm block leading-none">{m.label}</span>
+                        <p className="text-slate-205 leading-relaxed font-semibold max-w-xl mt-1.5">{m.items}</p>
+                      </div>
+                      <div className="text-right shrink-0 border-t sm:border-t-0 border-zinc-850 pt-2.5 sm:pt-0">
+                        <span className="font-black text-white block">{m.kcal}</span>
+                        <span className="text-[10px] text-cyan-455 block mt-0.5">{m.macros}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {selectedDietDay === todayName && (
+                  <div className="mt-6 pt-4 border-t border-[#1e293b]/40 flex items-center justify-between">
+                    <span className="text-[11px] text-slate-450 font-bold flex items-center gap-1.5">
+                      <Droplet className="w-4 h-4 text-blue-400 animate-pulse" /> Hydration Log Tracker
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <button 
+                        onClick={() => setWaterCount(prev => Math.max(prev - 0.5, 0))}
+                        className="px-2.5 py-1 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 rounded text-slate-405 text-xs font-bold cursor-pointer"
+                      >
+                        -0.5L
+                      </button>
+                      <span className="text-xs font-black text-white">{waterCount}L</span>
+                      <button 
+                        onClick={() => {
+                          setWaterCount(prev => Math.min(prev + 0.5, 6));
+                          toast.success("Hydration log tracked successfully.");
+                        }}
+                        className="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 rounded text-white text-xs font-bold cursor-pointer"
+                      >
+                        +0.5L
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+            </div>
+          );
+        })()}
 
         {/* 4. ATTENDANCE TAB */}
         {activeTab === "Attendance" && (
@@ -1303,7 +1570,278 @@ const ClientDashboard = () => {
           </div>
         )}
 
+        {/* 8. PROFILE TAB */}
+        {activeTab === "Profile" && (
+          <div className="space-y-6 text-left animate-in fade-in duration-200 pb-8">
+            
+            {/* Profile Header Card */}
+            <div className="bg-[#111827] border border-[#1e293b]/45 rounded-3xl p-6 shadow-xl relative overflow-hidden flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+              <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
+                <img
+                  src={client.photo || "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&q=80&w=120"}
+                  alt={client.name}
+                  className="w-20 h-20 rounded-2xl object-cover border-2 border-blue-500/20"
+                />
+                <div className="text-center sm:text-left space-y-1 mt-2 sm:mt-0">
+                  <h2 className="text-xl font-black text-white">{client.name}</h2>
+                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Member ID: {client.id}</span>
+                  
+                  <div className="flex flex-wrap gap-2 mt-3 justify-center sm:justify-start">
+                    <span className={`px-2.5 py-0.5 text-[9px] font-black uppercase tracking-wider rounded-lg border ${
+                      client.status === "Active"
+                        ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                        : "bg-amber-500/10 text-amber-400 border-amber-500/20"
+                    }`}>
+                      {client.status || "Active"}
+                    </span>
+                    <span className="px-2.5 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[9px] font-black uppercase tracking-wider rounded-lg">
+                      Goal: {client.goal || "General Fitness"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="p-4 bg-[#080B14] rounded-2xl border border-zinc-850 shrink-0 text-center w-full md:w-auto">
+                <span className="text-[9px] text-slate-455 font-bold block uppercase tracking-wider">Membership Plan</span>
+                <span className="text-xs font-black text-cyan-400 block mt-1">{client.membership || "Premium"}</span>
+              </div>
+            </div>
+
+            {/* Main Info Columns */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              
+              {/* Left Column: Personal Info & Fitness Info */}
+              <div className="space-y-6">
+                
+                {/* Personal Information */}
+                <div className="bg-[#111827] border border-[#1e293b]/45 rounded-3xl p-6 shadow-xl space-y-4">
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block border-b pb-2.5 border-zinc-850">
+                    Personal Information
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                    <div>
+                      <span className="text-slate-500 font-bold block text-[10px]">Full Name</span>
+                      <span className="text-white font-extrabold mt-1 block">{client.name}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-500 font-bold block text-[10px]">Phone Number</span>
+                      <span className="text-white font-extrabold mt-1 block">{client.phone || "N/A"}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-500 font-bold block text-[10px]">Email Address</span>
+                      <span className="text-white font-extrabold mt-1 block">{client.email || "N/A"}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-500 font-bold block text-[10px]">Gender</span>
+                      <span className="text-white font-extrabold mt-1 block">{client.gender || "N/A"}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-500 font-bold block text-[10px]">Age</span>
+                      <span className="text-white font-extrabold mt-1 block">{client.age ? `${client.age} years old` : "N/A"}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-500 font-bold block text-[10px]">Emergency Contact</span>
+                      <span className="text-white font-extrabold mt-1 block">{client.emergencyContact || "N/A"}</span>
+                    </div>
+                    <div className="sm:col-span-2">
+                      <span className="text-slate-500 font-bold block text-[10px]">Address</span>
+                      <span className="text-white font-extrabold mt-1 block">{client.address || "N/A"}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Fitness Information */}
+                <div className="bg-[#111827] border border-[#1e293b]/45 rounded-3xl p-6 shadow-xl space-y-4">
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block border-b pb-2.5 border-zinc-850">
+                    Fitness Information
+                  </span>
+                  <div className="grid grid-cols-2 gap-4 text-xs">
+                    <div>
+                      <span className="text-slate-500 font-bold block text-[10px]">Height</span>
+                      <span className="text-white font-extrabold mt-1 block">{client.height ? `${client.height} cm` : "N/A"}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-500 font-bold block text-[10px]">Assigned Trainer</span>
+                      <span className="text-white font-extrabold mt-1 block">Rahul Sharma</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-500 font-bold block text-[10px]">Current Weight</span>
+                      <span className="text-white font-extrabold mt-1 block">{client.currentWeight ? `${client.currentWeight} kg` : "N/A"}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-500 font-bold block text-[10px]">Goal Weight</span>
+                      <span className="text-cyan-400 font-extrabold mt-1 block">{client.targetWeight ? `${client.targetWeight} kg` : "N/A"}</span>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Right Column: Membership Card & Coach Feedback */}
+              <div className="space-y-6">
+                
+                {/* Membership validity (BeFit Premium Card Style) */}
+                <div className="bg-gradient-to-br from-[#111827] via-[#0e1422] to-[#121b2d] border border-blue-500/20 rounded-3xl p-6 shadow-xl flex flex-col justify-between text-left relative overflow-hidden group">
+                  <div className="space-y-4 relative z-10">
+                    <div className="flex justify-between items-center">
+                      <span className="text-[10px] font-black text-cyan-400 uppercase tracking-widest bg-cyan-400/10 px-2.5 py-1 rounded-full border border-cyan-400/20">
+                        BEFIT {client.membership?.toUpperCase() || "PREMIUM"} ⭐
+                      </span>
+                      <span className="text-xs font-black text-slate-405">{client.status || "Active"}</span>
+                    </div>
+
+                    <div className="space-y-3.5 mt-5">
+                      <div className="grid grid-cols-2 gap-3.5 text-xs">
+                        <div>
+                          <span className="text-[9px] text-slate-500 font-bold block uppercase tracking-wider font-display">Join Date</span>
+                          <span className="font-extrabold text-white mt-1 block">
+                            {client.joinDate ? new Date(client.joinDate).toLocaleDateString("en-US", { day: "numeric", month: "long", year: "numeric" }) : "N/A"}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-[9px] text-slate-500 font-bold block uppercase tracking-wider font-display">Expiration Date</span>
+                          <span className="font-extrabold text-white mt-1 block">
+                            {client.expiryDate ? new Date(client.expiryDate).toLocaleDateString("en-US", { day: "numeric", month: "long", year: "numeric" }) : "August 25, 2026"}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-[9px] text-slate-500 font-bold block uppercase tracking-wider font-display font-display">Days Remaining</span>
+                          <span className="font-extrabold text-cyan-400 mt-1 block">28 Days</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="border-t border-zinc-850/60 pt-4 mt-2">
+                      <span className="text-[9px] text-slate-500 font-black block uppercase tracking-wider mb-2">Plan Privileges</span>
+                      <ul className="text-[11px] text-slate-350 font-bold space-y-1.5">
+                        <li className="flex items-center gap-1.5 text-slate-205">🏋️ Unlimited Gym access</li>
+                        <li className="flex items-center gap-1.5 text-slate-205">🧘 Free group fitness classes</li>
+                        <li className="flex items-center gap-1.5 text-slate-205">🚿 Luxury lockers access</li>
+                        <li className="flex items-center gap-1.5 text-slate-205">🥤 1 Guest pass per month</li>
+                      </ul>
+                    </div>
+                  </div>
+                  
+                  {/* Flares background */}
+                  <div className="absolute -bottom-8 -right-8 w-24 h-24 bg-blue-500/5 rounded-full blur-2xl group-hover:scale-125 transition-transform" />
+                </div>
+
+                {/* Coach Feedback */}
+                <div className="bg-[#111827] border border-[#1e293b]/45 rounded-3xl p-6 shadow-xl flex flex-col justify-between text-left font-sans">
+                  <div>
+                    <div className="flex justify-between items-center mb-4 pb-2 border-b border-[#1e293b]/40">
+                      <h3 className="text-xs font-black uppercase text-slate-400 tracking-wider">Coach Feedback</h3>
+                      <span className="text-[10px] text-purple-400 font-bold">Latest Review</span>
+                    </div>
+
+                    <div className="flex items-center gap-3 mb-4 bg-zinc-950/30 p-3 rounded-2xl border border-zinc-900">
+                      <img 
+                        src="https://images.unsplash.com/photo-1568602471122-7832951cc4c5?auto=format&fit=crop&q=80&w=100" 
+                        alt="Rahul Sharma" 
+                        className="w-10 h-10 rounded-xl object-cover border border-[#1e293b]"
+                      />
+                      <div>
+                        <span className="font-extrabold text-white text-xs block">Rahul Sharma</span>
+                        <span className="text-[9.5px] text-slate-505 block font-bold mt-0.5">Head Gym Coach • July 31, 2026</span>
+                      </div>
+                    </div>
+
+                    <p className="text-xs text-slate-350 bg-zinc-950/20 border border-zinc-900/60 p-3.5 rounded-2xl italic leading-relaxed">
+                      "Great progress this week. Improve your squat depth and stay consistent with your cardio sessions."
+                    </p>
+                    <p className="text-[10px] text-slate-450 mt-3 font-semibold">
+                      <strong>Remarks:</strong> Focus on progressive overload on compound lifts. Keep stretching pre-workout.
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={() => toast.success("Chat channel opened with Trainer Rahul Sharma.")}
+                    className="w-full mt-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-xs font-black uppercase tracking-wider transition duration-150 cursor-pointer text-center"
+                  >
+                    Message Trainer
+                  </button>
+                </div>
+
+              </div>
+
+            </div>
+
+            {/* Account Actions */}
+            <div className="bg-[#111827] border border-[#1e293b]/45 rounded-3xl p-6 shadow-xl space-y-4">
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block border-b pb-2.5 border-zinc-850">
+                Account Settings
+              </span>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <button
+                  onClick={() => toast.success("Edit Profile drawer coming soon.")}
+                  className="px-4 py-3 bg-zinc-900 border border-zinc-800 hover:border-zinc-700 rounded-2xl text-xs font-black text-white transition duration-150 cursor-pointer flex items-center justify-between"
+                >
+                  <div className="flex items-center gap-2">
+                    <User className="w-4 h-4 text-blue-400" />
+                    <span>Edit Profile</span>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-slate-500" />
+                </button>
+
+                <button
+                  onClick={() => toast.success("Change Password option selected.")}
+                  className="px-4 py-3 bg-zinc-900 border border-zinc-800 hover:border-zinc-700 rounded-2xl text-xs font-black text-white transition duration-150 cursor-pointer flex items-center justify-between"
+                >
+                  <div className="flex items-center gap-2">
+                    <Lock className="w-4 h-4 text-purple-400" />
+                    <span>Change Password</span>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-slate-500" />
+                </button>
+
+                <button
+                  onClick={handleLogout}
+                  className="px-4 py-3 bg-zinc-900 border border-zinc-800 hover:border-rose-500/20 rounded-2xl text-xs font-black text-rose-500 transition duration-150 cursor-pointer flex items-center justify-between"
+                >
+                  <div className="flex items-center gap-2">
+                    <LogOut className="w-4 h-4 text-rose-500" />
+                    <span>Logout</span>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-slate-500" />
+                </button>
+              </div>
+            </div>
+
+          </div>
+        )}
+
       </main>
+
+      {/* --- MOBILE BOTTOM TAB NAVIGATION BAR --- */}
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 h-16 bg-[#0b101c]/95 backdrop-blur-md border-t border-[#1e293b]/50 flex items-center justify-around z-40 px-2 pb-safe shadow-[0_-4px_12px_rgba(0,0,0,0.03)] no-print">
+        {[
+          { name: "Dashboard", tab: "Dashboard", icon: LayoutDashboard },
+          { name: "Workout", tab: "My Workout", icon: Dumbbell },
+          { name: "Diet", tab: "My Diet", icon: Apple },
+          { name: "Attendance", tab: "Attendance", icon: Calendar },
+          { name: "Payments", tab: "Payments", icon: CreditCard },
+          { name: "Profile", tab: "Profile", icon: User }
+        ].map((item) => {
+          const isActive = activeTab === item.tab;
+          const Icon = item.icon;
+          return (
+            <button
+              key={item.name}
+              onClick={() => setActiveTab(item.tab)}
+              className={`flex flex-col items-center justify-center flex-1 py-1 transition-all cursor-pointer ${
+                isActive
+                  ? "text-blue-400"
+                  : "text-slate-400 hover:text-slate-200"
+              }`}
+            >
+              <div className={`p-1 px-3 rounded-2xl flex flex-col items-center transition ${isActive ? "text-blue-400" : ""}`}>
+                <Icon className="w-5.5 h-5.5" />
+                <span className="text-[9px] font-bold mt-1 tracking-tight">{item.name}</span>
+              </div>
+            </button>
+          );
+        })}
+      </nav>
 
     </div>
   );
