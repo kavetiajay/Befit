@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Dumbbell,
   Eye,
   EyeOff,
   Mail,
@@ -56,106 +55,112 @@ const Login = () => {
       setIsLoading(false);
     }, 1500);
   };
+
   return (
-    <div className="min-h-screen flex bg-gradient-to-tr from-slate-50 via-white to-blue-50/30 text-slate-800 font-sans antialiased overflow-hidden">
-
-      {/* LEFT SIDE: Large Fitness Image & Gradient Overlay (Desktop Only) */}
+    <div className="min-h-screen flex bg-[#f8fafc] text-slate-800 font-sans antialiased overflow-hidden">
+      
+      {/* LEFT SIDE: Premium blurred Gym Image & soft blue gradient overlay (Desktop Only) */}
       <div className="hidden lg:flex lg:w-1/2 relative bg-slate-900 overflow-hidden select-none">
-
-        {/* Background Fitness Image */}
+        
+        {/* Background Gym Image with blur to avoid distraction */}
         <img
           src="/login_fitness_bg.png"
           alt="Premium Fitness Environment"
-          className="absolute inset-0 w-full h-full object-cover transform scale-105 hover:scale-100 transition-transform duration-10000 ease-out opacity-80"
+          className="absolute inset-0 w-full h-full object-cover transform scale-105 hover:scale-100 transition-transform duration-[10000ms] ease-out opacity-75 blur-[2px]"
         />
 
-        {/* Deep Blue Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-700/80 via-blue-600/70 to-cyan-500/60 mix-blend-multiply" />
+        {/* Soft Modern Blue/Cyan Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-tr from-blue-700/60 via-blue-600/40 to-cyan-500/30 mix-blend-multiply" />
 
-        {/* Decorative Grid Patterns */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_20%,rgba(0,0,0,0.15))] pointer-events-none" />
+        {/* Deep Ambient Glowing Lights for Premium Polish */}
+        <div className="absolute -top-40 -left-40 w-[500px] h-[500px] bg-blue-500/20 rounded-full blur-3xl" />
+        <div className="absolute -bottom-40 -right-40 w-[500px] h-[500px] bg-cyan-500/20 rounded-full blur-3xl" />
 
-        {/* Content Container */}
+        {/* Content Box */}
         <div className="relative z-10 flex flex-col justify-between p-16 w-full h-full text-white">
-
-          {/* BeFit Top Branding */}
-          <div className="flex items-center gap-3.5 backdrop-blur-md bg-white/10 border border-white/15 px-5 py-3 rounded-2xl w-fit shadow-xl shadow-black/5">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-white to-blue-50 flex items-center justify-center text-blue-600 shadow-md">
-              <Dumbbell className="w-5.5 h-5.5" />
-            </div>
+          {/* Logo brand info */}
+          <div className="flex items-center gap-3 backdrop-blur-md bg-white/10 border border-white/15 px-5 py-3 rounded-2xl w-fit shadow-xl shadow-black/5">
+            <span className="text-2xl">🏋️</span>
             <div>
               <h1 className="text-lg font-black tracking-tight leading-none text-white">
-                BeFit
+                BEFIT
               </h1>
               <span className="text-[10px] text-blue-100 font-bold uppercase tracking-wider block mt-1">
-                Personal Companion
+                Fitness Management System
               </span>
             </div>
           </div>
 
-          {/* Welcome Text Block */}
+          {/* Inspirational Tagline */}
           <div className="space-y-6 max-w-xl">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-cyan-400/20 border border-cyan-300/35 text-cyan-200 text-xs font-semibold tracking-wide uppercase">
-              🚀 Commercial Gym CRM Portal
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-500/20 border border-blue-400/30 text-blue-100 text-xs font-semibold tracking-wide uppercase">
+              ✨ Premium Fitness SaaS Portal
             </div>
-            <h2 className="text-4xl xl:text-5xl font-black tracking-tight leading-tight drop-shadow-sm">
-              Transform Your <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-200 to-white">
-                Fitness Journey
+            <h2 className="text-4xl xl:text-5xl font-black tracking-tight leading-tight">
+              Powering The <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-100 via-cyan-100 to-white">
+                Ultimate Gym Experience
               </span>
             </h2>
             <p className="text-base text-blue-100/90 leading-relaxed font-medium">
-              Manage workouts, diet plans, attendance, and memberships all in one place. Streamline your gym experience and tracking suite.
+              A comprehensive suite to manage workouts, plan nutrition, monitor client progress, and run gym operations seamlessly.
             </p>
           </div>
 
-          {/* Footer Text */}
-          <div className="text-xs text-blue-200/70 font-semibold">
-            © {new Date().getFullYear()} BeFit CRM. All rights reserved.
+          <div className="text-xs text-blue-100/70 font-semibold">
+            © {new Date().getFullYear()} BeFit Inc. All rights reserved.
           </div>
         </div>
-
-        {/* Decorative ambient glowing lights */}
-        <div className="absolute -top-40 -left-40 w-96 h-96 bg-blue-400/20 rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-cyan-400/20 rounded-full blur-3xl" />
       </div>
 
-      {/* RIGHT SIDE: Centered Login Card */}
+      {/* RIGHT SIDE: Perfectly centered login card */}
       <div className="w-full lg:w-1/2 flex flex-col justify-center items-center px-6 sm:px-12 py-12 relative">
+        
+        {/* Soft background decor for modern depth */}
+        <div className="absolute top-20 right-20 w-80 h-80 bg-blue-100/30 rounded-full blur-3xl -z-10 animate-pulse duration-[8000ms]" />
+        <div className="absolute bottom-20 left-20 w-80 h-80 bg-cyan-100/30 rounded-full blur-3xl -z-10 animate-pulse duration-[10000ms]" />
 
-        {/* Decorative shapes for Light Mode glassmorphism look */}
-        <div className="absolute top-20 right-20 w-72 h-72 bg-blue-200/20 rounded-full blur-3xl -z-10 animate-pulse duration-[6000ms]" />
-        <div className="absolute bottom-20 left-20 w-72 h-72 bg-cyan-200/20 rounded-full blur-3xl -z-10 animate-pulse duration-[8000ms]" />
-
-        <div className="w-full max-w-md bg-white/70 backdrop-blur-xl border border-white/60 shadow-[0_20px_50px_rgba(59,130,246,0.08)] rounded-3xl p-8 sm:p-10 transition-all duration-300 hover:shadow-[0_20px_50px_rgba(59,130,246,0.12)]">
-
-          {/* Logo brand & Welcome Back */}
+        {/* Center Login Card Container with Fade-in Animation */}
+        <div className="w-full max-w-[500px] bg-white border border-slate-100 shadow-[0_20px_50px_rgba(59,130,246,0.06)] rounded-[20px] p-8 sm:p-12 animate-in fade-in zoom-in-95 duration-500 transition-all">
+          
+          {/* Header section with emoji logo */}
           <div className="flex flex-col items-center mb-8">
-            <div className="lg:hidden flex items-center gap-2 mb-6 bg-gradient-to-tr from-blue-600 to-cyan-400 text-white px-4 py-2 rounded-2xl shadow-lg shadow-blue-500/10">
-              <Dumbbell className="w-5 h-5" />
-              <span className="text-base font-black tracking-tight">BeFit</span>
+            <div className="flex items-center gap-3 mb-6 bg-gradient-to-tr from-blue-600 to-cyan-500 text-white px-5 py-3 rounded-2xl shadow-lg shadow-blue-500/10">
+              <span className="text-2xl leading-none">🏋️</span>
+              <div>
+                <h1 className="text-base font-black tracking-tight leading-none text-white">
+                  BEFIT
+                </h1>
+                <span className="text-[9px] text-blue-100 font-bold uppercase tracking-wider block mt-1">
+                  Fitness Management System
+                </span>
+              </div>
             </div>
 
-            <h3 className="text-2xl font-black text-slate-850 tracking-tight text-center">
+            <h3 className="text-2xl font-black text-slate-800 tracking-tight text-center">
               Welcome Back
             </h3>
-            <p className="text-xs text-slate-500 font-medium mt-2 text-center">
+            <p className="text-xs text-slate-400 font-bold mt-2 text-center">
               Sign in to continue to your account.
             </p>
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-6">
 
-            {/* Identifier Input (Email / Phone / Member ID) */}
+            {/* Email / Phone / Member ID field */}
             <div className="space-y-2">
               <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
                 Email / Phone / Member ID
               </label>
-              <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-500 transition-colors">
-                  <Mail className="w-4.5 h-4.5" />
+              
+              <div className="relative flex items-center group">
+                {/* Icon wrapper - perfectly vertically centered and spaced */}
+                <div className="absolute left-[18px] text-slate-400 group-focus-within:text-blue-500 transition-colors pointer-events-none flex items-center justify-center">
+                  <Mail className="w-5 h-5" />
                 </div>
+                
+                {/* Input element - 56px height, 14px border radius, 56px left padding */}
                 <input
                   type="text"
                   required
@@ -163,22 +168,24 @@ const Login = () => {
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
                   disabled={isLoading}
-                  className="w-full pl-11 pr-4 py-3.5 bg-slate-50/50 hover:bg-slate-50 border border-slate-200/80 rounded-2xl text-slate-800 text-sm font-semibold placeholder-slate-400 focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all duration-200"
+                  className="w-full h-14 pl-[56px] pr-4 bg-white border border-slate-200 rounded-[14px] text-slate-800 text-sm font-semibold placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all duration-200"
                 />
               </div>
             </div>
 
-            {/* Password Input */}
+            {/* Password Field */}
             <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
-                  Password
-                </label>
-              </div>
-              <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-500 transition-colors">
-                  <Lock className="w-4.5 h-4.5" />
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
+                Password
+              </label>
+              
+              <div className="relative flex items-center group">
+                {/* Left Lock Icon - perfectly centered */}
+                <div className="absolute left-[18px] text-slate-400 group-focus-within:text-blue-500 transition-colors pointer-events-none flex items-center justify-center">
+                  <Lock className="w-5 h-5" />
                 </div>
+                
+                {/* Password Input - 56px height, 14px border radius, 56px left and right padding */}
                 <input
                   type={showPassword ? "text" : "password"}
                   required
@@ -186,68 +193,70 @@ const Login = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   disabled={isLoading}
-                  className="w-full pl-11 pr-12 py-3.5 bg-slate-50/50 hover:bg-slate-50 border border-slate-200/80 rounded-2xl text-slate-800 text-sm font-semibold placeholder-slate-400 focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all duration-200"
+                  className="w-full h-14 pl-[56px] pr-[56px] bg-white border border-slate-200 rounded-[14px] text-slate-800 text-sm font-semibold placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all duration-200"
                 />
+                
+                {/* Right Eye toggle - perfectly centered */}
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   disabled={isLoading}
-                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-650 transition-colors"
+                  className="absolute right-[18px] text-slate-400 hover:text-slate-650 transition-colors flex items-center justify-center cursor-pointer"
                 >
                   {showPassword ? (
-                    <EyeOff className="w-4.5 h-4.5" />
+                    <EyeOff className="w-5 h-5" />
                   ) : (
-                    <Eye className="w-4.5 h-4.5" />
+                    <Eye className="w-5 h-5" />
                   )}
                 </button>
               </div>
             </div>
 
-            {/* Checkbox and Forgot Password */}
-            <div className="flex items-center justify-between text-xs pt-1">
-              <label className="flex items-center gap-2.5 font-semibold text-slate-600 cursor-pointer group select-none">
+            {/* Remember Me and Forgot Password in one aligned row */}
+            <div className="flex items-center justify-between text-xs font-bold pt-1">
+              <label className="flex items-center gap-2.5 text-slate-500 cursor-pointer group select-none">
                 <input
                   type="checkbox"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
                   disabled={isLoading}
-                  className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500/20 focus:ring-2 cursor-pointer transition"
+                  className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500/20 focus:ring-2 cursor-pointer transition-all duration-150"
                 />
-                <span className="group-hover:text-slate-800 transition-colors">Remember Me</span>
+                <span className="group-hover:text-slate-700 transition-colors">Remember Me</span>
               </label>
 
               <button
                 type="button"
                 onClick={() => toast.info("Forgot Password flow needs gym administrator reset.")}
                 disabled={isLoading}
-                className="font-bold text-blue-600 hover:text-blue-700 transition-colors hover:underline cursor-pointer"
+                className="text-blue-600 hover:text-blue-700 transition-colors hover:underline cursor-pointer"
               >
                 Forgot Password?
               </button>
             </div>
 
-            {/* Login Button with subtle Loading Animation */}
+            {/* Sign In Button: Blue gradient, height 56px, roundedCorners, white text, arrow, animation */}
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full mt-6 py-4 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white rounded-2xl text-sm font-black uppercase tracking-wider shadow-lg shadow-blue-500/15 hover:shadow-xl hover:shadow-blue-500/25 active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-85 disabled:cursor-not-allowed"
+              className="group w-full h-14 mt-6 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white rounded-[14px] text-sm font-black uppercase tracking-wider shadow-lg shadow-blue-500/15 hover:shadow-xl hover:shadow-blue-500/25 active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-85 disabled:cursor-not-allowed"
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <Loader2 className="w-5 h-5 animate-spin" />
                   <span>Signing In...</span>
                 </>
               ) : (
                 <>
-                  <span>Login</span>
-                  <ArrowRight className="w-4.5 h-4.5 group-hover:translate-x-1 transition-transform" />
+                  <span>Sign In</span>
+                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-200" />
                 </>
               )}
             </button>
           </form>
 
           {/* Need help text */}
-          <div className="mt-8 pt-6 border-t border-slate-100 flex items-center justify-center gap-2 text-xs text-slate-500 font-semibold text-center">
+          <div className="mt-8 pt-6 border-t border-slate-100 flex items-center justify-center gap-2 text-xs text-slate-400 font-bold text-center">
             <HelpCircle className="w-4 h-4 text-slate-400 shrink-0" />
             <span>Need help? Contact your gym administrator.</span>
           </div>
