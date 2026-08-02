@@ -90,7 +90,9 @@ const DashboardLayout = ({ children }) => {
   };
 
   const handleLogout = () => {
-    toast.success("Successfully logged out (demo mode)");
+    localStorage.removeItem("gym_role");
+    toast.success("Successfully logged out");
+    navigate("/login");
   };
 
   const handleQuickAction = (path) => {

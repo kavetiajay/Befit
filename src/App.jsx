@@ -2,7 +2,11 @@ import React from "react";
 import { HashRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "sonner";
 import { CRMProvider } from "./context/CRMContext";
+
 import DashboardLayout from "./layouts/DashboardLayout";
+
+import Login from "./pages/Login";
+
 import Dashboard from "./pages/Dashboard";
 import Clients from "./pages/Clients";
 import AddClient from "./pages/AddClient";
@@ -22,13 +26,27 @@ function App() {
     <CRMProvider>
       <Router>
         <Routes>
-          {/* Client Dashboard Root */}
+
+          {/* Default Route */}
+          <Route path="/" element={<Navigate to="/login" replace />} />
+
+          {/* Login */}
+          <Route path="/login" element={<Login />} />
+
+          {/* Client */}
           <Route path="/client" element={<ClientDashboard />} />
           <Route path="/client/dashboard" element={<ClientDashboard />} />
 
-          {/* Trainer Portal routes wrapped in DashboardLayout */}
-          <Route path="/" element={<DashboardLayout><Dashboard /></DashboardLayout>} />
-          <Route path="/trainer/dashboard" element={<DashboardLayout><Dashboard /></DashboardLayout>} />
+          {/* Trainer */}
+          <Route
+            path="/trainer/dashboard"
+            element={
+              <DashboardLayout>
+                <Dashboard />
+              </DashboardLayout>
+            }
+          />
+
           <Route path="/clients" element={<DashboardLayout><Clients /></DashboardLayout>} />
           <Route path="/clients/add" element={<DashboardLayout><AddClient /></DashboardLayout>} />
           <Route path="/clients/:id" element={<DashboardLayout><ClientProfile /></DashboardLayout>} />
@@ -40,9 +58,13 @@ function App() {
           <Route path="/reports" element={<DashboardLayout><Reports /></DashboardLayout>} />
           <Route path="/notifications" element={<DashboardLayout><Notifications /></DashboardLayout>} />
           <Route path="/settings" element={<DashboardLayout><Settings /></DashboardLayout>} />
-          <Route path="*" element={<Navigate to="/" />} />
+
+          {/* Catch all */}
+          <Route path="*" element={<Navigate to="/login" replace />} />
+
         </Routes>
       </Router>
+
       <Toaster position="top-right" richColors theme="system" />
     </CRMProvider>
   );
