@@ -168,6 +168,7 @@ const Login = () => {
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
                   disabled={isLoading}
+                  style={{ paddingLeft: "56px" }}
                   className="w-full h-14 pl-[56px] pr-4 bg-white border border-slate-200 rounded-[14px] text-slate-800 text-sm font-semibold placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all duration-200"
                 />
               </div>
@@ -193,6 +194,7 @@ const Login = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   disabled={isLoading}
+                  style={{ paddingLeft: "56px", paddingRight: "56px" }}
                   className="w-full h-14 pl-[56px] pr-[56px] bg-white border border-slate-200 rounded-[14px] text-slate-800 text-sm font-semibold placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all duration-200"
                 />
                 
