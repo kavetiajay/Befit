@@ -57,7 +57,7 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex bg-[#f8fafc] text-slate-800 font-sans antialiased overflow-hidden">
+    <div className="min-h-screen flex bg-[#f8fafc] text-slate-800 font-sans antialiased overflow-hidden login-page-container">
       
       {/* LEFT SIDE: Premium blurred Gym Image & soft blue gradient overlay (Desktop Only) */}
       <div className="hidden lg:flex lg:w-1/2 relative bg-slate-900 overflow-hidden select-none">
@@ -114,14 +114,14 @@ const Login = () => {
       </div>
 
       {/* RIGHT SIDE: Perfectly centered login card */}
-      <div className="w-full lg:w-1/2 flex flex-col justify-center items-center px-6 sm:px-12 py-12 relative">
+      <div className="w-full lg:w-1/2 flex flex-col justify-center items-center px-6 sm:px-12 py-12 relative login-right-panel">
         
         {/* Soft background decor for modern depth */}
-        <div className="absolute top-20 right-20 w-80 h-80 bg-blue-100/30 rounded-full blur-3xl -z-10 animate-pulse duration-[8000ms]" />
-        <div className="absolute bottom-20 left-20 w-80 h-80 bg-cyan-100/30 rounded-full blur-3xl -z-10 animate-pulse duration-[10000ms]" />
+        <div className="absolute top-20 right-20 w-80 h-80 bg-blue-100/30 rounded-full blur-3xl -z-10 animate-pulse duration-[8000ms] login-decor" />
+        <div className="absolute bottom-20 left-20 w-80 h-80 bg-cyan-100/30 rounded-full blur-3xl -z-10 animate-pulse duration-[10000ms] login-decor" />
 
         {/* Center Login Card Container with Fade-in Animation */}
-        <div className="w-full max-w-[500px] bg-white border border-slate-100 shadow-[0_20px_50px_rgba(59,130,246,0.06)] rounded-[20px] p-8 sm:p-12 animate-in fade-in zoom-in-95 duration-500 transition-all">
+        <div className="w-full max-w-[500px] bg-white border border-slate-100 shadow-[0_20px_50px_rgba(59,130,246,0.06)] rounded-[20px] p-8 sm:p-12 animate-in fade-in zoom-in-95 duration-500 transition-all login-card-container">
           
           {/* Header section with emoji logo */}
           <div className="flex flex-col items-center mb-8">
@@ -137,10 +137,10 @@ const Login = () => {
               </div>
             </div>
 
-            <h3 className="text-2xl font-black text-slate-800 tracking-tight text-center">
+            <h3 className="text-2xl font-black text-slate-800 tracking-tight text-center login-title">
               Welcome Back
             </h3>
-            <p className="text-xs text-slate-400 font-bold mt-2 text-center">
+            <p className="text-xs text-slate-400 font-bold mt-2 text-center login-subtitle">
               Sign in to continue to your account.
             </p>
           </div>
@@ -150,13 +150,13 @@ const Login = () => {
 
             {/* Email / Phone / Member ID field */}
             <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block login-label">
                 Email / Phone / Member ID
               </label>
               
               <div className="relative flex items-center group">
                 {/* Icon wrapper - perfectly vertically centered and spaced */}
-                <div className="absolute left-[18px] text-slate-400 group-focus-within:text-blue-500 transition-colors pointer-events-none flex items-center justify-center">
+                <div className="absolute left-[18px] text-slate-400 group-focus-within:text-blue-500 transition-colors pointer-events-none flex items-center justify-center login-input-icon-wrapper">
                   <Mail className="w-5 h-5" />
                 </div>
                 
@@ -169,20 +169,20 @@ const Login = () => {
                   onChange={(e) => setIdentifier(e.target.value)}
                   disabled={isLoading}
                   style={{ paddingLeft: "56px" }}
-                  className="w-full h-14 pl-[56px] pr-4 bg-white border border-slate-200 rounded-[14px] text-slate-800 text-sm font-semibold placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all duration-200"
+                  className="w-full h-14 pl-[56px] pr-4 bg-white border border-slate-200 rounded-[14px] text-slate-800 text-sm font-semibold placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all duration-200 login-input"
                 />
               </div>
             </div>
 
             {/* Password Field */}
             <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block login-label">
                 Password
               </label>
               
               <div className="relative flex items-center group">
                 {/* Left Lock Icon - perfectly centered */}
-                <div className="absolute left-[18px] text-slate-400 group-focus-within:text-blue-500 transition-colors pointer-events-none flex items-center justify-center">
+                <div className="absolute left-[18px] text-slate-400 group-focus-within:text-blue-500 transition-colors pointer-events-none flex items-center justify-center login-input-icon-wrapper">
                   <Lock className="w-5 h-5" />
                 </div>
                 
@@ -195,7 +195,7 @@ const Login = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   disabled={isLoading}
                   style={{ paddingLeft: "56px", paddingRight: "56px" }}
-                  className="w-full h-14 pl-[56px] pr-[56px] bg-white border border-slate-200 rounded-[14px] text-slate-800 text-sm font-semibold placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all duration-200"
+                  className="w-full h-14 pl-[56px] pr-[56px] bg-white border border-slate-200 rounded-[14px] text-slate-800 text-sm font-semibold placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all duration-200 login-input"
                 />
                 
                 {/* Right Eye toggle - perfectly centered */}
@@ -203,7 +203,7 @@ const Login = () => {
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   disabled={isLoading}
-                  className="absolute right-[18px] text-slate-400 hover:text-slate-650 transition-colors flex items-center justify-center cursor-pointer"
+                  className="absolute right-[18px] text-slate-400 hover:text-slate-650 transition-colors flex items-center justify-center cursor-pointer login-password-toggle"
                 >
                   {showPassword ? (
                     <EyeOff className="w-5 h-5" />
@@ -216,7 +216,7 @@ const Login = () => {
 
             {/* Remember Me and Forgot Password in one aligned row */}
             <div className="flex items-center justify-between text-xs font-bold pt-1">
-              <label className="flex items-center gap-2.5 text-slate-500 cursor-pointer group select-none">
+              <label className="flex items-center gap-2.5 text-slate-500 cursor-pointer group select-none login-remember-label">
                 <input
                   type="checkbox"
                   checked={rememberMe}
@@ -224,14 +224,14 @@ const Login = () => {
                   disabled={isLoading}
                   className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500/20 focus:ring-2 cursor-pointer transition-all duration-150"
                 />
-                <span className="group-hover:text-slate-700 transition-colors">Remember Me</span>
+                <span className="group-hover:text-slate-700 transition-colors login-remember-text">Remember Me</span>
               </label>
 
               <button
                 type="button"
                 onClick={() => toast.info("Forgot Password flow needs gym administrator reset.")}
                 disabled={isLoading}
-                className="text-blue-600 hover:text-blue-700 transition-colors hover:underline cursor-pointer"
+                className="text-blue-600 hover:text-blue-700 transition-colors hover:underline cursor-pointer login-forgot-password"
               >
                 Forgot Password?
               </button>
@@ -258,8 +258,8 @@ const Login = () => {
           </form>
 
           {/* Need help text */}
-          <div className="mt-8 pt-6 border-t border-slate-100 flex items-center justify-center gap-2 text-xs text-slate-400 font-bold text-center">
-            <HelpCircle className="w-4 h-4 text-slate-400 shrink-0" />
+          <div className="mt-8 pt-6 border-t border-slate-100 flex items-center justify-center gap-2 text-xs text-slate-400 font-bold text-center login-footer-text">
+            <HelpCircle className="w-4 h-4 text-slate-400 shrink-0 login-footer-icon" />
             <span>Need help? Contact your gym administrator.</span>
           </div>
 

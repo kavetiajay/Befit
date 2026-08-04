@@ -260,3 +260,166 @@ textarea:focus {
   color: #71717a;
 }
 
+/* Custom Login Responsive Styles and Transitions */
+.login-page-container,
+.login-right-panel,
+.login-card-container,
+.login-title,
+.login-subtitle,
+.login-label,
+.login-input,
+.login-input-icon-wrapper,
+.login-password-toggle,
+.login-remember-label,
+.login-remember-text,
+.login-forgot-password,
+.login-footer-text,
+.login-footer-icon {
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@media (max-width: 1023px) {
+  /* Use the gym background image from desktop left panel as a full-screen mobile background */
+  .login-right-panel {
+    position: relative !important;
+    overflow: hidden !important;
+    background: none !important; /* Override any bg color */
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    min-height: 100vh !important;
+  }
+
+  /* Full screen gym image with soft blur */
+  .login-right-panel::before {
+    content: "" !important;
+    position: absolute !important;
+    inset: 0 !important;
+    background-image: url('/login_fitness_bg.png') !important;
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    filter: blur(6px) !important; /* soft blur effect */
+    transform: scale(1.05) !important; /* prevent blurred edges */
+    z-index: 1 !important;
+  }
+
+  /* Dark blue overlay */
+  .login-right-panel::after {
+    content: "" !important;
+    position: absolute !important;
+    inset: 0 !important;
+    background: linear-gradient(135deg, rgba(8, 47, 73, 0.85), rgba(15, 23, 42, 0.9)) !important;
+    z-index: 2 !important;
+  }
+
+  /* Keep the login card centered and on top */
+  .login-card-container {
+    position: relative !important;
+    z-index: 10 !important;
+    
+    /* Make the login card a premium glassmorphism card with:
+       * semi-transparent dark background,
+       * backdrop blur 14px,
+       * 1px white transparent border,
+       * 24px border radius,
+       * soft shadow.
+    */
+    background: rgba(15, 23, 42, 0.45) !important;
+    backdrop-filter: blur(14px) !important;
+    -webkit-backdrop-filter: blur(14px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    border-radius: 24px !important;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4) !important;
+  }
+
+  /* Hide desktop decor lights on mobile */
+  .login-decor {
+    display: none !important;
+  }
+
+  /* Mobile text colors to white/light gray for readability */
+  .login-title {
+    color: #ffffff !important;
+  }
+
+  .login-subtitle {
+    color: #e2e8f0 !important;
+  }
+
+  .login-label {
+    color: #cbd5e1 !important;
+  }
+
+  /* Inputs inside glassmorphic card on mobile */
+  .login-input {
+    background-color: rgba(255, 255, 255, 0.08) !important;
+    border-color: rgba(255, 255, 255, 0.15) !important;
+    color: #ffffff !important;
+  }
+
+  .login-input::placeholder {
+    color: rgba(255, 255, 255, 0.4) !important;
+  }
+  
+  .login-input:focus {
+    background-color: rgba(255, 255, 255, 0.12) !important;
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.35) !important;
+  }
+
+  /* Icons and toggle button */
+  .login-input-icon-wrapper {
+    color: rgba(255, 255, 255, 0.6) !important;
+  }
+
+  .login-password-toggle {
+    color: rgba(255, 255, 255, 0.6) !important;
+  }
+
+  .login-password-toggle:hover {
+    color: #ffffff !important;
+  }
+
+  /* Remember me checkbox and text */
+  .login-remember-label {
+    color: #cbd5e1 !important;
+  }
+
+  .login-remember-text {
+    color: #cbd5e1 !important;
+  }
+
+  .login-remember-label:hover .login-remember-text {
+    color: #ffffff !important;
+  }
+
+  /* Forgot password link readability */
+  .login-forgot-password {
+    color: #60a5fa !important;
+  }
+
+  .login-forgot-password:hover {
+    color: #93c5fd !important;
+  }
+
+  /* Keep footer text at the bottom of the screen */
+  .login-footer-text {
+    position: absolute !important;
+    bottom: 24px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: calc(100% - 48px) !important;
+    max-width: 500px !important;
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+    border-top: none !important;
+    color: #cbd5e1 !important;
+    z-index: 10 !important;
+  }
+
+  .login-footer-icon {
+    color: #cbd5e1 !important;
+  }
+}
+
