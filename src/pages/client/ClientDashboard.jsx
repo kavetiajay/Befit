@@ -349,6 +349,23 @@ const ClientDashboard = () => {
   // Retrieve the logged-in/active client, falling back to the first client in the system
   const client = clients?.find(c => c.id === localStorage.getItem("gym_client_id") || c.name === "Ajay Kaveti" || c.email === "ajay@befit.com") || clients?.[0];
 
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const timeGreeting = React.useMemo(() => {
+    const hour = currentTime.getHours();
+    if (hour < 12) return "Good Morning";
+    if (hour < 17) return "Good Afternoon";
+    return "Good Evening";
+  }, [currentTime]);
+
+  const welcomeSubtitle = `Welcome back! You are pacing well on your ${client?.goal?.toLowerCase() || 'fitness'} milestones. Stay fueled, hydra-charged, and crush today's lift split.`;
+  const motivationalQuote = "Consistency beats motivation. Small daily improvements lead to massive results!";
+
   const [showRoleDropdown, setShowRoleDropdown] = useState(false);
   const [activeTab, setActiveTab] = useState("Dashboard");
   
@@ -470,8 +487,12 @@ const ClientDashboard = () => {
   ];
 
   const handleLogout = () => {
-    toast.error("Signed out from BeFit Companion (demo mode)");
-    navigate("/");
+    localStorage.removeItem("gym_auth");
+    localStorage.removeItem("gym_role");
+    sessionStorage.removeItem("gym_auth");
+    sessionStorage.removeItem("gym_role");
+    toast.success("Successfully logged out");
+    navigate("/login");
   };
 
   if (!client) {
@@ -614,17 +635,24 @@ const ClientDashboard = () => {
           <div className="space-y-6 animate-in fade-in duration-300">
             
             {/* Hero Welcome Banner */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-6 sm:p-8 bg-gradient-to-br from-[#111827] via-[#0b101c] to-[#0c0f1c] border border-zinc-850 rounded-3xl relative overflow-hidden text-left gap-4">
-              <div className="relative z-10 space-y-2">
-                <span className="text-[10px] font-black text-cyan-400 uppercase tracking-widest bg-cyan-400/10 px-3 py-1 rounded-full border border-cyan-400/20">
-                  Ready to achieve your fitness goals today?
-                </span>
-                <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-white mt-1">
-                  Good Morning, {client.name} 👋
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-6 sm:p-8 bg-gradient-to-br from-[#1e293b] via-[#0f172a] to-[#09090b] border border-zinc-850 rounded-3xl relative overflow-hidden text-left gap-4">
+              <div className="absolute -top-24 -right-24 w-60 h-60 bg-blue-600/10 rounded-full blur-3xl" />
+              <div className="absolute -bottom-24 -left-24 w-60 h-60 bg-cyan-500/10 rounded-full blur-3xl" />
+              
+              <div className="relative z-10 space-y-3">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-550/15 border border-cyan-500/30 text-cyan-300 text-[10px] font-black uppercase tracking-wider">
+                  ✨ {currentTime.toLocaleDateString("en-US", { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' })} • {currentTime.toLocaleTimeString("en-US", { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                </div>
+                <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-white">
+                  {timeGreeting}, {client?.name || "Client"} 👋
                 </h1>
-                <p className="text-xs text-slate-400 max-w-md font-medium leading-relaxed">
-                  Welcome back! You are pacing well on your {client.goal?.toLowerCase() || 'fitness'} milestones. Stay fueled, hydra-charged, and crush today's lift split.
+                <p className="text-xs text-slate-355 max-w-md font-medium leading-relaxed">
+                  {welcomeSubtitle}
                 </p>
+                <div className="pt-2 border-t border-slate-800/50 max-w-md">
+                  <span className="text-[9px] text-slate-400 font-bold uppercase block tracking-wider mb-1">DAILY MOTIVATION</span>
+                  <p className="text-xs text-cyan-350 italic font-bold">"{motivationalQuote}"</p>
+                </div>
               </div>
 
               {/* Float Metadata Summary Block with Role Dropdown */}
@@ -634,15 +662,15 @@ const ClientDashboard = () => {
                   className="flex items-center gap-4 bg-zinc-900/60 backdrop-blur-md border border-[#1e293b]/40 p-4 rounded-2xl relative z-10 shrink-0 shadow-xl hover:bg-zinc-800 transition cursor-pointer text-left"
                 >
                   <img
-                    src={client.photo || "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&q=80&w=120"}
-                    alt={client.name}
+                    src={client?.photo || "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&q=80&w=120"}
+                    alt={client?.name || "Client"}
                     className="w-14 h-14 rounded-xl object-cover border border-blue-500/20"
                   />
                   <div className="text-left text-xs space-y-0.5">
                     <span className="text-[10px] font-black text-slate-500 block uppercase tracking-wider">Client Mode 👤</span>
-                    <span className="font-extrabold text-blue-400 flex items-center gap-1 mt-0.5">🔥 {client.name.split(' ')[0]}</span>
+                    <span className="font-extrabold text-blue-400 flex items-center gap-1 mt-0.5">🔥 {client?.name?.split(' ')[0] || "Client"}</span>
                     <div className="flex items-center gap-3.5 mt-1.5 text-[10px] font-semibold text-slate-350">
-                      <div>Goal: <strong className="text-white">{client.goal || 'General Fitness'}</strong></div>
+                      <div>Goal: <strong className="text-white">{client?.goal || 'General Fitness'}</strong></div>
                     </div>
                   </div>
                 </button>

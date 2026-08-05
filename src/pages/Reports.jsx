@@ -17,6 +17,7 @@ import {
   AreaChart,
   Area
 } from "recharts";
+import { useNavigate } from "react-router-dom";
 import {
   FileText,
   Printer,
@@ -25,8 +26,10 @@ import {
   AlertCircle
 } from "lucide-react";
 import { toast } from "sonner";
+import { EmptyState } from "../components/FeedbackStates";
 
 const Reports = () => {
+  const navigate = useNavigate();
   const { clients, payments, attendance } = useCRM();
 
   const goalData = useMemo(() => {
@@ -76,6 +79,28 @@ const Reports = () => {
   const handlePrint = () => {
     window.print();
   };
+
+  if (clients.length === 0) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold font-display text-slate-800 dark:text-zinc-50 flex items-center gap-2">
+            Analytical Reports
+          </h1>
+          <p className="text-slate-400 dark:text-zinc-500 text-sm">
+            Export or print deep-dive fitness metrics, goal mappings, and billing stats.
+          </p>
+        </div>
+        <EmptyState
+          title="No Data Available for Reports"
+          description="Register athletes and log payments to populate reports and charts."
+          actionText="Register Athlete"
+          onAction={() => navigate("/clients/add")}
+          icon={TrendingUp}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

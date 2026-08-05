@@ -14,10 +14,29 @@ import {
 } from "lucide-react";
 import { useCRM } from "../context/CRMContext";
 
+import { AnimatedNumber } from "../components/AnimatedNumber";
+
 const Dashboard = () => {
-  const { clients, attendance, payments } = useCRM();
+  const { clients, attendance, payments, settings } = useCRM();
   const navigate = useNavigate();
   const todayStr = new Date().toISOString().split("T")[0];
+
+  const [currentTime, setCurrentTime] = React.useState(new Date());
+
+  React.useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const timeGreeting = useMemo(() => {
+    const hour = currentTime.getHours();
+    if (hour < 12) return "Good Morning";
+    if (hour < 17) return "Good Afternoon";
+    return "Good Evening";
+  }, [currentTime]);
+
+  const welcomeMessage = `Welcome back to the BeFit Gym console, Coach ${settings?.trainerName?.split(" ")?.[1] || "Marcus"}. Let's make today's training sessions legendary!`;
+  const motivationalQuote = "Consistency beats motivation. Keep showing up every single day!";
 
   // Calculate Metrics
   const metrics = useMemo(() => {
@@ -152,19 +171,25 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300 pb-12">
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-100 dark:border-zinc-800 pb-5 gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-black font-display text-slate-800 dark:text-zinc-50 flex items-center gap-2">
-            Dashboard
+      {/* Dynamic Greetings Header Banner */}
+      <div className="bg-gradient-to-br from-[#1e293b] via-[#0f172a] to-[#09090b] text-white p-6 sm:p-8 rounded-3xl border border-slate-800/20 shadow-soft relative overflow-hidden text-left mb-6">
+        <div className="absolute -top-24 -right-24 w-60 h-60 bg-blue-600/10 rounded-full blur-3xl" />
+        <div className="absolute -bottom-24 -left-24 w-60 h-60 bg-cyan-500/10 rounded-full blur-3xl" />
+        
+        <div className="relative z-10 space-y-3">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-550/15 border border-blue-500/30 text-blue-300 text-[10px] font-black uppercase tracking-wider">
+            ✨ {currentTime.toLocaleDateString("en-US", { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' })} • {currentTime.toLocaleTimeString("en-US", { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+          </div>
+          <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-white">
+            {timeGreeting}, Coach {settings.trainerName?.split(" ")[1] || "Marcus"} 👋
           </h1>
-          <p className="text-slate-400 dark:text-zinc-500 text-xs mt-0.5">
-            Simplify daily check-ins, record collections, manage active timetables, and monitor notifications.
+          <p className="text-xs sm:text-sm text-slate-350 font-medium leading-relaxed max-w-2xl">
+            {welcomeMessage}
           </p>
-        </div>
-        <div className="flex items-center gap-2 bg-slate-50 dark:bg-zinc-900 border border-slate-205 dark:border-zinc-800 px-4 py-2 rounded-2xl text-xs font-bold text-slate-650 dark:text-zinc-400 shadow-sm shrink-0">
-          <CalendarDays className="w-4 h-4 text-blue-500" />
-          <span>{new Date().toLocaleDateString("en-US", { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' })}</span>
+          <div className="pt-2 border-t border-slate-800/50 max-w-md">
+            <span className="text-[9px] text-slate-400 font-bold uppercase block tracking-wider mb-1">DAILY MOTIVATION</span>
+            <p className="text-xs text-blue-300 italic font-bold">"{motivationalQuote}"</p>
+          </div>
         </div>
       </div>
 
@@ -176,7 +201,7 @@ const Dashboard = () => {
           return (
             <div
               key={i}
-              className="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-850 rounded-3xl p-5 hover:shadow-lg hover:border-slate-300 dark:hover:border-zinc-750 transition-all duration-300 relative text-left group"
+              className="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-850 rounded-3xl p-5 hover:shadow-lg hover:border-slate-300 dark:hover:border-zinc-750 transition-all duration-300 relative text-left group hover:-translate-y-1"
             >
               <div className="flex justify-between items-start">
                 <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${kpi.color} border border-current/10 shrink-0`}>
@@ -190,7 +215,7 @@ const Dashboard = () => {
               </div>
               <div className="mt-4">
                 <h3 className="text-2xl font-black font-display text-slate-900 dark:text-zinc-50 leading-none">
-                  {kpi.val}
+                  <AnimatedNumber value={kpi.val} />
                 </h3>
                 <p className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 mt-2 uppercase tracking-wider">
                   {kpi.title}

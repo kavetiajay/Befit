@@ -45,6 +45,7 @@ import {
 } from "recharts";
 import { useCRM } from "../context/CRMContext";
 import { toast } from "sonner";
+import { AnimatedNumber } from "../components/AnimatedNumber";
 
 const ClientProfile = () => {
   const { id } = useParams();
@@ -410,25 +411,25 @@ const ClientProfile = () => {
           <img
             src={client.photo}
             alt={client.name}
-            className="w-16 h-16 rounded-full object-cover border-2 border-slate-200 dark:border-zinc-800 shadow-md bg-slate-100"
+            className="w-20 h-20 rounded-full object-cover border-2 border-blue-500/20 dark:border-blue-500/30 shadow-md bg-slate-100 group-hover:scale-105 transition-transform"
           />
           <div>
-            <h1 className="text-xl font-bold font-display text-slate-800 dark:text-zinc-50 leading-tight">
+            <h1 className="text-xl font-bold font-display text-slate-800 dark:text-zinc-50 leading-tight flex items-center gap-2">
               {client.name}
             </h1>
-            <p className="text-xs text-slate-400 dark:text-zinc-500 mt-0.5">
+            <p className="text-xs text-slate-400 dark:text-zinc-500 mt-1">
               Goal: <span className="font-semibold text-slate-600 dark:text-zinc-350">{client.goal}</span>
             </p>
-            <div className="flex items-center gap-2 mt-2">
-              <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${
-                client.status === "Active" ? "bg-emerald-500/10 text-emerald-500" :
-                client.status === "Pending Payment" ? "bg-amber-500/10 text-amber-500" :
-                "bg-red-500/10 text-red-500"
+            <div className="flex flex-wrap items-center gap-2 mt-2">
+              <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
+                client.status === "Active" ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20" :
+                client.status === "Pending Payment" ? "bg-amber-500/10 text-amber-500 border border-amber-500/20" :
+                "bg-red-500/10 text-red-500 border border-red-500/20"
               }`}>
                 {client.status}
               </span>
-              <span className="text-[10px] font-medium text-slate-400 dark:text-zinc-500">
-                Plan: {client.membership}
+              <span className="inline-flex items-center gap-1 text-[10px] font-black text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/25 px-2 py-0.5 rounded-lg border border-blue-500/10 shadow-sm uppercase tracking-wider">
+                🏆 {client.membership}
               </span>
             </div>
           </div>
@@ -498,16 +499,16 @@ const ClientProfile = () => {
                 {/* Metrics Stats Grid */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                   {[
-                    { name: "Age / Gender", val: `${client.age} yrs / ${client.gender}`, sub: "General status", color: "text-blue-500" },
-                    { name: "Height / Weight", val: `${client.height}cm / ${client.currentWeight}kg`, sub: `Goal: ${client.targetWeight}kg`, color: "text-teal-500" },
-                    { name: "BMI", val: client.bmi, sub: client.bmi > 25 ? "Overweight" : "Normal", color: "text-amber-500" },
-                    { name: "Body Fat / Blood", val: `${client.bodyFat}% / ${client.bloodGroup || "O+"}`, sub: "Tape & diagnostics", color: "text-rose-500" }
+                    { name: "Age / Gender", val: <><AnimatedNumber value={client.age} /> yrs / {client.gender}</>, sub: "General status", color: "text-blue-500" },
+                    { name: "Height / Weight", val: <><AnimatedNumber value={client.height} />cm / <AnimatedNumber value={client.currentWeight} />kg</>, sub: `Goal: ${client.targetWeight}kg`, color: "text-teal-500" },
+                    { name: "BMI", val: <AnimatedNumber value={client.bmi} />, sub: client.bmi > 25 ? "Overweight" : "Normal", color: "text-amber-500" },
+                    { name: "Body Fat / Blood", val: <><AnimatedNumber value={client.bodyFat} />% / {client.bloodGroup || "O+"}</>, sub: "Tape & diagnostics", color: "text-rose-500" }
                   ].map((stat, i) => (
-                    <div key={i} className="p-4 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex flex-col justify-between h-28 shadow-sm">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">{stat.name}</span>
+                    <div key={i} className="p-4 rounded-2xl border border-slate-205 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex flex-col justify-between h-28 shadow-soft hover:-translate-y-0.5 transition-all">
+                      <span className="text-[10px] font-bold text-slate-450 uppercase tracking-wider block">{stat.name}</span>
                       <div>
-                        <h4 className="text-base sm:text-lg font-black text-slate-800 dark:text-zinc-200 leading-none mt-1">{stat.val}</h4>
-                        <p className="text-[10px] text-slate-400 mt-1">{stat.sub}</p>
+                        <h4 className="text-base sm:text-lg font-black text-slate-800 dark:text-zinc-100 leading-none mt-1">{stat.val}</h4>
+                        <p className="text-[10px] text-slate-400 mt-1.5">{stat.sub}</p>
                       </div>
                     </div>
                   ))}

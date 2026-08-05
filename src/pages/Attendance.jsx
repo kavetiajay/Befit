@@ -73,8 +73,16 @@ const Attendance = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search member name..."
-            className="w-full pl-9 pr-3 py-2 border border-slate-205 dark:border-zinc-800 rounded-xl bg-white dark:bg-zinc-950 text-slate-805 dark:text-zinc-200 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/15 transition-all"
+            className="w-full pl-9 pr-8 py-2 border border-slate-205 dark:border-zinc-800 rounded-xl bg-white dark:bg-zinc-950 text-slate-805 dark:text-zinc-200 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/15 transition-all"
           />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery("")}
+              className="absolute right-2.5 top-2.5 text-slate-405 hover:text-slate-600 dark:hover:text-slate-350 cursor-pointer"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
       </div>
 

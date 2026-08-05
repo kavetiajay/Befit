@@ -36,6 +36,17 @@ const Login = () => {
         identifier.trim().toLowerCase() === "trainee@gmail.com" &&
         password === "ajay@08"
       ) {
+        if (rememberMe) {
+          localStorage.setItem("gym_auth", "true");
+          localStorage.setItem("gym_role", "trainer");
+          sessionStorage.removeItem("gym_auth");
+          sessionStorage.removeItem("gym_role");
+        } else {
+          sessionStorage.setItem("gym_auth", "true");
+          sessionStorage.setItem("gym_role", "trainer");
+          localStorage.setItem("gym_role", "trainer");
+          localStorage.removeItem("gym_auth");
+        }
         toast.success("Welcome Trainer!");
         navigate("/trainer/dashboard");
         return;
@@ -46,6 +57,17 @@ const Login = () => {
         identifier.trim().toLowerCase() === "client@gmail.com" &&
         password === "sharan@03"
       ) {
+        if (rememberMe) {
+          localStorage.setItem("gym_auth", "true");
+          localStorage.setItem("gym_role", "client");
+          sessionStorage.removeItem("gym_auth");
+          sessionStorage.removeItem("gym_role");
+        } else {
+          sessionStorage.setItem("gym_auth", "true");
+          sessionStorage.setItem("gym_role", "client");
+          localStorage.setItem("gym_role", "client");
+          localStorage.removeItem("gym_auth");
+        }
         toast.success("Welcome Client!");
         navigate("/client/dashboard");
         return;

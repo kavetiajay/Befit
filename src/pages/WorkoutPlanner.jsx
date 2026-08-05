@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useCRM } from "../context/CRMContext";
+import { useNavigate } from "react-router-dom";
 import {
   Dumbbell,
   User,
@@ -14,8 +15,10 @@ import {
   Moon
 } from "lucide-react";
 import { toast } from "sonner";
+import { EmptyState } from "../components/FeedbackStates";
 
 const WorkoutPlanner = () => {
+  const navigate = useNavigate();
   const {
     clients,
     workouts,
@@ -115,6 +118,28 @@ const WorkoutPlanner = () => {
   const handlePrint = () => {
     window.print();
   };
+
+  if (clients.length === 0) {
+    return (
+      <div className="space-y-6 text-left">
+        <div>
+          <h1 className="text-2xl font-bold font-display text-slate-805 dark:text-zinc-50 flex items-center gap-2">
+            Weekly Workout Planner
+          </h1>
+          <p className="text-slate-400 dark:text-zinc-500 text-sm mt-0.5">
+            Map out training splits, muscle groups, sets, reps and durations.
+          </p>
+        </div>
+        <EmptyState
+          title="No Active Members Loaded"
+          description="Register your gym athletes first in order to build customized weekly workout splits."
+          actionText="Onboard New Member"
+          onAction={() => navigate("/clients/add")}
+          icon={Dumbbell}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

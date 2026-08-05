@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useCRM } from "../context/CRMContext";
+import { useNavigate } from "react-router-dom";
 import {
   Apple,
   User,
@@ -16,8 +17,10 @@ import {
   Coffee
 } from "lucide-react";
 import { toast } from "sonner";
+import { EmptyState } from "../components/FeedbackStates";
 
 const DietPlanner = () => {
+  const navigate = useNavigate();
   const {
     clients,
     diets,
@@ -126,6 +129,28 @@ const DietPlanner = () => {
     { key: "dinner", label: "Dinner" },
     { key: "beforeBed", label: "Before Bed" }
   ];
+
+  if (clients.length === 0) {
+    return (
+      <div className="space-y-6 text-left">
+        <div>
+          <h1 className="text-2xl font-bold font-display text-slate-808 dark:text-zinc-50 flex items-center gap-2">
+            Weekly Diet Planner
+          </h1>
+          <p className="text-slate-400 dark:text-zinc-500 text-sm mt-0.5">
+            Configure macro goals, load diet templates, and customize daily client meals.
+          </p>
+        </div>
+        <EmptyState
+          title="No Active Members Loaded"
+          description="Register your gym athletes first in order to build customized weekly diet schedules."
+          actionText="Onboard New Member"
+          onAction={() => navigate("/clients/add")}
+          icon={Apple}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

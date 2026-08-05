@@ -27,6 +27,7 @@ import {
   X
 } from "lucide-react";
 import { toast } from "sonner";
+import { AnimatedNumber } from "../components/AnimatedNumber";
 
 const Payments = () => {
   const { clients, payments, recordClientPayment, updateClient, settings } = useCRM();
@@ -451,7 +452,13 @@ Generated on ${new Date().toLocaleString("en-IN")}
                   </div>
                   <div className="mt-4">
                     <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-zinc-50 leading-none">
-                      {stat.val}
+                      {stat.val.startsWith("₹") ? (
+                        <>₹<AnimatedNumber value={parseInt(stat.val.replace(/[^0-9]/g, ''))} /></>
+                      ) : stat.val.includes(" ") ? (
+                        <><AnimatedNumber value={parseInt(stat.val)} /> {stat.val.split(" ")[1]}</>
+                      ) : (
+                        stat.val
+                      )}
                     </h3>
                     <p className="text-[9px] text-slate-400 dark:text-zinc-500 mt-2 font-semibold leading-normal">
                       {stat.desc}
@@ -553,8 +560,16 @@ Generated on ${new Date().toLocaleString("en-IN")}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Invoice #, member name, phone..."
-                    className="w-full pl-9 pr-3 py-2.5 border border-slate-205 dark:border-zinc-800 rounded-xl bg-slate-50 dark:bg-zinc-950 text-xs focus:outline-none text-slate-805 dark:text-zinc-200"
+                    className="w-full pl-9 pr-8 py-2.5 border border-slate-205 dark:border-zinc-800 rounded-xl bg-slate-50 dark:bg-zinc-950 text-xs focus:outline-none text-slate-805 dark:text-zinc-200"
                   />
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery("")}
+                      className="absolute right-2.5 top-3 text-slate-405 hover:text-slate-600 dark:hover:text-slate-355 cursor-pointer"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
                 </div>
               </div>
 

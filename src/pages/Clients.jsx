@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import { useCRM } from "../context/CRMContext";
 import { toast } from "sonner";
+import { EmptyState } from "../components/FeedbackStates";
 
 const Clients = () => {
   const { 
@@ -318,8 +319,19 @@ const Clients = () => {
                 setSearch(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full pl-11 pr-4 py-3 border border-slate-200 dark:border-zinc-800 rounded-2xl bg-slate-50/50 dark:bg-zinc-950/20 text-slate-800 dark:text-zinc-150 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/15 focus:border-blue-500/50 transition-all"
+              className="w-full pl-11 pr-10 py-3 border border-slate-200 dark:border-zinc-800 rounded-2xl bg-slate-50/50 dark:bg-zinc-950/20 text-slate-800 dark:text-zinc-150 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/15 focus:border-blue-500/50 transition-all"
             />
+            {search && (
+              <button
+                onClick={() => {
+                  setSearch("");
+                  setCurrentPage(1);
+                }}
+                className="absolute right-3.5 top-3.5 text-slate-405 hover:text-slate-600 dark:hover:text-slate-350 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
           </div>
 
           {/* Quick Sort Options */}
@@ -382,15 +394,15 @@ const Clients = () => {
       </div>
 
       {/* Directory Table Layout (Mindbody Inspired Compact List) */}
-      <div className="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-850 rounded-3xl overflow-hidden shadow-sm no-print">
+      <div className="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-850 rounded-3xl overflow-hidden shadow-soft no-print">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
-            <thead>
-              <tr className="border-b border-slate-100 dark:border-zinc-850 text-slate-400 dark:text-zinc-500 font-bold uppercase tracking-wider text-[10px] bg-slate-50/50 dark:bg-zinc-950/20">
-                <th className="py-4 px-5">Member</th>
-                <th className="py-4 px-5">Billing Status</th>
-                <th className="py-4 px-5">Workout Goal</th>
-                <th className="py-4 px-5 text-right">Quick Actions</th>
+            <thead className="sticky top-0 bg-white dark:bg-zinc-900 z-10">
+              <tr className="border-b border-slate-200 dark:border-zinc-800 text-slate-400 dark:text-zinc-500 font-black uppercase tracking-wider text-[10px] bg-slate-50/60 dark:bg-zinc-950/40">
+                <th className="py-4.5 px-5">Member</th>
+                <th className="py-4.5 px-5">Billing Status</th>
+                <th className="py-4.5 px-5">Workout Goal</th>
+                <th className="py-4.5 px-5 text-right">Quick Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100/60 dark:divide-zinc-850/40">
@@ -411,7 +423,7 @@ const Clients = () => {
                     <tr 
                       key={client.id} 
                       onClick={() => handleOpenClientModal(client)}
-                      className="hover:bg-slate-50/50 dark:hover:bg-zinc-800/10 transition-colors cursor-pointer group"
+                      className="odd:bg-white dark:odd:bg-zinc-900 even:bg-slate-50/15 dark:even:bg-zinc-950/15 hover:bg-blue-50/30 dark:hover:bg-blue-900/10 border-b border-slate-150 dark:border-zinc-850/40 transition-colors cursor-pointer group"
                     >
                       {/* Member Info */}
                       <td className="py-3 px-5 flex items-center gap-3.5">
@@ -420,7 +432,7 @@ const Clients = () => {
                           alt={client.name} 
                           className="w-10 h-10 rounded-xl object-cover shadow-sm bg-slate-100 border border-slate-200/50 dark:border-zinc-800 group-hover:scale-105 transition-transform"
                         />
-                        <div>
+                        <div className="text-left">
                           <span className="font-extrabold text-slate-805 dark:text-zinc-150 text-sm group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors block leading-tight">
                             {client.name}
                           </span>
@@ -429,7 +441,7 @@ const Clients = () => {
                       </td>
 
                       {/* Status badge */}
-                      <td className="py-3 px-5">
+                      <td className="py-3 px-5 text-left">
                         <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider inline-block ${
                           isOnline ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20" :
                           isPending ? "bg-amber-500/10 text-amber-600 border border-amber-500/20" :
@@ -440,7 +452,7 @@ const Clients = () => {
                       </td>
 
                       {/* Workout goal indicator */}
-                      <td className="py-3 px-5">
+                      <td className="py-3 px-5 text-left">
                         <span className={`px-2 py-0.5 rounded border text-[9px] font-bold inline-block ${goalBg}`}>
                           {client.goal}
                         </span>
@@ -451,28 +463,28 @@ const Clients = () => {
                         <div className="flex gap-1 justify-end items-center" onClick={(e) => e.stopPropagation()}>
                           <button
                             onClick={() => handleOpenClientModal(client)}
-                            className="p-2 bg-slate-50 dark:bg-zinc-800 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 text-slate-500 dark:text-zinc-400 rounded-xl transition cursor-pointer"
+                            className="p-2 bg-slate-50 dark:bg-zinc-800 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-650 text-slate-500 dark:text-zinc-400 rounded-xl transition cursor-pointer active:scale-95"
                             title="View Profile Modal"
                           >
                             <Eye className="w-3.5 h-3.5" />
                           </button>
                           <button
                             onClick={(e) => handleEditClick(e, client)}
-                            className="p-2 bg-slate-50 dark:bg-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-750 text-slate-500 dark:text-zinc-400 rounded-xl transition cursor-pointer"
+                            className="p-2 bg-slate-50 dark:bg-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-750 text-slate-500 dark:text-zinc-400 rounded-xl transition cursor-pointer active:scale-95"
                             title="Edit Profile"
                           >
                             <Edit2 className="w-3.5 h-3.5" />
                           </button>
                           <button
                             onClick={(e) => handlePrintClient(e, client)}
-                            className="p-2 bg-slate-50 dark:bg-zinc-800 hover:bg-indigo-50 dark:hover:bg-indigo-950 text-slate-500 dark:text-zinc-400 rounded-xl transition cursor-pointer"
+                            className="p-2 bg-slate-50 dark:bg-zinc-800 hover:bg-indigo-50 dark:hover:bg-indigo-950 text-slate-500 dark:text-zinc-400 rounded-xl transition cursor-pointer active:scale-95"
                             title="Print Summary Sheet"
                           >
                             <Printer className="w-3.5 h-3.5" />
                           </button>
                           <button
                             onClick={(e) => { e.stopPropagation(); setDeletingClientId(client.id); }}
-                            className="p-2 bg-slate-50 dark:bg-zinc-800 hover:bg-red-500 hover:text-white dark:hover:bg-red-650 text-slate-500 dark:text-zinc-400 rounded-xl transition cursor-pointer"
+                            className="p-2 bg-slate-50 dark:bg-zinc-800 hover:bg-red-500 hover:text-white dark:hover:bg-red-655 text-slate-500 dark:text-zinc-400 rounded-xl transition cursor-pointer active:scale-95"
                             title="Delete Record"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -484,12 +496,14 @@ const Clients = () => {
                 })
               ) : (
                 <tr>
-                  <td colSpan="4" className="py-16 text-center text-slate-400 shadow-sm">
-                    <div className="flex flex-col items-center justify-center gap-2.5">
-                      <AlertCircle className="w-9 h-9 text-slate-350" />
-                      <h4 className="text-sm font-bold text-slate-700 dark:text-zinc-350">No Members Match Search Criteria</h4>
-                      <p className="text-xs text-slate-400">Try modifying search phrases or toggling different filter chips.</p>
-                    </div>
+                  <td colSpan="4" className="p-0 border-none">
+                    <EmptyState
+                      title="No Members Found"
+                      description="Try modifying search phrases, toggling different filter chips, or onboarding a new gym member."
+                      actionText="Clear Search & Filters"
+                      onAction={handleClearFilters}
+                      icon={Search}
+                    />
                   </td>
                 </tr>
               )}

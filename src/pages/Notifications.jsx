@@ -19,6 +19,7 @@ import {
   CheckCheck
 } from "lucide-react";
 import { toast } from "sonner";
+import { EmptyState } from "../components/FeedbackStates";
 
 const Notifications = () => {
   const { notifications: contextNotifications, markNotificationAsRead, clearAllNotifications } = useCRM();
@@ -401,15 +402,11 @@ const Notifications = () => {
             );
           })
         ) : (
-          <div className="text-center py-20 text-slate-405 flex flex-col items-center gap-3">
-            <div className="w-14 h-14 bg-slate-50 dark:bg-zinc-950 border border-slate-100 dark:border-zinc-850 rounded-2xl flex items-center justify-center text-slate-400">
-              <Bell className="w-6 h-6 text-slate-350" />
-            </div>
-            <div className="space-y-1">
-              <span className="text-xs font-bold block text-slate-600 dark:text-zinc-400">No operational alerts logged</span>
-              <p className="text-[10px] text-slate-400">All check-ins, payments, and renewals are cleared.</p>
-            </div>
-          </div>
+          <EmptyState
+            title="All Caught Up!"
+            description="All check-ins, payments, and member renewals are cleared. No new system notifications."
+            icon={Bell}
+          />
         )}
       </div>
 

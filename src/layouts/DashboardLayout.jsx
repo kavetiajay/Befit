@@ -31,8 +31,18 @@ const DashboardLayout = ({ children }) => {
   const { theme, toggleTheme, notifications, markNotificationAsRead, clients, settings } = useCRM();
   const location = useLocation();
   const navigate = useNavigate();
-  
+
   const [showRoleDropdown, setShowRoleDropdown] = useState(false);
+  const [isMobile, setIsMobile] = useState(typeof window !== "undefined" ? window.innerWidth < 1024 : false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 1024);
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     if (location.pathname === "/") {
@@ -58,7 +68,7 @@ const DashboardLayout = ({ children }) => {
       toast.success("Switched to Trainer View Portal 👨‍🏫");
     }
   };
-  
+
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showQuickActions, setShowQuickActions] = useState(false);
@@ -82,7 +92,7 @@ const DashboardLayout = ({ children }) => {
   const searchedClients = searchQuery
     ? clients.filter((c) => c.name.toLowerCase().includes(searchQuery.toLowerCase()))
     : [];
- 
+
   const handleSearchSelect = (clientId) => {
     setSearchQuery("");
     setShowSearchDropdown(false);
@@ -90,8 +100,11 @@ const DashboardLayout = ({ children }) => {
   };
 
   const handleLogout = () => {
+    localStorage.removeItem("gym_auth");
     localStorage.removeItem("gym_role");
-    toast.success("Successfully logged out");
+    sessionStorage.removeItem("gym_auth");
+    sessionStorage.removeItem("gym_role");
+    toast.success("Logged out successfully.");
     navigate("/login");
   };
 
@@ -109,6 +122,8 @@ const DashboardLayout = ({ children }) => {
   ];
 
   const renderMobileHeader = () => {
+    if (!isMobile) return null;
+
     const isDashboard = location.pathname === "/";
     const isClients = location.pathname === "/clients";
     const isAttendance = location.pathname === "/attendance";
@@ -221,25 +236,53 @@ const DashboardLayout = ({ children }) => {
               />
             </button>
             {showRoleDropdown && (
-              <div className="absolute top-11 right-0 w-48 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border border-slate-200/80 dark:border-zinc-800 rounded-2xl shadow-xl z-50 p-2 divide-y divide-slate-100 dark:divide-zinc-800/40 animate-in fade-in slide-in-from-top-2 duration-200 text-left">
-                <div className="px-3 py-1.5">
-                  <span className="text-[9px] text-slate-400 font-bold block uppercase tracking-wider">Role</span>
-                  <span className="text-xs font-black text-slate-805 dark:text-zinc-100 block mt-0.5">Trainer Portal</span>
+              <div className="absolute top-11 right-0 w-52 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border border-slate-200/80 dark:border-zinc-800 rounded-2xl shadow-xl z-50 p-2 divide-y divide-slate-100 dark:divide-zinc-800/40 animate-in fade-in slide-in-from-top-2 duration-200 text-left">
+                <div className="px-3 py-2">
+                  <span className="text-[9px] text-slate-400 font-bold block uppercase tracking-wider">Coach Account</span>
+                  <span className="text-xs font-black text-slate-805 dark:text-zinc-100 block mt-0.5 truncate">{settings.trainerName}</span>
                 </div>
                 <div className="py-1">
                   <button
-                    onClick={() => handleSwitchRole("trainer")}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold bg-slate-50 dark:bg-zinc-800/40 text-blue-605 rounded-xl transition text-left"
+                    onClick={() => {
+                      setShowRoleDropdown(false);
+                      navigate("/settings");
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-bold hover:bg-slate-50 dark:hover:bg-zinc-800/40 text-slate-700 dark:text-zinc-200 rounded-xl transition text-left cursor-pointer"
                   >
-                    <span>👨‍🏫</span>
-                    <span>Switch to Trainer</span>
+                    <User className="w-3.5 h-3.5 text-slate-400 dark:text-zinc-550" />
+                    <span>My Profile</span>
                   </button>
                   <button
-                    onClick={() => handleSwitchRole("client")}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold hover:bg-slate-50 dark:hover:bg-zinc-850 text-slate-650 dark:text-zinc-350 rounded-xl transition text-left mt-0.5"
+                    onClick={() => {
+                      setShowRoleDropdown(false);
+                      navigate("/settings");
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-bold hover:bg-slate-50 dark:hover:bg-zinc-800/40 text-slate-700 dark:text-zinc-200 rounded-xl transition text-left mt-0.5 cursor-pointer"
                   >
-                    <span>👤</span>
+                    <SettingsIcon className="w-3.5 h-3.5 text-slate-400 dark:text-zinc-550" />
+                    <span>Settings</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowRoleDropdown(false);
+                      handleSwitchRole("client");
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-bold hover:bg-slate-50 dark:hover:bg-zinc-800/40 text-slate-700 dark:text-zinc-200 rounded-xl transition text-left mt-0.5 cursor-pointer"
+                  >
+                    <Users className="w-3.5 h-3.5 text-slate-400 dark:text-zinc-550" />
                     <span>Switch to Client</span>
+                  </button>
+                </div>
+                <div className="py-1">
+                  <button
+                    onClick={() => {
+                      setShowRoleDropdown(false);
+                      handleLogout();
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-bold hover:bg-red-50 dark:hover:bg-red-950/20 text-red-650 rounded-xl transition-all text-left mt-0.5 cursor-pointer"
+                  >
+                    <span className="text-sm">🚪</span>
+                    <span>Logout</span>
                   </button>
                 </div>
               </div>
@@ -278,11 +321,10 @@ const DashboardLayout = ({ children }) => {
               <Link
                 key={item.name}
                 to={item.path}
-                className={`flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
-                  isActive
+                className={`flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${isActive
                     ? "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400"
                     : "text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800/60"
-                }`}
+                  }`}
               >
                 <div className="flex items-center gap-3">
                   <Icon className="w-4 h-4" />
@@ -327,13 +369,13 @@ const DashboardLayout = ({ children }) => {
               </p>
             </div>
           </div>
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-2 py-2 text-xs font-medium text-red-600 dark:text-red-400 border border-slate-200 dark:border-zinc-800 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg transition-all"
-          >
-            <LogOut className="w-3.5 h-3.5" />
-            <span>Sign Out</span>
-          </button>
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center justify-center gap-2.5 py-2 text-xs font-bold text-red-600 dark:text-red-400 border border-red-200/50 dark:border-red-950/30 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg transition-all cursor-pointer"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span>Logout</span>
+            </button>
         </div>
       </aside>
 
@@ -359,7 +401,7 @@ const DashboardLayout = ({ children }) => {
                 {settings.gymName}
               </span>
             </div>
-            <nav className="flex-1 space-y-1">
+            <nav className="flex-1 space-y-1 overflow-y-auto pr-1">
               {menuItems.map((item) => {
                 const isActive = location.pathname === item.path;
                 const Icon = item.icon;
@@ -368,11 +410,10 @@ const DashboardLayout = ({ children }) => {
                     key={item.name}
                     to={item.path}
                     onClick={() => setMobileSidebarOpen(false)}
-                    className={`flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                      isActive
+                    className={`flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${isActive
                         ? "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400"
                         : "text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800/60"
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center gap-3">
                       <Icon className="w-4 h-4" />
@@ -400,7 +441,7 @@ const DashboardLayout = ({ children }) => {
                 <span>Client View Portal</span>
               </Link>
             </nav>
-            <div className="pt-4 border-t border-slate-100 dark:border-zinc-800 mt-auto">
+            <div className="pt-4 border-t border-slate-100 dark:border-zinc-800 mt-auto shrink-0">
               <div className="flex items-center gap-3 mb-3">
                 <img
                   src="https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&q=80&w=100"
@@ -411,6 +452,7 @@ const DashboardLayout = ({ children }) => {
                   <p className="text-xs font-semibold text-slate-700 dark:text-zinc-200 truncate">
                     {settings.trainerName}
                   </p>
+                  <p className="text-[10px] text-slate-400 dark:text-zinc-500 font-medium">Trainer Portal</p>
                 </div>
               </div>
               <button
@@ -418,10 +460,10 @@ const DashboardLayout = ({ children }) => {
                   setMobileSidebarOpen(false);
                   handleLogout();
                 }}
-                className="w-full flex items-center justify-center gap-2 py-2 text-xs font-medium text-red-600 dark:text-red-400 border border-slate-200 dark:border-zinc-800 hover:bg-red-50 rounded-lg"
+                className="w-full flex items-center justify-center gap-2.5 py-3 text-sm font-bold text-white bg-red-600 hover:bg-red-700 active:scale-95 transition-all rounded-xl shadow-md shadow-red-500/10 cursor-pointer"
               >
-                <LogOut className="w-3.5 h-3.5" />
-                <span>Sign Out</span>
+                <LogOut className="w-4 h-4" />
+                <span>Logout</span>
               </button>
             </div>
           </div>
@@ -503,23 +545,51 @@ const DashboardLayout = ({ children }) => {
               {showRoleDropdown && (
                 <div className="absolute top-11 right-0 w-52 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border border-slate-200/80 dark:border-zinc-800 rounded-2xl shadow-xl z-50 p-2 divide-y divide-slate-100 dark:divide-zinc-800/40 animate-in fade-in slide-in-from-top-2 duration-200 text-left">
                   <div className="px-3 py-2">
-                    <span className="text-[9px] text-slate-400 font-bold block uppercase tracking-wider">Current Role</span>
-                    <span className="text-xs font-black text-slate-805 dark:text-zinc-100 block mt-0.5">Trainer Portal</span>
+                    <span className="text-[9px] text-slate-400 font-bold block uppercase tracking-wider">Coach Account</span>
+                    <span className="text-xs font-black text-slate-805 dark:text-zinc-100 block mt-0.5 truncate">{settings.trainerName}</span>
                   </div>
                   <div className="py-1">
                     <button
-                      onClick={() => handleSwitchRole("trainer")}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold bg-slate-50 dark:bg-zinc-800/40 text-blue-605 rounded-xl transition text-left"
+                      onClick={() => {
+                        setShowRoleDropdown(false);
+                        navigate("/settings");
+                      }}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-bold hover:bg-slate-50 dark:hover:bg-zinc-800/40 text-slate-700 dark:text-zinc-200 rounded-xl transition text-left cursor-pointer"
                     >
-                      <span className="text-sm">👨‍🏫</span>
-                      <span>Switch to Trainer</span>
+                      <User className="w-3.5 h-3.5 text-slate-400 dark:text-zinc-550" />
+                      <span>My Profile</span>
                     </button>
                     <button
-                      onClick={() => handleSwitchRole("client")}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold hover:bg-slate-50 dark:hover:bg-zinc-850 text-slate-650 dark:text-zinc-300 rounded-xl transition text-left mt-0.5"
+                      onClick={() => {
+                        setShowRoleDropdown(false);
+                        navigate("/settings");
+                      }}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-bold hover:bg-slate-50 dark:hover:bg-zinc-800/40 text-slate-700 dark:text-zinc-200 rounded-xl transition text-left mt-0.5 cursor-pointer"
                     >
-                      <span className="text-sm">👤</span>
+                      <SettingsIcon className="w-3.5 h-3.5 text-slate-400 dark:text-zinc-550" />
+                      <span>Settings</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowRoleDropdown(false);
+                        handleSwitchRole("client");
+                      }}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-bold hover:bg-slate-50 dark:hover:bg-zinc-800/40 text-slate-700 dark:text-zinc-200 rounded-xl transition text-left mt-0.5 cursor-pointer"
+                    >
+                      <Users className="w-3.5 h-3.5 text-slate-400 dark:text-zinc-550" />
                       <span>Switch to Client</span>
+                    </button>
+                  </div>
+                  <div className="py-1">
+                    <button
+                      onClick={() => {
+                        setShowRoleDropdown(false);
+                        handleLogout();
+                      }}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-bold hover:bg-red-50 dark:hover:bg-red-950/20 text-red-650 rounded-xl transition-all text-left mt-0.5 cursor-pointer"
+                    >
+                      <span className="text-sm">🚪</span>
+                      <span>Logout</span>
                     </button>
                   </div>
                 </div>
@@ -651,11 +721,10 @@ const DashboardLayout = ({ children }) => {
               <Link
                 key={item.name}
                 to={item.path}
-                className={`flex flex-col items-center justify-center flex-1 py-1 transition-all ${
-                  isActive
+                className={`flex flex-col items-center justify-center flex-1 py-1 transition-all ${isActive
                     ? "text-blue-600 dark:text-blue-400"
                     : "text-slate-400 dark:text-zinc-500 hover:text-slate-600 dark:hover:text-zinc-300"
-                }`}
+                  }`}
               >
                 <div className={`p-1 px-3 rounded-2xl flex flex-col items-center transition ${isActive ? "text-blue-600 dark:text-blue-400" : ""}`}>
                   <Icon className="w-5.5 h-5.5" />
