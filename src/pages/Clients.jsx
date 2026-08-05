@@ -310,7 +310,7 @@ const Clients = () => {
           
           {/* Enhanced Search Input */}
           <div className="relative flex-1">
-            <Search className="w-4.5 h-4.5 text-slate-400 absolute left-3.5 top-3.5" />
+            <Search className="w-[18px] h-[18px] text-slate-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
               placeholder="Search by name, phone, plan or goal..."
@@ -319,7 +319,8 @@ const Clients = () => {
                 setSearch(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full pl-11 pr-10 py-3 border border-slate-200 dark:border-zinc-800 rounded-2xl bg-slate-50/50 dark:bg-zinc-950/20 text-slate-800 dark:text-zinc-150 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/15 focus:border-blue-500/50 transition-all"
+              style={{ paddingLeft: "48px", paddingRight: "40px" }}
+              className="w-full border border-slate-200 dark:border-zinc-800 rounded-2xl bg-slate-50/50 dark:bg-zinc-950/20 text-slate-805 dark:text-zinc-150 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/15 focus:border-blue-500/50 transition-all"
             />
             {search && (
               <button
@@ -327,7 +328,7 @@ const Clients = () => {
                   setSearch("");
                   setCurrentPage(1);
                 }}
-                className="absolute right-3.5 top-3.5 text-slate-405 hover:text-slate-600 dark:hover:text-slate-350 cursor-pointer"
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-655 dark:hover:text-zinc-300 cursor-pointer flex items-center justify-center"
               >
                 <X className="w-4 h-4" />
               </button>

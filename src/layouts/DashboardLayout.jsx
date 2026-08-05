@@ -124,13 +124,17 @@ const DashboardLayout = ({ children }) => {
   const renderMobileHeader = () => {
     if (!isMobile) return null;
 
-    const isDashboard = location.pathname === "/";
+    const isDashboard = location.pathname === "/" || location.pathname === "/trainer/dashboard";
     const isClients = location.pathname === "/clients";
     const isAttendance = location.pathname === "/attendance";
     const isPayments = location.pathname === "/payments";
     const isSettings = location.pathname === "/settings";
 
-    if (!isDashboard && !isClients && !isAttendance && !isPayments && !isSettings) {
+    if (isDashboard) {
+      return null;
+    }
+
+    if (!isClients && !isAttendance && !isPayments && !isSettings) {
       let title = "Back";
       if (location.pathname.startsWith("/clients/")) {
         title = "Client Profile";
@@ -476,9 +480,7 @@ const DashboardLayout = ({ children }) => {
         <header className="hidden lg:flex h-16 border-b border-slate-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md sticky top-0 z-30 px-4 lg:px-6 items-center justify-between gap-4 no-print">
           {/* Quick Search */}
           <div className="relative flex-1 max-w-md hidden sm:block">
-            <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-slate-400">
-              <Search className="w-4 h-4" />
-            </div>
+            <Search className="w-[18px] h-[18px] text-slate-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
               placeholder="Search clients by name..."
@@ -488,7 +490,8 @@ const DashboardLayout = ({ children }) => {
                 setShowSearchDropdown(true);
               }}
               onFocus={() => setShowSearchDropdown(true)}
-              className="w-full pl-9 pr-4 py-1.5 text-sm bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg text-slate-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200"
+              style={{ paddingLeft: "48px" }}
+              className="w-full pr-4 py-1.5 text-sm bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg text-slate-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200"
             />
             {showSearchDropdown && searchQuery && (
               <div className="absolute top-11 left-0 right-0 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-xl z-50 max-h-60 overflow-y-auto p-2">

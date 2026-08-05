@@ -67,18 +67,19 @@ const Attendance = () => {
         
         {/* Modern Compact Search */}
         <div className="relative w-full sm:w-72">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+          <Search className="w-[18px] h-[18px] text-slate-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search member name..."
-            className="w-full pl-9 pr-8 py-2 border border-slate-205 dark:border-zinc-800 rounded-xl bg-white dark:bg-zinc-950 text-slate-805 dark:text-zinc-200 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/15 transition-all"
+            style={{ paddingLeft: "48px", paddingRight: "32px" }}
+            className="w-full border border-slate-205 dark:border-zinc-800 rounded-xl bg-white dark:bg-zinc-950 text-slate-805 dark:text-zinc-200 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/15 transition-all"
           />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery("")}
-              className="absolute right-2.5 top-2.5 text-slate-405 hover:text-slate-600 dark:hover:text-slate-350 cursor-pointer"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-zinc-350 cursor-pointer flex items-center justify-center"
             >
               <X className="w-3.5 h-3.5" />
             </button>
