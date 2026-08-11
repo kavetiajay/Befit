@@ -18,7 +18,7 @@ export async function GET() {
     // 2. Perform a test query against a dummy table.
     // We expect this query to fail with a "relation does not exist" error because we haven't created any tables yet.
     // If we receive this specific database schema error, it proves the connection is working perfectly!
-    const { error } = await supabase.from("_connection_test").select("*").limit(1);
+    const { error, status } = await supabase.from("_connection_test").select("*").limit(1);
 
     if (error) {
       console.log("Supabase connection test query returned error:", error);
@@ -27,7 +27,7 @@ export async function GET() {
       if (
         error.code === "42P01" ||
         error.code === "PGRST205" ||
-        error.status === 404 ||
+        status === 404 ||
         error.message.includes("relation") ||
         error.message.includes("schema cache")
       ) {
@@ -39,7 +39,7 @@ export async function GET() {
       }
 
       // Check if it failed due to bad/expired API keys (authentication)
-      if (error.status === 401) {
+      if (status === 401) {
         return NextResponse.json(
           {
             success: false,
@@ -59,7 +59,7 @@ export async function GET() {
           error_details: error.message,
           code: error.code,
         },
-        { status: error.status || 500 }
+        { status: status || 500 }
       );
     }
 
@@ -69,7 +69,7 @@ export async function GET() {
       success: true,
       message: "BeFit Supabase connection successful",
     });
-  } catch (err: any) {
+  } catch (err) {
     console.error("Supabase connection test exception caught:", err);
     // Catch-all for network errors (e.g. wrong URL, no internet)
     return NextResponse.json(
@@ -77,7 +77,7 @@ export async function GET() {
         success: false,
         message: "Supabase connection failed: Network error.",
         details: "Failed to connect to the Supabase URL. Please check your internet connection and verify that your NEXT_PUBLIC_SUPABASE_URL is correct in backend/.env.",
-        error_details: err.message || err,
+        error_details: err instanceof Error ? err.message : String(err),
       },
       { status: 500 }
     );
