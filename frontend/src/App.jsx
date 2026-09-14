@@ -7,6 +7,8 @@ import { ProtectedRoute, PublicRoute } from "./context/AuthGuard";
 import DashboardLayout from "./layouts/DashboardLayout";
 
 import Login from "./pages/Login";
+import ResetPassword from "./pages/ResetPassword";
+import ClientInviteRegister from "./pages/ClientInviteRegister";
 
 import Dashboard from "./pages/Dashboard";
 import Clients from "./pages/Clients";
@@ -35,6 +37,12 @@ function App() {
 
           {/* Login */}
           <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+
+          {/* Reset Password */}
+          <Route path="/reset-password" element={<PublicRoute><ResetPassword /></PublicRoute>} />
+
+          {/* Client Invitation Registration */}
+          <Route path="/invite" element={<PublicRoute><ClientInviteRegister /></PublicRoute>} />
 
           {/* Client */}
           <Route path="/client" element={<ProtectedRoute role="client"><ClientDashboard /></ProtectedRoute>} />

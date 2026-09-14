@@ -62,8 +62,6 @@ export async function POST(request: Request) {
     }
 
     const { user } = authResult;
-    const authHeader = request.headers.get("Authorization")!;
-    const token = authHeader.substring(7).trim();
 
     // 2. Parse request body
     const body = await request.json();
@@ -127,7 +125,6 @@ export async function POST(request: Request) {
     }
 
     // 5. Insert notification record
-    const requestClient = getRequestClient(token);
     const notificationPayload = {
       user_id: recipientId,
       title: title.trim(),
@@ -136,7 +133,7 @@ export async function POST(request: Request) {
       is_read: false,
     };
 
-    const { data: newNotification, error: insertError } = await requestClient
+    const { data: newNotification, error: insertError } = await dbClient
       .from("notifications")
       .insert(notificationPayload)
       .select()

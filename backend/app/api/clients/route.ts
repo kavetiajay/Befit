@@ -17,7 +17,7 @@ export async function GET(request: Request) {
     const requestClient = getRequestClient(token);
     const { data, error } = await requestClient
       .from("trainer_client")
-      .select("assigned_at, client:profiles!client_id(id, full_name, email, phone, dob, gender, address, emergency_contact, created_at, updated_at)")
+      .select("assigned_at, client:profiles!client_id(id, full_name, email, phone, dob, gender, address, emergency_contact, profile_image_url, role, goal, height, medical_conditions, allergies, injuries, created_at, updated_at)")
       .eq("trainer_id", user.id);
 
     if (error) {

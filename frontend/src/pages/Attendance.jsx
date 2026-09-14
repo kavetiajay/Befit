@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useCRM } from "../context/CRMContext";
 import {
   Search,
@@ -11,10 +11,17 @@ import {
   Plus
 } from "lucide-react";
 import { toast } from "sonner";
+import { SkeletonLoader } from "../components/FeedbackStates";
 
 const Attendance = () => {
   const todayStr = "2026-07-22"; // Anchor date to match database
-  const { clients, attendance, markClientAttendance } = useCRM();
+  const { 
+    clients, 
+    attendance, 
+    markClientAttendance, 
+    fetchAttendance, 
+    loading 
+  } = useCRM();
 
   // Search input state
   const [searchQuery, setSearchQuery] = useState("");
@@ -25,6 +32,10 @@ const Attendance = () => {
   // History query date state
   const [historyDate, setHistoryDate] = useState(todayStr);
 
+  useEffect(() => {
+    fetchAttendance();
+  }, []);
+
   // Filter clients by search keyword
   const filteredClients = useMemo(() => {
     if (!searchQuery.trim()) return clients;
@@ -33,10 +44,16 @@ const Attendance = () => {
   }, [clients, searchQuery]);
 
   // Handle marking attendance
-  const handleMarkAttendance = (clientId, status) => {
+  const handleMarkAttendance = async (clientId, status) => {
     const timeIn = status === "Present" ? "08:00 AM" : "-";
-    markClientAttendance(clientId, todayStr, status, timeIn);
-    toast.success(`Attendance updated for today: ${status}`);
+    const toastId = toast.loading(`Marking client attendance...`);
+    try {
+      await markClientAttendance(clientId, todayStr, status, timeIn);
+      toast.success(`Attendance updated for today: ${status}`, { id: toastId });
+    } catch (err) {
+      console.error(err);
+      toast.error(`Failed to mark attendance: ${err instanceof Error ? err.message : String(err)}`, { id: toastId });
+    }
   };
 
   // Format historical date display
@@ -88,7 +105,10 @@ const Attendance = () => {
       </div>
 
       {/* Simplified Grid of Member Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 text-left">
+      {loading ? (
+        <SkeletonLoader type="table" count={4} />
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 text-left">
         {filteredClients.length > 0 ? (
           filteredClients.map((client) => {
             const isActive = client.status === "Active";
@@ -127,7 +147,8 @@ const Attendance = () => {
             <p className="text-[10px] text-slate-405">Try typing another query name.</p>
           </div>
         )}
-      </div>
+        </div>
+      )}
 
       {/* --- ATTENDANCE OVERLAY POPUP MODAL --- */}
       {selectedClient && (() => {

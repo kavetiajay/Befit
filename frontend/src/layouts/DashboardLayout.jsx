@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { useCRM } from "../context/CRMContext";
 import { toast } from "sonner";
+import { api } from "../services/api";
 
 const DashboardLayout = ({ children }) => {
   const { theme, toggleTheme, notifications, markNotificationAsRead, clients, settings } = useCRM();
@@ -99,13 +100,23 @@ const DashboardLayout = ({ children }) => {
     navigate(`/clients/${clientId}`);
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("gym_auth");
-    localStorage.removeItem("gym_role");
-    sessionStorage.removeItem("gym_auth");
-    sessionStorage.removeItem("gym_role");
-    toast.success("Logged out successfully.");
-    navigate("/login");
+  const handleLogout = async () => {
+    try {
+      await api.post("/api/auth/logout");
+    } catch (err) {
+      console.warn("Logout request failed:", err);
+    } finally {
+      localStorage.removeItem("gym_auth");
+      localStorage.removeItem("gym_role");
+      localStorage.removeItem("gym_token");
+      localStorage.removeItem("gym_client_id");
+      sessionStorage.removeItem("gym_auth");
+      sessionStorage.removeItem("gym_role");
+      sessionStorage.removeItem("gym_token");
+      sessionStorage.removeItem("gym_client_id");
+      toast.success("Logged out successfully.");
+      navigate("/login");
+    }
   };
 
   const handleQuickAction = (path) => {

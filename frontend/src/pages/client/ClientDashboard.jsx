@@ -9,6 +9,7 @@ import {
   CreditCard,
   Trophy,
   User,
+  Plus,
   Settings as SettingsIcon,
   LogOut,
   Menu,
@@ -27,10 +28,13 @@ import {
   TrendingUp,
   Download,
   Check,
-  Lock
+  Lock,
+  Bell,
+  CheckCheck
 } from "lucide-react";
 import { toast } from "sonner";
 import { useCRM } from "../../context/CRMContext";
+import { api } from "../../services/api";
 
 const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
@@ -344,7 +348,24 @@ const WEIGHT_LOSS_WORKOUT_PLAN = {
 
 const ClientDashboard = () => {
   const navigate = useNavigate();
-  const { clients, workouts } = useCRM();
+  const { 
+    clients, 
+    workouts, 
+    diets, 
+    fetchClients, 
+    fetchWorkoutPlanForClient, 
+    fetchDietPlanForClient,
+    attendance,
+    measurements,
+    fetchAttendance,
+    fetchWeightProgress,
+    addWeightProgress,
+    payments,
+    fetchPayments,
+    notifications,
+    fetchNotifications,
+    markNotificationAsRead
+  } = useCRM();
 
   // Retrieve the logged-in/active client, falling back to the first client in the system
   const client = clients?.find(c => c.id === localStorage.getItem("gym_client_id") || c.name === "Ajay Kaveti" || c.email === "ajay@befit.com") || clients?.[0];
@@ -367,7 +388,19 @@ const ClientDashboard = () => {
   const motivationalQuote = "Consistency beats motivation. Small daily improvements lead to massive results!";
 
   const [showRoleDropdown, setShowRoleDropdown] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
   const [activeTab, setActiveTab] = useState("Dashboard");
+  
+  const unreadNotifications = React.useMemo(() => notifications.filter(n => !n.read), [notifications]);
+
+  const handleMarkNotifRead = async (notifId) => {
+    try {
+      await markNotificationAsRead(notifId);
+      toast.success("Notification marked as read");
+    } catch (e) {
+      console.error(e);
+    }
+  };
   
   const todayName = daysOfWeek[new Date().getDay()];
   const [selectedDietDay, setSelectedDietDay] = useState(todayName);
@@ -383,6 +416,12 @@ const ClientDashboard = () => {
   // Quick settings state
   const [waterCount, setWaterCount] = useState(2); // 2 Liters drunk today
 
+  // Weight logging modal state for client
+  const [measurementModalOpen, setMeasurementModalOpen] = useState(false);
+  const [newMeasure, setNewMeasure] = useState({
+    weight: "", bodyFat: "", chest: "", waist: "", arms: "", thigh: ""
+  });
+
   // Exercise completions check list
   const [exerciseCompletions, setExerciseCompletions] = useState({
     ex_bench: true,
@@ -396,7 +435,19 @@ const ClientDashboard = () => {
 
   useEffect(() => {
     localStorage.setItem("gym_role", "client");
+    fetchClients();
+    fetchWorkoutPlanForClient();
+    fetchDietPlanForClient();
+    fetchAttendance();
+    fetchPayments();
+    fetchNotifications();
   }, []);
+
+  useEffect(() => {
+    if (client?.id) {
+      fetchWeightProgress(client.id);
+    }
+  }, [client?.id]);
 
   useEffect(() => {
     if (activeTab === "My Workout") {
@@ -433,6 +484,35 @@ const ClientDashboard = () => {
     }, 1200);
   };
 
+  const handleClientAddMeasurement = async (e) => {
+    e.preventDefault();
+    if (!newMeasure.weight) {
+      toast.warning("Weight value is required.");
+      return;
+    }
+    const today = new Date().toISOString().split("T")[0];
+    const newPoint = {
+      date: today,
+      weight: parseFloat(newMeasure.weight),
+      bodyFat: parseFloat(newMeasure.bodyFat) || client?.bodyFat || 0,
+      chest: parseFloat(newMeasure.chest) || client?.chest || 0,
+      waist: parseFloat(newMeasure.waist) || client?.waist || 0,
+      arms: parseFloat(newMeasure.arms) || client?.arms || 0,
+      thigh: parseFloat(newMeasure.thigh) || client?.thigh || 0
+    };
+
+    const toastId = toast.loading("Saving weight progress log...");
+    try {
+      await addWeightProgress(client.id, newPoint);
+      toast.success("New stats logged successfully!", { id: toastId });
+      setMeasurementModalOpen(false);
+      setNewMeasure({ weight: "", bodyFat: "", chest: "", waist: "", arms: "", thigh: "" });
+    } catch (err) {
+      console.error(err);
+      toast.error(`Failed to save measurements: ${err instanceof Error ? err.message : String(err)}`, { id: toastId });
+    }
+  };
+
   const formatDateFriendly = (dateString) => {
     if (!dateString) return "";
     try {
@@ -444,35 +524,87 @@ const ClientDashboard = () => {
     }
   };
 
-  // Mock invoice data
-  const invoiceList = [
-    { id: "inv_1", number: "INV-072601", date: "2026-07-25", plan: "BeFit Premium Annual", amount: 28000, method: "UPI", status: "Paid" },
-    { id: "inv_2", number: "INV-062604", date: "2026-06-25", plan: "BeFit Premium Monthly", amount: 3500, method: "Card", status: "Paid" },
-    { id: "inv_3", number: "INV-052609", date: "2026-05-25", plan: "BeFit Premium Monthly", amount: 3500, method: "UPI", status: "Paid" }
-  ];
+  // Dynamic client payments/invoices data
+  const clientPayments = React.useMemo(() => {
+    const cid = client?.id || localStorage.getItem("gym_client_id") || "logged_in_client";
+    return payments.filter(p => p.clientId === cid);
+  }, [payments, client?.id]);
 
-  // Mock weight history
-  const weightProgressList = [
-    { date: "May 10", weight: 75 },
-    { date: "May 25", weight: 74.2 },
-    { date: "Jun 10", weight: 73 },
-    { date: "Jun 25", weight: 71.5 },
-    { date: "Jul 10", weight: 70.8 },
-    { date: "Jul 22", weight: 70 }
-  ];
+  const invoiceList = React.useMemo(() => {
+    if (clientPayments.length === 0) {
+      return [
+        { id: "no_inv", number: "—", date: "—", plan: client?.membership || "Standard Monthly", amount: Number(client?.monthlyFees) || 3500, method: "—", status: "Unpaid" }
+      ];
+    }
+    return clientPayments.map(p => ({
+      id: p.id,
+      number: p.invoiceNumber,
+      date: p.date,
+      plan: p.membershipPlan,
+      amount: p.amount,
+      method: p.method,
+      status: p.status
+    }));
+  }, [clientPayments, client]);
 
-  // Mock July 2026 heatmap calendar
-  // 1 = Present (Green), 2 = Absent (Red), 3 = Holiday (Grey)
-  const attendanceHeatmap = [
-    { day: 1, status: 1 }, { day: 2, status: 1 }, { day: 3, status: 1 }, { day: 4, status: 3 },
-    { day: 5, status: 1 }, { day: 6, status: 1 }, { day: 7, status: 1 }, { day: 8, status: 1 },
-    { day: 9, status: 1 }, { day: 10, status: 1 }, { day: 11, status: 3 }, { day: 12, status: 2 },
-    { day: 13, status: 1 }, { day: 14, status: 1 }, { day: 15, status: 1 }, { day: 16, status: 1 },
-    { day: 17, status: 1 }, { day: 18, status: 3 }, { day: 19, status: 1 }, { day: 20, status: 1 },
-    { day: 21, status: 1 }, { day: 22, status: 1 }, { day: 23, status: 2 }, { day: 24, status: 1 },
-    { day: 25, status: 3 }, { day: 26, status: 1 }, { day: 27, status: 1 }, { day: 28, status: 1 },
-    { day: 29, status: 1 }, { day: 30, status: 1 }, { day: 31, status: 1 }
-  ];
+  const daysRemaining = React.useMemo(() => {
+    if (!client?.expiryDate) return 0;
+    const expiry = new Date(client.expiryDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const diffTime = expiry - today;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays > 0 ? diffDays : 0;
+  }, [client?.expiryDate]);
+
+  // Dynamic client weight progress
+  const clientMeasurements = React.useMemo(() => {
+    const cid = client?.id || localStorage.getItem("gym_client_id") || "logged_in_client";
+    return measurements[cid] || [];
+  }, [measurements, client?.id]);
+
+  const weightProgressList = React.useMemo(() => {
+    if (clientMeasurements.length === 0) {
+      return [
+        { date: "No Logs", weight: Number(client?.currentWeight) || 70 }
+      ];
+    }
+    return [...clientMeasurements]
+      .sort((a, b) => new Date(a.date) - new Date(b.date))
+      .map(m => ({
+        date: new Date(m.date).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+        weight: m.weight
+      }));
+  }, [clientMeasurements, client?.currentWeight]);
+
+  // Dynamic client attendance logs & July 2026 heatmap
+  const clientAttendanceLogs = React.useMemo(() => {
+    return attendance.filter(a => a.clientId === client?.id || a.clientId === "logged_in_client");
+  }, [attendance, client?.id]);
+
+  const attendanceHeatmap = React.useMemo(() => {
+    return Array.from({ length: 31 }, (_, i) => {
+      const dayNum = i + 1;
+      const dateStr = `2026-07-${dayNum.toString().padStart(2, "0")}`;
+      const log = clientAttendanceLogs.find(a => a.date === dateStr);
+      
+      let status = 3; // default Holiday
+      if (log) {
+        status = log.status === "Present" || log.status === "Late" ? 1 : 2;
+      }
+      return { day: dayNum, status };
+    });
+  }, [clientAttendanceLogs]);
+
+  const attendanceStats = React.useMemo(() => {
+    const present = clientAttendanceLogs.filter(a => a.status === "Present" || a.status === "Late").length;
+    const absent = clientAttendanceLogs.filter(a => a.status === "Absent").length;
+    return {
+      present,
+      absent,
+      total: clientAttendanceLogs.length
+    };
+  }, [clientAttendanceLogs]);
 
   // Menu items list
   const sidebarItems = [
@@ -486,13 +618,23 @@ const ClientDashboard = () => {
     { name: "Profile", icon: User }
   ];
 
-  const handleLogout = () => {
-    localStorage.removeItem("gym_auth");
-    localStorage.removeItem("gym_role");
-    sessionStorage.removeItem("gym_auth");
-    sessionStorage.removeItem("gym_role");
-    toast.success("Successfully logged out");
-    navigate("/login");
+  const handleLogout = async () => {
+    try {
+      await api.post("/api/auth/logout");
+    } catch (err) {
+      console.warn("Logout request failed:", err);
+    } finally {
+      localStorage.removeItem("gym_auth");
+      localStorage.removeItem("gym_role");
+      localStorage.removeItem("gym_token");
+      localStorage.removeItem("gym_client_id");
+      sessionStorage.removeItem("gym_auth");
+      sessionStorage.removeItem("gym_role");
+      sessionStorage.removeItem("gym_token");
+      sessionStorage.removeItem("gym_client_id");
+      toast.success("Successfully logged out");
+      navigate("/login");
+    }
   };
 
   if (!client) {
@@ -588,10 +730,58 @@ const ClientDashboard = () => {
             <span className="font-extrabold text-sm tracking-tight text-white">BeFit Portal</span>
           </div>
           <div className="flex items-center gap-2">
+            {/* Notification Bell Mobile trigger */}
+            <div className="relative">
+              <button
+                onClick={() => { setShowNotifications(!showNotifications); setShowRoleDropdown(false); }}
+                className="w-8.5 h-8.5 rounded-xl bg-zinc-900/80 border border-[#1e293b]/70 flex items-center justify-center text-slate-300 relative cursor-pointer"
+                title="Notifications"
+              >
+                <Bell className="w-4 h-4" />
+                {unreadNotifications.length > 0 && (
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 text-white rounded-full text-[8px] font-black flex items-center justify-center border border-[#0b101c]">
+                    {unreadNotifications.length}
+                  </span>
+                )}
+              </button>
+              {showNotifications && (
+                <div className="absolute top-10 right-0 w-72 bg-[#0b101c]/95 backdrop-blur-md border border-[#1e293b]/70 rounded-2xl shadow-2xl z-50 p-3 animate-in fade-in slide-in-from-top-2 duration-200 text-left">
+                  <div className="flex items-center justify-between pb-2 border-b border-[#1e293b]/40">
+                    <span className="text-xs font-black text-white">Notifications</span>
+                    <span className="text-[10px] text-cyan-400 font-bold">{unreadNotifications.length} unread</span>
+                  </div>
+                  <div className="py-2 max-h-60 overflow-y-auto space-y-2 divide-y divide-[#1e293b]/20">
+                    {notifications.length === 0 ? (
+                      <p className="text-[11px] text-slate-400 text-center py-4">No notifications yet 🎉</p>
+                    ) : (
+                      notifications.slice(0, 5).map((n) => (
+                        <div key={n.id} className="pt-2 first:pt-0 flex justify-between items-start gap-2">
+                          <div>
+                            <p className="text-xs font-bold text-white leading-tight">{n.title}</p>
+                            <p className="text-[10px] text-slate-400 mt-0.5 leading-snug">{n.message}</p>
+                            <span className="text-[9px] text-slate-500 mt-1 block">{n.time}</span>
+                          </div>
+                          {!n.read && (
+                            <button
+                              onClick={() => handleMarkNotifRead(n.id)}
+                              className="p-1 text-cyan-400 hover:text-cyan-300 rounded shrink-0"
+                              title="Mark read"
+                            >
+                              <CheckCheck className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* Profile Avatar Mobile toggle trigger */}
             <div className="relative">
               <button
-                onClick={() => setShowRoleDropdown(!showRoleDropdown)}
+                onClick={() => { setShowRoleDropdown(!showRoleDropdown); setShowNotifications(false); }}
                 className="w-8.5 h-8.5 rounded-xl overflow-hidden border border-[#1e293b]/70 cursor-pointer"
               >
                 <img
@@ -655,50 +845,100 @@ const ClientDashboard = () => {
                 </div>
               </div>
 
-              {/* Float Metadata Summary Block with Role Dropdown */}
-              <div className="relative">
-                <button
-                  onClick={() => setShowRoleDropdown(!showRoleDropdown)}
-                  className="flex items-center gap-4 bg-zinc-900/60 backdrop-blur-md border border-[#1e293b]/40 p-4 rounded-2xl relative z-10 shrink-0 shadow-xl hover:bg-zinc-800 transition cursor-pointer text-left"
-                >
-                  <img
-                    src={client?.photo || "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&q=80&w=120"}
-                    alt={client?.name || "Client"}
-                    className="w-14 h-14 rounded-xl object-cover border border-blue-500/20"
-                  />
-                  <div className="text-left text-xs space-y-0.5">
-                    <span className="text-[10px] font-black text-slate-500 block uppercase tracking-wider">Client Mode 👤</span>
-                    <span className="font-extrabold text-blue-400 flex items-center gap-1 mt-0.5">🔥 {client?.name?.split(' ')[0] || "Client"}</span>
-                    <div className="flex items-center gap-3.5 mt-1.5 text-[10px] font-semibold text-slate-350">
-                      <div>Goal: <strong className="text-white">{client?.goal || 'General Fitness'}</strong></div>
-                    </div>
-                  </div>
-                </button>
+              {/* Float Metadata Summary Block with Notifications & Role Dropdown */}
+              <div className="flex items-center gap-3 relative z-10">
+                <div className="relative">
+                  <button
+                    onClick={() => { setShowNotifications(!showNotifications); setShowRoleDropdown(false); }}
+                    className="w-14 h-14 rounded-2xl bg-zinc-900/60 backdrop-blur-md border border-[#1e293b]/40 flex items-center justify-center text-slate-300 hover:text-white hover:bg-zinc-800 transition cursor-pointer shadow-xl relative"
+                    title="Notifications"
+                  >
+                    <Bell className="w-5 h-5" />
+                    {unreadNotifications.length > 0 && (
+                      <span className="absolute -top-1 -right-1 w-5 h-5 bg-rose-500 text-white rounded-full text-[9px] font-black flex items-center justify-center border-2 border-[#0b101c]">
+                        {unreadNotifications.length}
+                      </span>
+                    )}
+                  </button>
 
-                {showRoleDropdown && (
-                  <div className="absolute top-20 right-0 w-52 bg-[#0b101c]/95 backdrop-blur-md border border-[#1e293b]/70 rounded-2xl shadow-xl z-50 p-2 divide-y divide-[#1e293b]/30 animate-in fade-in slide-in-from-top-2 duration-200 text-left">
-                    <div className="px-3 py-2">
-                      <span className="text-[9px] text-slate-550 font-bold block uppercase tracking-wider">Current Role</span>
-                      <span className="text-xs font-black text-white block mt-0.5">Client Portal</span>
+                  {showNotifications && (
+                    <div className="absolute top-16 right-0 w-80 bg-[#0b101c]/95 backdrop-blur-md border border-[#1e293b]/70 rounded-2xl shadow-2xl z-50 p-4 animate-in fade-in slide-in-from-top-2 duration-200 text-left">
+                      <div className="flex items-center justify-between pb-2.5 border-b border-[#1e293b]/40">
+                        <span className="text-xs font-black text-white">Notifications Feed</span>
+                        <span className="text-[10px] text-cyan-400 font-bold">{unreadNotifications.length} unread</span>
+                      </div>
+                      <div className="py-2.5 max-h-72 overflow-y-auto space-y-2.5 divide-y divide-[#1e293b]/20">
+                        {notifications.length === 0 ? (
+                          <p className="text-xs text-slate-400 text-center py-6">No notifications yet 🎉</p>
+                        ) : (
+                          notifications.slice(0, 8).map((n) => (
+                            <div key={n.id} className="pt-2.5 first:pt-0 flex justify-between items-start gap-2.5">
+                              <div>
+                                <p className="text-xs font-bold text-white leading-tight">{n.title}</p>
+                                <p className="text-[11px] text-slate-400 mt-0.5 leading-snug">{n.message}</p>
+                                <span className="text-[9px] text-slate-500 mt-1 block">{n.date} • {n.time}</span>
+                              </div>
+                              {!n.read && (
+                                <button
+                                  onClick={() => handleMarkNotifRead(n.id)}
+                                  className="p-1 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 rounded-lg shrink-0 transition"
+                                  title="Mark as Read"
+                                >
+                                  <CheckCheck className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                            </div>
+                          ))
+                        )}
+                      </div>
                     </div>
-                    <div className="py-1">
-                      <button
-                        onClick={() => handleSwitchRole("trainer")}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold hover:bg-[#111827] text-slate-300 rounded-xl transition text-left"
-                      >
-                        <span className="text-sm">👨‍🏫</span>
-                        <span>Switch to Trainer</span>
-                      </button>
-                      <button
-                        onClick={() => handleSwitchRole("client")}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold bg-blue-600/10 text-cyan-400 rounded-xl transition text-left mt-0.5"
-                      >
-                        <span className="text-sm">👤</span>
-                        <span>Switch to Client</span>
-                      </button>
+                  )}
+                </div>
+
+                <div className="relative">
+                  <button
+                    onClick={() => { setShowRoleDropdown(!showRoleDropdown); setShowNotifications(false); }}
+                    className="flex items-center gap-4 bg-zinc-900/60 backdrop-blur-md border border-[#1e293b]/40 p-4 rounded-2xl relative z-10 shrink-0 shadow-xl hover:bg-zinc-800 transition cursor-pointer text-left"
+                  >
+                    <img
+                      src={client?.photo || "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&q=80&w=120"}
+                      alt={client?.name || "Client"}
+                      className="w-14 h-14 rounded-xl object-cover border border-blue-500/20"
+                    />
+                    <div className="text-left text-xs space-y-0.5">
+                      <span className="text-[10px] font-black text-slate-500 block uppercase tracking-wider">Client Mode 👤</span>
+                      <span className="font-extrabold text-blue-400 flex items-center gap-1 mt-0.5">🔥 {client?.name?.split(' ')[0] || "Client"}</span>
+                      <div className="flex items-center gap-3.5 mt-1.5 text-[10px] font-semibold text-slate-350">
+                        <div>Goal: <strong className="text-white">{client?.goal || 'General Fitness'}</strong></div>
+                      </div>
                     </div>
-                  </div>
-                )}
+                  </button>
+
+                  {showRoleDropdown && (
+                    <div className="absolute top-20 right-0 w-52 bg-[#0b101c]/95 backdrop-blur-md border border-[#1e293b]/70 rounded-2xl shadow-xl z-50 p-2 divide-y divide-[#1e293b]/30 animate-in fade-in slide-in-from-top-2 duration-200 text-left">
+                      <div className="px-3 py-2">
+                        <span className="text-[9px] text-slate-550 font-bold block uppercase tracking-wider">Current Role</span>
+                        <span className="text-xs font-black text-white block mt-0.5">Client Portal</span>
+                      </div>
+                      <div className="py-1">
+                        <button
+                          onClick={() => handleSwitchRole("trainer")}
+                          className="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold hover:bg-[#111827] text-slate-300 rounded-xl transition text-left"
+                        >
+                          <span className="text-sm">👨‍🏫</span>
+                          <span>Switch to Trainer</span>
+                        </button>
+                        <button
+                          onClick={() => handleSwitchRole("client")}
+                          className="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold bg-blue-600/10 text-cyan-400 rounded-xl transition text-left mt-0.5"
+                        >
+                          <span className="text-sm">👤</span>
+                          <span>Switch to Client</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
               
               {/* Background gradient flares */}
@@ -709,10 +949,10 @@ const ClientDashboard = () => {
             {/* Quick Fitness Stats Row */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-left">
               {[
-                { title: "Weight Progress", val: "70 kg", sub: "↓ 2kg this month", icon: Scale, color: "from-blue-600 to-cyan-500 text-blue-400" },
-                { title: "Attendance Rate", val: "92%", sub: "Excellent records", icon: Calendar, color: "from-emerald-500 to-teal-400 text-emerald-450" },
+                { title: "Weight Progress", val: `${client?.currentWeight || 70} kg`, sub: client?.targetWeight ? `Target: ${client.targetWeight} kg` : "Active progress", icon: Scale, color: "from-blue-600 to-cyan-500 text-blue-400" },
+                { title: "Attendance Rate", val: attendanceStats.total > 0 ? `${Math.round((attendanceStats.present / attendanceStats.total) * 100)}%` : "92%", sub: `${attendanceStats.present} check-ins logged`, icon: Calendar, color: "from-emerald-500 to-teal-400 text-emerald-450" },
                 { title: "Workout Completed", val: "18 Sessions", sub: "Month activity logs", icon: Dumbbell, color: "from-purple-600 to-pink-500 text-purple-400" },
-                { title: "Membership Period", val: "Active Plan", sub: "28 Days Remaining", icon: CreditCard, color: "from-amber-500 to-orange-400 text-amber-500" }
+                { title: "Membership Period", val: client?.membership || "Active Plan", sub: `${daysRemaining} Days Remaining`, icon: CreditCard, color: "from-amber-500 to-orange-400 text-amber-500" }
               ].map((card, i) => {
                 const Icon = card.icon;
                 return (
@@ -815,7 +1055,7 @@ const ClientDashboard = () => {
         {activeTab === "My Workout" && (() => {
           const todayDayName = new Date().toLocaleDateString("en-US", { weekday: "long" }); // e.g. "Monday"
           const todayDayKey = todayDayName.toLowerCase(); // e.g. "monday"
-          const clientWorkoutPlan = client ? workouts?.[client.id] : null;
+          const clientWorkoutPlan = client ? (workouts?.[client.id] || workouts?.["logged_in_client"]) : null;
           const todayWorkout = clientWorkoutPlan ? (clientWorkoutPlan[todayDayKey] || clientWorkoutPlan[todayDayName]) : null;
 
           if (isWorkoutLoading) {
@@ -1065,35 +1305,43 @@ const ClientDashboard = () => {
 
         {/* 3. DIET TAB */}
         {activeTab === "My Diet" && (() => {
-          const getGoalPlanKey = (goal) => {
-            if (!goal) return "Maintenance";
-            const g = goal.toLowerCase();
-            if (g.includes("loss") || g.includes("cut") || g.includes("diet") || g.includes("fat")) return "Weight Loss";
-            if (g.includes("gain") || g.includes("bulk") || g.includes("strength") || g.includes("muscle")) return "Muscle Gain";
-            return "Maintenance";
-          };
+          const mealsConfig = [
+            { key: "earlyMorning", label: "🍽 Early Morning" },
+            { key: "breakfast", label: "🍽 Breakfast" },
+            { key: "midMorning", label: "🍎 Mid-Morning Snack" },
+            { key: "lunch", label: "🍛 Lunch" },
+            { key: "eveningSnack", label: "☕ Evening Snack" },
+            { key: "preWorkout", label: "⚡ Pre-Workout Snack" },
+            { key: "postWorkout", label: "🥤 Post-Workout Shake" },
+            { key: "dinner", label: "🍽 Dinner" },
+            { key: "beforeBed", label: "🌙 Before Bed" }
+          ];
 
-          const goalKey = getGoalPlanKey(client.goal);
-          const activePlan = DIET_PLANS[goalKey] || DIET_PLANS["Maintenance"];
-          const dayMeals = activePlan.days[selectedDietDay] || [];
-          
-          // Dynamic calories/macros based on active selection (overridden for Sunday Rest Day)
-          const isSunday = selectedDietDay === "Sunday";
-          const displayCalories = isSunday 
-            ? (goalKey === "Weight Loss" ? "1,240 kcal" : goalKey === "Muscle Gain" ? "1,980 kcal" : "1,580 kcal")
-            : activePlan.calories;
-          const displayProtein = isSunday 
-            ? (goalKey === "Weight Loss" ? "65g" : goalKey === "Muscle Gain" ? "120g" : "90g")
-            : activePlan.protein;
-          const displayCarbs = isSunday 
-            ? (goalKey === "Weight Loss" ? "110g" : goalKey === "Muscle Gain" ? "190g" : "150g")
-            : activePlan.carbs;
-          const displayFats = isSunday 
-            ? (goalKey === "Weight Loss" ? "35g" : goalKey === "Muscle Gain" ? "50g" : "40g")
-            : activePlan.fats;
-          const displayWater = isSunday 
-            ? (goalKey === "Weight Loss" ? "2.5L" : goalKey === "Muscle Gain" ? "3.5L" : "3.0L")
-            : activePlan.water;
+          const clientDietPlan = client ? (diets?.[client.id] || diets?.["logged_in_client"]) : null;
+          const dayMealsObj = clientDietPlan ? (clientDietPlan[selectedDietDay.toLowerCase()] || {}) : {};
+
+          // Convert to renderable array
+          const dayMeals = mealsConfig.map(meal => {
+            const m = dayMealsObj[meal.key] || {};
+            return {
+              label: meal.label,
+              items: m.meal || "No meal planned",
+              kcal: m.calories ? `${m.calories} kcal` : "0 kcal",
+              macros: `P: ${m.protein || 0}g | C: ${m.carbs || 0}g | F: ${m.fat || 0}g`
+            };
+          }).filter(m => m.items !== "No meal planned");
+
+          const dayCals = Object.values(dayMealsObj).reduce((acc, curr) => acc + (Number(curr?.calories) || 0), 0);
+          const dayProtein = Object.values(dayMealsObj).reduce((acc, curr) => acc + (Number(curr?.protein) || 0), 0);
+          const dayCarbs = Object.values(dayMealsObj).reduce((acc, curr) => acc + (Number(curr?.carbs) || 0), 0);
+          const dayFats = Object.values(dayMealsObj).reduce((acc, curr) => acc + (Number(curr?.fat) || 0), 0);
+
+          const displayCalories = `${dayCals} kcal`;
+          const displayProtein = `${dayProtein}g`;
+          const displayCarbs = `${dayCarbs}g`;
+          const displayFats = `${dayFats}g`;
+          const displayWater = "3.5L";
+          const goalKey = clientDietPlan?.template || "Curated Diet";
 
           return (
             <div className="space-y-6 text-left animate-in fade-in duration-200">
@@ -1191,18 +1439,24 @@ const ClientDashboard = () => {
                 </span>
                 
                 <div className="divide-y divide-[#1e293b]/35 space-y-4">
-                  {dayMeals.map((m, i) => (
-                    <div key={i} className={`pt-4 ${i === 0 ? "pt-0" : ""} flex flex-col sm:flex-row justify-between sm:items-start gap-3.5 text-xs`}>
-                      <div className="space-y-1">
-                        <span className="font-extrabold text-white text-sm block leading-none">{m.label}</span>
-                        <p className="text-slate-205 leading-relaxed font-semibold max-w-xl mt-1.5">{m.items}</p>
+                  {dayMeals.length > 0 ? (
+                    dayMeals.map((m, i) => (
+                      <div key={i} className={`pt-4 ${i === 0 ? "pt-0" : ""} flex flex-col sm:flex-row justify-between sm:items-start gap-3.5 text-xs`}>
+                        <div className="space-y-1">
+                          <span className="font-extrabold text-white text-sm block leading-none">{m.label}</span>
+                          <p className="text-slate-205 leading-relaxed font-semibold max-w-xl mt-1.5">{m.items}</p>
+                        </div>
+                        <div className="text-right shrink-0 border-t sm:border-t-0 border-zinc-850 pt-2.5 sm:pt-0">
+                          <span className="font-black text-white block">{m.kcal}</span>
+                          <span className="text-[10px] text-cyan-455 block mt-0.5">{m.macros}</span>
+                        </div>
                       </div>
-                      <div className="text-right shrink-0 border-t sm:border-t-0 border-zinc-850 pt-2.5 sm:pt-0">
-                        <span className="font-black text-white block">{m.kcal}</span>
-                        <span className="text-[10px] text-cyan-455 block mt-0.5">{m.macros}</span>
-                      </div>
+                    ))
+                  ) : (
+                    <div className="py-8 text-center text-xs text-slate-450 border border-dashed border-[#1e293b]/40 rounded-2xl">
+                      No diet blueprint configured for {selectedDietDay}. Ask your trainer to load a plan.
                     </div>
-                  ))}
+                  )}
                 </div>
 
                 {selectedDietDay === todayName && (
@@ -1304,15 +1558,15 @@ const ClientDashboard = () => {
             <div className="grid grid-cols-3 gap-4 text-center">
               <div className="p-4 bg-[#111827] border border-[#1e293b]/45 rounded-2xl shadow-sm">
                 <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider block">Present Days</span>
-                <span className="text-lg font-black text-emerald-450 mt-1 block">23 Days</span>
+                <span className="text-lg font-black text-emerald-450 mt-1 block">{attendanceStats.present} Days</span>
               </div>
               <div className="p-4 bg-[#111827] border border-[#1e293b]/45 rounded-2xl shadow-sm">
                 <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider block">Absent Days</span>
-                <span className="text-lg font-black text-rose-500 mt-1 block">2 Days</span>
+                <span className="text-lg font-black text-rose-500 mt-1 block">{attendanceStats.absent} Days</span>
               </div>
               <div className="p-4 bg-[#111827] border border-[#1e293b]/45 rounded-2xl shadow-sm">
                 <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider block">Total Tracked</span>
-                <span className="text-lg font-black text-blue-400 mt-1 block">25 Days</span>
+                <span className="text-lg font-black text-blue-400 mt-1 block">{attendanceStats.total} Days</span>
               </div>
             </div>
 
@@ -1325,9 +1579,18 @@ const ClientDashboard = () => {
             
             {/* SVG Weight Progression Line graph */}
             <div className="bg-[#111827] border border-[#1e293b]/45 rounded-3xl p-6 shadow-xl space-y-4">
-              <div>
-                <h3 className="text-xs font-black uppercase text-slate-400 tracking-wider">Weight Progression Trend</h3>
-                <p className="text-[10px] text-slate-500 mt-0.5 font-medium">Tracking body weight parameters against goal weight targets</p>
+              <div className="flex justify-between items-center">
+                <div>
+                  <h3 className="text-xs font-black uppercase text-slate-400 tracking-wider">Weight Progression Trend</h3>
+                  <p className="text-[10px] text-slate-500 mt-0.5 font-medium">Tracking body weight parameters against goal weight targets</p>
+                </div>
+                <button
+                  onClick={() => setMeasurementModalOpen(true)}
+                  className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white font-black text-[10px] uppercase tracking-wider rounded-xl shadow cursor-pointer transition"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Log Stats</span>
+                </button>
               </div>
 
               {/* Custom SVG Line Chart */}
@@ -1356,8 +1619,9 @@ const ClientDashboard = () => {
                   else pathD += ` L ${px} ${py}`;
                 });
 
-                // Target weight horizontal helper line (65kg)
-                const targetY = mapY(65);
+                // Target weight horizontal helper line
+                const targetWeight = Number(client?.targetWeight) || 65;
+                const targetY = mapY(targetWeight);
 
                 return (
                   <div className="relative pt-2">
@@ -1368,7 +1632,7 @@ const ClientDashboard = () => {
 
                       {/* Target line (Dotted Rose) */}
                       <line x1={paddingX} y1={targetY} x2={chartW - paddingX} y2={targetY} stroke="#f43f5e" strokeWidth="1.5" strokeDasharray="4 3" />
-                      <text x={chartW - paddingX - 60} y={targetY - 5} fill="#f43f5e" fontSize="7" fontWeight="bold">Target Limit: 65kg</text>
+                      <text x={chartW - paddingX - 65} y={targetY - 5} fill="#f43f5e" fontSize="7" fontWeight="bold">Target: {targetWeight}kg</text>
 
                       {/* Weight progress path line */}
                       <path d={pathD} fill="none" stroke="#2563eb" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -1463,8 +1727,110 @@ const ClientDashboard = () => {
                   </div>
                 </div>
               </div>
-
             </div>
+
+            {/* --- CLIENT LOG WEIGHT POPUP MODAL --- */}
+            {measurementModalOpen && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm" onClick={() => setMeasurementModalOpen(false)} />
+                
+                <form 
+                  onSubmit={handleClientAddMeasurement} 
+                  className="relative bg-[#0b101c]/95 border border-[#1e293b]/70 rounded-3xl max-w-sm w-full p-6 shadow-2xl animate-in scale-in duration-200 text-left"
+                >
+                  <h3 className="text-sm font-black text-white mb-4 font-display uppercase tracking-wider">Log Weight Progress</h3>
+                  <div className="space-y-3.5">
+                    <div>
+                      <label className="text-[9px] font-bold text-slate-500 uppercase block mb-1">Weight (kg) *</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        required
+                        value={newMeasure.weight}
+                        onChange={(e) => setNewMeasure({ ...newMeasure, weight: e.target.value })}
+                        className="w-full px-3 py-2 text-xs border border-zinc-800 rounded-xl bg-zinc-955/60 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/25"
+                        placeholder="e.g. 72.5"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="text-[9px] font-bold text-slate-500 uppercase block mb-1">Body Fat (%)</label>
+                        <input
+                          type="number"
+                          step="0.1"
+                          value={newMeasure.bodyFat}
+                          onChange={(e) => setNewMeasure({ ...newMeasure, bodyFat: e.target.value })}
+                          className="w-full px-3 py-2 text-xs border border-zinc-800 rounded-xl bg-zinc-955/60 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/25"
+                          placeholder="e.g. 15.4"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[9px] font-bold text-slate-500 uppercase block mb-1">Waist (cm)</label>
+                        <input
+                          type="number"
+                          step="0.1"
+                          value={newMeasure.waist}
+                          onChange={(e) => setNewMeasure({ ...newMeasure, waist: e.target.value })}
+                          className="w-full px-3 py-2 text-xs border border-zinc-800 rounded-xl bg-zinc-955/60 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/25"
+                          placeholder="e.g. 82"
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div>
+                        <label className="text-[9px] font-bold text-slate-500 uppercase block mb-1">Chest (cm)</label>
+                        <input
+                          type="number"
+                          step="0.1"
+                          value={newMeasure.chest}
+                          onChange={(e) => setNewMeasure({ ...newMeasure, chest: e.target.value })}
+                          className="w-full px-3 py-2 text-xs border border-zinc-800 rounded-xl bg-zinc-955/60 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/25"
+                          placeholder="e.g. 96"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[9px] font-bold text-slate-500 uppercase block mb-1">Arms (cm)</label>
+                        <input
+                          type="number"
+                          step="0.1"
+                          value={newMeasure.arms}
+                          onChange={(e) => setNewMeasure({ ...newMeasure, arms: e.target.value })}
+                          className="w-full px-3 py-2 text-xs border border-zinc-800 rounded-xl bg-zinc-955/60 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/25"
+                          placeholder="e.g. 34"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[9px] font-bold text-slate-500 uppercase block mb-1">Thigh (cm)</label>
+                        <input
+                          type="number"
+                          step="0.1"
+                          value={newMeasure.thigh}
+                          onChange={(e) => setNewMeasure({ ...newMeasure, thigh: e.target.value })}
+                          className="w-full px-3 py-2 text-xs border border-zinc-800 rounded-xl bg-zinc-955/60 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/25"
+                          placeholder="e.g. 52"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2 mt-6 border-t border-zinc-900 pt-4">
+                    <button
+                      type="button"
+                      onClick={() => setMeasurementModalOpen(false)}
+                      className="flex-1 py-2 border border-zinc-850 hover:bg-zinc-900 rounded-xl text-xs font-black text-slate-400 uppercase tracking-wider cursor-pointer transition"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="flex-1 py-2 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-xl text-xs uppercase tracking-wider cursor-pointer shadow-lg shadow-blue-600/10 transition"
+                    >
+                      Submit Log
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
 
           </div>
         )}
@@ -1477,18 +1843,18 @@ const ClientDashboard = () => {
             <div className="bg-gradient-to-br from-[#111827] via-[#0e1422] to-[#141f32] border border-blue-500/25 rounded-3xl p-6 shadow-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div>
                 <span className="text-[10px] font-black text-cyan-400 bg-cyan-400/10 px-2.5 py-1 rounded-full border border-cyan-400/20 uppercase tracking-wide">
-                  Active BEFIT PREMIUM Membership ⭐
+                  Active {client?.membership ? client.membership.toUpperCase() : "BEFIT PREMIUM"} Membership ⭐
                 </span>
                 <h2 className="text-lg font-black text-white mt-3.5">BeFit Gym Subscription Billed Status</h2>
                 <div className="flex gap-4 mt-2 text-xs text-slate-400 font-semibold">
-                  <div>Billed Rates: <strong className="text-white">₹3,500 / month</strong></div>
-                  <div>Expiration: <strong className="text-white">25 August 2026</strong></div>
+                  <div>Billed Rates: <strong className="text-white">₹{(client?.monthlyFees || 3500).toLocaleString("en-IN")} / month</strong></div>
+                  <div>Expiration: <strong className="text-white">{client?.expiryDate ? formatDateFriendly(client.expiryDate) : "—"}</strong></div>
                 </div>
               </div>
               
               <div className="p-4 bg-zinc-950/60 rounded-2xl border border-zinc-850 shrink-0 text-center">
                 <span className="text-[9px] text-slate-450 font-bold block uppercase tracking-wider">Days Remaining</span>
-                <span className="text-xl font-black text-cyan-400 block mt-1">28 Days</span>
+                <span className="text-xl font-black text-cyan-400 block mt-1">{daysRemaining} Days</span>
               </div>
             </div>
 

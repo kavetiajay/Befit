@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useCRM } from "../context/CRMContext";
 import {
   CreditCard,
@@ -28,9 +28,19 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { AnimatedNumber } from "../components/AnimatedNumber";
+import { SkeletonLoader } from "../components/FeedbackStates";
 
 const Payments = () => {
-  const { clients, payments, recordClientPayment, updateClient, settings } = useCRM();
+  const { 
+    clients, 
+    payments, 
+    recordClientPayment, 
+    updateClient, 
+    settings,
+    fetchPayments,
+    updateClientPayment,
+    loading
+  } = useCRM();
 
   // Navigation Tabs state
   const [activeTab, setActiveTab] = useState("overview"); // overview, invoices, outstanding
@@ -50,6 +60,24 @@ const Payments = () => {
 
   // Expanded row ID state
   const [expandedPaymentId, setExpandedPaymentId] = useState(null);
+
+  useEffect(() => {
+    fetchPayments();
+  }, []);
+
+  const handleMarkPaymentPaid = async (payment) => {
+    const toastId = toast.loading("Marking invoice as Paid...");
+    try {
+      await updateClientPayment(payment.id, {
+        status: "Paid",
+        payment_date: new Date().toISOString()
+      });
+      toast.success("Invoice successfully cleared!", { id: toastId });
+    } catch (err) {
+      console.error(err);
+      toast.error(`Failed to update invoice: ${err instanceof Error ? err.message : String(err)}`, { id: toastId });
+    }
+  };
 
   // Form input states
   const [newPaymentInput, setNewPaymentInput] = useState({
@@ -215,7 +243,7 @@ const Payments = () => {
   }, [processedPayments, searchQuery, filterStatus, filterMethod]);
 
   // Helper actions: Record Payment Submit
-  const handleRecordPaymentSubmit = (e) => {
+  const handleRecordPaymentSubmit = async (e) => {
     e.preventDefault();
     if (!newPaymentInput.amount || parseFloat(newPaymentInput.amount) <= 0) {
       toast.warning("Please enter a valid amount.");
@@ -225,35 +253,40 @@ const Payments = () => {
     const client = clients.find((c) => c.id === newPaymentInput.clientId);
     if (!client) return;
 
-    recordClientPayment({
-      clientId: client.id,
-      clientName: client.name,
-      amount: parseFloat(newPaymentInput.amount),
-      method: newPaymentInput.method,
-      status: newPaymentInput.status,
-      membershipPlan: client.membership || "Standard Monthly",
-      date: newPaymentInput.date,
-      dueDate: newPaymentInput.dueDate,
-      notes: newPaymentInput.notes || "Manually logged gym dues."
-    });
-
-    toast.success(`Payment receipt recorded for ${client.name}.`);
-    setPaymentModalOpen(false);
-    
-    // Reset form
-    setNewPaymentInput({
-      clientId: clients[0]?.id || "",
-      amount: clients[0]?.monthlyFees || "3500",
-      method: "UPI",
-      status: "Paid",
-      date: new Date().toISOString().split("T")[0],
-      dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-      notes: ""
-    });
+    const toastId = toast.loading(`Recording payment receipt...`);
+    try {
+      await recordClientPayment({
+        clientId: client.id,
+        clientName: client.name,
+        amount: parseFloat(newPaymentInput.amount),
+        method: newPaymentInput.method,
+        status: newPaymentInput.status,
+        membershipPlan: client.membership || "Standard Monthly",
+        date: newPaymentInput.date,
+        dueDate: newPaymentInput.dueDate,
+        notes: newPaymentInput.notes || "Manually logged gym dues."
+      });
+      toast.success(`Payment receipt recorded for ${client.name}.`, { id: toastId });
+      setPaymentModalOpen(false);
+      
+      // Reset form
+      setNewPaymentInput({
+        clientId: clients[0]?.id || "",
+        amount: clients[0]?.monthlyFees || "3500",
+        method: "UPI",
+        status: "Paid",
+        date: new Date().toISOString().split("T")[0],
+        dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+        notes: ""
+      });
+    } catch (err) {
+      console.error(err);
+      toast.error(`Failed to record payment: ${err instanceof Error ? err.message : String(err)}`, { id: toastId });
+    }
   };
 
   // Helper actions: Renew Membership Submit
-  const handleRenewMembershipSubmit = (e) => {
+  const handleRenewMembershipSubmit = async (e) => {
     e.preventDefault();
     const client = clients.find((c) => c.id === newRenewalInput.clientId);
     if (!client) return;
@@ -268,29 +301,35 @@ const Payments = () => {
     const end = new Date(start.setMonth(start.getMonth() + planDuration));
     const newExpiryDateStr = end.toISOString().split("T")[0];
 
-    // 1. Update Client profile parameters
-    updateClient(client.id, {
-      membership: planName,
-      monthlyFees: fee,
-      expiryDate: newExpiryDateStr,
-      status: "Active"
-    });
+    const toastId = toast.loading(`Renewing membership...`);
+    try {
+      // 1. Update Client profile parameters
+      await updateClient(client.id, {
+        membership: planName,
+        monthlyFees: fee,
+        expiryDate: newExpiryDateStr,
+        status: "Active"
+      });
 
-    // 2. Log corresponding payment record
-    recordClientPayment({
-      clientId: client.id,
-      clientName: client.name,
-      amount: fee,
-      method: newRenewalInput.method,
-      status: newRenewalInput.status,
-      membershipPlan: planName,
-      date: newRenewalInput.startDate,
-      dueDate: newExpiryDateStr,
-      notes: newRenewalInput.notes || `Renewed membership for ${planDuration} Month(s).`
-    });
+      // 2. Log corresponding payment record
+      await recordClientPayment({
+        clientId: client.id,
+        clientName: client.name,
+        amount: fee,
+        method: newRenewalInput.method,
+        status: newRenewalInput.status,
+        membershipPlan: planName,
+        date: newRenewalInput.startDate,
+        dueDate: newExpiryDateStr,
+        notes: newRenewalInput.notes || `Renewed membership for ${planDuration} Month(s).`
+      });
 
-    toast.success(`Renewed membership for ${client.name}! New Expiry: ${formatDate(newExpiryDateStr)}`);
-    setRenewalModalOpen(false);
+      toast.success(`Renewed membership for ${client.name}! New Expiry: ${formatDate(newExpiryDateStr)}`, { id: toastId });
+      setRenewalModalOpen(false);
+    } catch (err) {
+      console.error(err);
+      toast.error(`Failed to renew membership: ${err instanceof Error ? err.message : String(err)}`, { id: toastId });
+    }
   };
 
   // Trigger Send Reminder Notification Toast
@@ -423,6 +462,11 @@ Generated on ${new Date().toLocaleString("en-IN")}
           );
         })}
       </div>
+
+      {loading ? (
+        <SkeletonLoader type="table" count={5} />
+      ) : (
+        <>
 
       {/* --- TAB 1: OVERVIEW --- */}
       {activeTab === "overview" && (
@@ -690,13 +734,22 @@ Generated on ${new Date().toLocaleString("en-IN")}
                                   <Download className="w-3.5 h-3.5" />
                                 </button>
                                 {p.status !== "Paid" && p.status !== "Expired" && (
-                                  <button
-                                    onClick={() => handleSendReminder(p.clientName, p.amount, p.dueDate)}
-                                    className="p-2 bg-blue-50 hover:bg-blue-600 hover:text-white dark:bg-blue-900/10 dark:hover:bg-blue-600 text-blue-600 dark:text-blue-400 rounded-xl transition cursor-pointer"
-                                    title="Send payment alert"
-                                  >
-                                    <Send className="w-3.5 h-3.5" />
-                                  </button>
+                                  <>
+                                    <button
+                                      onClick={() => handleSendReminder(p.clientName, p.amount, p.dueDate)}
+                                      className="p-2 bg-blue-50 hover:bg-blue-600 hover:text-white dark:bg-blue-900/10 dark:hover:bg-blue-600 text-blue-600 dark:text-blue-400 rounded-xl transition cursor-pointer"
+                                      title="Send payment alert"
+                                    >
+                                      <Send className="w-3.5 h-3.5" />
+                                    </button>
+                                    <button
+                                      onClick={() => handleMarkPaymentPaid(p)}
+                                      className="p-2 bg-emerald-50 hover:bg-emerald-600 hover:text-white dark:bg-emerald-900/10 dark:hover:bg-emerald-600 text-emerald-600 dark:text-emerald-400 rounded-xl transition cursor-pointer"
+                                      title="Mark as Paid"
+                                    >
+                                      <Check className="w-3.5 h-3.5" />
+                                    </button>
+                                  </>
                                 )}
                               </div>
                             </td>
@@ -766,13 +819,22 @@ Generated on ${new Date().toLocaleString("en-IN")}
                     </div>
                     <div className="text-right shrink-0 flex flex-col items-end gap-1.5">
                       <span className="text-xs font-black text-slate-850 dark:text-zinc-100">₹{item.amount}</span>
-                      <button
-                        onClick={() => handleSendReminder(item.clientName, item.amount, item.dueDate)}
-                        className="p-1.5 bg-blue-50 dark:bg-blue-900/10 text-blue-600 dark:text-blue-400 hover:bg-blue-600 hover:text-white rounded-lg transition cursor-pointer shadow-sm border border-blue-50"
-                        title="Send collection warning"
-                      >
-                        <Send className="w-3 h-3" />
-                      </button>
+                      <div className="flex gap-1.5">
+                        <button
+                          onClick={() => handleSendReminder(item.clientName, item.amount, item.dueDate)}
+                          className="p-1.5 bg-blue-50 dark:bg-blue-900/10 text-blue-600 dark:text-blue-400 hover:bg-blue-600 hover:text-white rounded-lg transition cursor-pointer shadow-sm border border-blue-50"
+                          title="Send collection warning"
+                        >
+                          <Send className="w-3 h-3" />
+                        </button>
+                        <button
+                          onClick={() => handleMarkPaymentPaid(item)}
+                          className="p-1.5 bg-emerald-50 dark:bg-emerald-900/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-650 hover:text-white rounded-lg transition cursor-pointer shadow-sm border border-emerald-50"
+                          title="Mark as Paid"
+                        >
+                          <Check className="w-3 h-3" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))
@@ -1070,6 +1132,9 @@ Generated on ${new Date().toLocaleString("en-IN")}
             </form>
           </div>
         </div>
+      )}
+
+        </>
       )}
 
     </div>

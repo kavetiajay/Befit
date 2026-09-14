@@ -1,5 +1,6 @@
-import React from "react";
-import { Navigate } from "react-router-dom";
+import React, { useEffect } from "react";
+import { Navigate, useLocation } from "react-router-dom";
+import { api } from "../services/api";
 
 export const isAuthenticated = () => {
   return (
@@ -13,6 +14,22 @@ export const getSessionRole = () => {
 };
 
 export const ProtectedRoute = ({ children, role }) => {
+  const location = useLocation();
+
+  useEffect(() => {
+    const verifySession = async () => {
+      if (isAuthenticated()) {
+        try {
+          await api.get("/api/auth/session");
+        } catch (error) {
+          // Centralized error handler in api.ts will clean session data and redirect to /login
+          console.warn("Session check failed, session is invalid or expired.", error);
+        }
+      }
+    };
+    verifySession();
+  }, [location.pathname]);
+
   if (!isAuthenticated()) {
     return <Navigate to="/login" replace />;
   }

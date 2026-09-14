@@ -25,10 +25,10 @@ export const supabase = createClient(
   isConfigured ? supabaseAnonKey! : "placeholder-anon-key"
 );
 
-// Initialize admin client if service key is provided
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-export const supabaseAdmin = supabaseServiceKey && isConfigured
-  ? createClient(supabaseUrl!, supabaseServiceKey, {
+// Initialize privileged admin client if secret key is provided (server-side only)
+const supabaseSecretKey = process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+export const supabaseAdmin = supabaseSecretKey && isConfigured
+  ? createClient(supabaseUrl!, supabaseSecretKey, {
       auth: {
         autoRefreshToken: false,
         persistSession: false

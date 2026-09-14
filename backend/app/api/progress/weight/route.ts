@@ -154,6 +154,7 @@ export async function POST(request: Request) {
       chest_cm,
       waist_cm,
       hips_cm,
+      thigh_cm,
       biceps_cm,
       notes,
     } = body;
@@ -179,7 +180,7 @@ export async function POST(request: Request) {
     }
 
     // Body measurements validations
-    const measurementFields = { body_fat_pct, chest_cm, waist_cm, hips_cm, biceps_cm };
+    const measurementFields = { body_fat_pct, chest_cm, waist_cm, hips_cm, thigh_cm, biceps_cm };
     for (const [key, val] of Object.entries(measurementFields)) {
       if (val !== undefined && (typeof val !== "number" || val <= 0)) {
         return NextResponse.json(
@@ -254,6 +255,7 @@ export async function POST(request: Request) {
       chest_cm: chest_cm !== undefined ? Number(chest_cm) : null,
       waist_cm: waist_cm !== undefined ? Number(waist_cm) : null,
       hips_cm: hips_cm !== undefined ? Number(hips_cm) : null,
+      thigh_cm: thigh_cm !== undefined ? Number(thigh_cm) : (hips_cm !== undefined ? Number(hips_cm) : null),
       biceps_cm: biceps_cm !== undefined ? Number(biceps_cm) : null,
       notes: notes || null,
     };

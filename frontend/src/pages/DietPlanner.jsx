@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useCRM } from "../context/CRMContext";
 import { useNavigate } from "react-router-dom";
 import {
@@ -17,7 +17,7 @@ import {
   Coffee
 } from "lucide-react";
 import { toast } from "sonner";
-import { EmptyState } from "../components/FeedbackStates";
+import { EmptyState, SkeletonLoader } from "../components/FeedbackStates";
 
 const DietPlanner = () => {
   const navigate = useNavigate();
@@ -26,7 +26,10 @@ const DietPlanner = () => {
     diets,
     updateDiet,
     updateDietTemplate,
-    applyDietTemplatePreset
+    applyDietTemplatePreset,
+    fetchDietPlanForClient,
+    loading,
+    error
   } = useCRM();
 
   const [selectedClientId, setSelectedClientId] = useState(clients[0]?.id || "");
@@ -67,6 +70,13 @@ const DietPlanner = () => {
   const activeClient = clients.find((c) => c.id === selectedClientId);
   const clientDiet = activeClient ? diets[activeClient.id] || { template: "General Fitness", waterGoal: 3.0 } : {};
 
+  // Fetch diet plan on mount and selected client changes
+  useEffect(() => {
+    if (selectedClientId) {
+      fetchDietPlanForClient(selectedClientId);
+    }
+  }, [selectedClientId]);
+
   const handleEditDietMeal = (day, mKey) => {
     const meals = clientDiet[day.toLowerCase()] || {};
     const mealItem = meals[mKey] || {};
@@ -85,33 +95,51 @@ const DietPlanner = () => {
     setDietModalOpen(true);
   };
 
-  const handleSaveDietMeal = (e) => {
+  const handleSaveDietMeal = async (e) => {
     e.preventDefault();
-    updateDiet(activeClient.id, selectedDay, mealKey, {
-      meal: mealInput.meal,
-      quantity: mealInput.quantity,
-      calories: parseFloat(mealInput.calories) || 0,
-      protein: parseFloat(mealInput.protein) || 0,
-      carbs: parseFloat(mealInput.carbs) || 0,
-      fat: parseFloat(mealInput.fat) || 0,
-      waterIntake: parseFloat(mealInput.waterIntake) || 0,
-      notes: mealInput.notes
-    });
-    toast.success(`Meal detail for ${mealKey} on ${selectedDay} updated.`);
-    setDietModalOpen(false);
+    const toastId = toast.loading(`Saving meal detail for ${mealKey} on ${selectedDay}...`);
+    try {
+      await updateDiet(activeClient.id, selectedDay, mealKey, {
+        meal: mealInput.meal,
+        quantity: mealInput.quantity,
+        calories: parseFloat(mealInput.calories) || 0,
+        protein: parseFloat(mealInput.protein) || 0,
+        carbs: parseFloat(mealInput.carbs) || 0,
+        fat: parseFloat(mealInput.fat) || 0,
+        waterIntake: parseFloat(mealInput.waterIntake) || 0,
+        notes: mealInput.notes
+      });
+      toast.success(`Meal detail for ${mealKey} on ${selectedDay} updated.`, { id: toastId });
+      setDietModalOpen(false);
+    } catch (err) {
+      console.error(err);
+      toast.error(`Failed to update meal: ${err instanceof Error ? err.message : String(err)}`, { id: toastId });
+    }
   };
 
-  const handleCopyDayPlan = (fromDay, toDay) => {
+  const handleCopyDayPlan = async (fromDay, toDay) => {
     const fromMeals = clientDiet[fromDay.toLowerCase()] || {};
-    Object.entries(fromMeals).forEach(([key, val]) => {
-      updateDiet(activeClient.id, toDay, key, val);
-    });
-    toast.success(`Copied diet plan from ${fromDay} to ${toDay}.`);
+    const toastId = toast.loading(`Copying diet plan from ${fromDay} to ${toDay}...`);
+    try {
+      for (const [key, val] of Object.entries(fromMeals)) {
+        await updateDiet(activeClient.id, toDay, key, val);
+      }
+      toast.success(`Copied diet plan from ${fromDay} to ${toDay}.`, { id: toastId });
+    } catch (err) {
+      console.error(err);
+      toast.error(`Failed to copy plan: ${err instanceof Error ? err.message : String(err)}`, { id: toastId });
+    }
   };
 
-  const handleApplyPreset = (templateName) => {
-    applyDietTemplatePreset(activeClient.id, templateName);
-    toast.success(`Loaded ${templateName} template diet plan.`);
+  const handleApplyPreset = async (templateName) => {
+    const toastId = toast.loading(`Loading ${templateName} template preset...`);
+    try {
+      await applyDietTemplatePreset(activeClient.id, templateName);
+      toast.success(`Loaded ${templateName} template diet plan.`, { id: toastId });
+    } catch (err) {
+      console.error(err);
+      toast.error(`Failed to load preset: ${err instanceof Error ? err.message : String(err)}`, { id: toastId });
+    }
   };
 
   const handlePrint = () => {
@@ -223,7 +251,10 @@ const DietPlanner = () => {
           </div>
 
           {/* Days split accordion schedule */}
-          <div className="space-y-4 no-print">
+          {loading ? (
+            <SkeletonLoader type="table" count={5} />
+          ) : (
+            <div className="space-y-4 no-print">
             {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].map((day) => {
               const dayMeals = clientDiet[day.toLowerCase()] || {};
               const dayCals = Object.values(dayMeals).reduce((acc, curr) => acc + (curr?.calories || 0), 0);
@@ -396,6 +427,7 @@ const DietPlanner = () => {
               );
             })}
           </div>
+          )}
 
         </div>
       ) : (

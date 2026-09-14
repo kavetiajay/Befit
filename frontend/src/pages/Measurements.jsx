@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useCRM } from "../context/CRMContext";
 import {
   Scale,
@@ -20,9 +20,18 @@ import {
   Legend
 } from "recharts";
 import { toast } from "sonner";
+import { SkeletonLoader } from "../components/FeedbackStates";
 
 const Measurements = () => {
-  const { clients, measurements, updateClient } = useCRM();
+  const { 
+    clients, 
+    measurements, 
+    updateClient, 
+    fetchWeightProgress, 
+    addWeightProgress, 
+    loading, 
+    error 
+  } = useCRM();
 
   const [selectedClientId, setSelectedClientId] = useState(clients[0]?.id || "");
   const [measurementModalOpen, setMeasurementModalOpen] = useState(false);
@@ -31,6 +40,12 @@ const Measurements = () => {
   const [newMeasure, setNewMeasure] = useState({
     weight: "", bodyFat: "", chest: "", waist: "", arms: "", thigh: ""
   });
+
+  useEffect(() => {
+    if (selectedClientId) {
+      fetchWeightProgress(selectedClientId);
+    }
+  }, [selectedClientId]);
 
   const activeClient = clients.find((c) => c.id === selectedClientId);
   const clientMeasurements = activeClient ? measurements[activeClient.id] || [] : [];
@@ -48,7 +63,7 @@ const Measurements = () => {
     }));
   }, [sortedMeasurements]);
 
-  const handleAddMeasurement = (e) => {
+  const handleAddMeasurement = async (e) => {
     e.preventDefault();
     if (!newMeasure.weight) {
       toast.warning("Weight is required.");
@@ -58,27 +73,23 @@ const Measurements = () => {
     const newPoint = {
       date: today,
       weight: parseFloat(newMeasure.weight),
-      bmi: (parseFloat(newMeasure.weight) / ((activeClient.height / 100) * (activeClient.height / 100))).toFixed(1),
-      bodyFat: parseFloat(newMeasure.bodyFat) || activeClient.bodyFat,
-      chest: parseFloat(newMeasure.chest) || activeClient.chest,
-      waist: parseFloat(newMeasure.waist) || activeClient.waist,
-      arms: parseFloat(newMeasure.arms) || activeClient.arms,
-      thigh: parseFloat(newMeasure.thigh) || activeClient.thigh
+      bodyFat: parseFloat(newMeasure.bodyFat) || activeClient.bodyFat || 0,
+      chest: parseFloat(newMeasure.chest) || activeClient.chest || 0,
+      waist: parseFloat(newMeasure.waist) || activeClient.waist || 0,
+      arms: parseFloat(newMeasure.arms) || activeClient.arms || 0,
+      thigh: parseFloat(newMeasure.thigh) || activeClient.thigh || 0
     };
 
-    updateClient(activeClient.id, {
-      currentWeight: newPoint.weight,
-      bodyFat: newPoint.bodyFat,
-      bmi: newPoint.bmi,
-      chest: newPoint.chest,
-      waist: newPoint.waist,
-      arms: newPoint.arms,
-      thigh: newPoint.thigh
-    });
-
-    toast.success("New stats logged successfully!");
-    setMeasurementModalOpen(false);
-    setNewMeasure({ weight: "", bodyFat: "", chest: "", waist: "", arms: "", thigh: "" });
+    const toastId = toast.loading("Saving new body measurements...");
+    try {
+      await addWeightProgress(activeClient.id, newPoint);
+      toast.success("New stats logged successfully!", { id: toastId });
+      setMeasurementModalOpen(false);
+      setNewMeasure({ weight: "", bodyFat: "", chest: "", waist: "", arms: "", thigh: "" });
+    } catch (err) {
+      console.error(err);
+      toast.error(`Failed to save measurements: ${err instanceof Error ? err.message : String(err)}`, { id: toastId });
+    }
   };
 
   return (
@@ -122,7 +133,10 @@ const Measurements = () => {
       </div>
 
       {activeClient ? (
-        <div className="space-y-6">
+        loading ? (
+          <SkeletonLoader type="table" count={5} />
+        ) : (
+          <div className="space-y-6">
           {/* Athlete Info Bar */}
           <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl p-4 shadow-sm flex items-center gap-3">
             <img src={activeClient.photo} alt={activeClient.name} className="w-10 h-10 rounded-full object-cover shadow-sm bg-slate-100" />
@@ -212,7 +226,8 @@ const Measurements = () => {
             </div>
           </div>
 
-        </div>
+          </div>
+        )
       ) : (
         <div className="text-center py-20 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl">
           <AlertCircle className="w-12 h-12 text-slate-350 mx-auto mb-4" />

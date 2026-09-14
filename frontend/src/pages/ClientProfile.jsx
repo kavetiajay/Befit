@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   User,
@@ -46,6 +46,7 @@ import {
 import { useCRM } from "../context/CRMContext";
 import { toast } from "sonner";
 import { AnimatedNumber } from "../components/AnimatedNumber";
+import { SkeletonLoader, ErrorState } from "../components/FeedbackStates";
 
 const ClientProfile = () => {
   const { id } = useParams();
@@ -64,11 +65,38 @@ const ClientProfile = () => {
     applyDietTemplatePreset,
     markClientAttendance,
     recordClientPayment,
-    settings
+    settings,
+    fetchClientById,
+    fetchAttendance,
+    fetchWeightProgress,
+    addWeightProgress
   } = useCRM();
 
   // Find active client
   const client = useMemo(() => clients.find((c) => c.id === id), [clients, id]);
+
+  const [fetchingProfile, setFetchingProfile] = useState(false);
+  const [fetchError, setFetchError] = useState(null);
+
+  useEffect(() => {
+    const loadProfile = async () => {
+      setFetchingProfile(true);
+      setFetchError(null);
+      try {
+        await fetchClientById(id);
+        await fetchAttendance(id);
+        await fetchWeightProgress(id);
+      } catch (err) {
+        console.error("Failed to load client profile from backend:", err);
+        setFetchError(err instanceof Error ? err.message : String(err));
+      } finally {
+        setFetchingProfile(false);
+      }
+    };
+    if (id) {
+      loadProfile();
+    }
+  }, [id]);
 
   // Tab State (Overview, Workout, Diet, Attendance, Payments, Progress)
   const [activeTab, setActiveTab] = useState("overview");
@@ -155,6 +183,19 @@ const ClientProfile = () => {
     setEditModalOpen(false);
   };
 
+  if (fetchingProfile) {
+    return <SkeletonLoader type="profile" />;
+  }
+
+  if (fetchError) {
+    return (
+      <ErrorState 
+        message={fetchError} 
+        onRetry={() => fetchClientById(id)} 
+      />
+    );
+  }
+
   if (!client) {
     return (
       <div className="text-center py-20 bg-white dark:bg-zinc-900 border border-slate-205 dark:border-zinc-800 rounded-3xl shadow-sm">
@@ -231,7 +272,7 @@ const ClientProfile = () => {
   // --- ACTIONS ---
 
   // Measurement Submit
-  const handleAddMeasurement = (e) => {
+  const handleAddMeasurement = async (e) => {
     e.preventDefault();
     if (!newMeasure.weight) {
       toast.warning("Weight value is required.");
@@ -241,27 +282,23 @@ const ClientProfile = () => {
     const newPoint = {
       date: today,
       weight: parseFloat(newMeasure.weight),
-      bmi: (parseFloat(newMeasure.weight) / ((client.height / 100) * (client.height / 100))).toFixed(1),
-      bodyFat: parseFloat(newMeasure.bodyFat) || client.bodyFat,
-      chest: parseFloat(newMeasure.chest) || client.chest,
-      waist: parseFloat(newMeasure.waist) || client.waist,
-      arms: parseFloat(newMeasure.arms) || client.arms,
-      thigh: parseFloat(newMeasure.thigh) || client.thigh
+      bodyFat: parseFloat(newMeasure.bodyFat) || client.bodyFat || 0,
+      chest: parseFloat(newMeasure.chest) || client.chest || 0,
+      waist: parseFloat(newMeasure.waist) || client.waist || 0,
+      arms: parseFloat(newMeasure.arms) || client.arms || 0,
+      thigh: parseFloat(newMeasure.thigh) || client.thigh || 0
     };
 
-    updateClient(client.id, {
-      currentWeight: newPoint.weight,
-      bodyFat: newPoint.bodyFat,
-      bmi: newPoint.bmi,
-      chest: newPoint.chest,
-      waist: newPoint.waist,
-      arms: newPoint.arms,
-      thigh: newPoint.thigh
-    });
-
-    toast.success("New measurements recorded successfully.");
-    setMeasurementModalOpen(false);
-    setNewMeasure({ weight: "", bodyFat: "", chest: "", waist: "", arms: "", thigh: "" });
+    const toastId = toast.loading("Saving body measurements...");
+    try {
+      await addWeightProgress(client.id, newPoint);
+      toast.success("New measurements recorded successfully.", { id: toastId });
+      setMeasurementModalOpen(false);
+      setNewMeasure({ weight: "", bodyFat: "", chest: "", waist: "", arms: "", thigh: "" });
+    } catch (err) {
+      console.error(err);
+      toast.error(`Failed to save measurements: ${err instanceof Error ? err.message : String(err)}`, { id: toastId });
+    }
   };
 
   // Update exercise completion status
@@ -1039,21 +1076,33 @@ const ClientProfile = () => {
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     <button
-                      onClick={() => {
-                        const time = document.getElementById("today-time-in-prof").value;
+                      onClick={async () => {
+                        const time = document.getElementById("today-time-in-prof")?.value || "08:00 AM";
                         const today = new Date().toISOString().split("T")[0];
-                        markClientAttendance(client.id, today, "Present", time);
-                        toast.success("Marked client as Present.");
+                        const toastId = toast.loading("Marking client as Present...");
+                        try {
+                          await markClientAttendance(client.id, today, "Present", time);
+                          toast.success("Marked client as Present.", { id: toastId });
+                        } catch (err) {
+                          console.error(err);
+                          toast.error(`Failed: ${err instanceof Error ? err.message : String(err)}`, { id: toastId });
+                        }
                       }}
                       className="py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow cursor-pointer"
                     >
                       Present
                     </button>
                     <button
-                      onClick={() => {
+                      onClick={async () => {
                         const today = new Date().toISOString().split("T")[0];
-                        markClientAttendance(client.id, today, "Absent", "-");
-                        toast.error("Marked client as Absent.");
+                        const toastId = toast.loading("Marking client as Absent...");
+                        try {
+                          await markClientAttendance(client.id, today, "Absent", "-");
+                          toast.success("Marked client as Absent.", { id: toastId });
+                        } catch (err) {
+                          console.error(err);
+                          toast.error(`Failed: ${err instanceof Error ? err.message : String(err)}`, { id: toastId });
+                        }
                       }}
                       className="py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-semibold shadow cursor-pointer"
                     >

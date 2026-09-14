@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Plus,
@@ -31,7 +31,7 @@ import {
 } from "lucide-react";
 import { useCRM } from "../context/CRMContext";
 import { toast } from "sonner";
-import { EmptyState } from "../components/FeedbackStates";
+import { EmptyState, SkeletonLoader } from "../components/FeedbackStates";
 
 const Clients = () => {
   const { 
@@ -43,7 +43,11 @@ const Clients = () => {
     workouts,
     diets,
     measurements,
-    payments 
+    payments,
+    loading,
+    error,
+    fetchClients,
+    assignClient
   } = useCRM();
   const navigate = useNavigate();
 
@@ -66,8 +70,41 @@ const Clients = () => {
   // Delete Confirmation State
   const [deletingClientId, setDeletingClientId] = useState(null);
 
+  // Assign Existing Client Modal State
+  const [assignModalOpen, setAssignModalOpen] = useState(false);
+  const [assignClientId, setAssignClientId] = useState("");
+
   // Print client modal state
   const [printClientInfo, setPrintClientInfo] = useState(null);
+
+  // Fetch clients on mount
+  useEffect(() => {
+    fetchClients();
+  }, []);
+
+  // Submit assign form
+  const handleAssignSubmit = async (e) => {
+    e.preventDefault();
+    if (!assignClientId.trim()) {
+      toast.warning("A valid client UUID is required.");
+      return;
+    }
+    
+    // Validate UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(assignClientId.trim())) {
+      toast.error("Invalid client ID format. It must be a valid UUID.");
+      return;
+    }
+
+    try {
+      await assignClient(assignClientId.trim());
+      setAssignModalOpen(false);
+      setAssignClientId("");
+    } catch (err) {
+      console.error("Assignment error:", err);
+    }
+  };
 
   // Detail Modal / Profile Popup State
   const [selectedClient, setSelectedClient] = useState(null);
@@ -295,13 +332,22 @@ const Clients = () => {
             Monitor member profiles, track bodyweight progressions, and trigger training operations.
           </p>
         </div>
-        <button
-          onClick={() => navigate("/clients/add")}
-          className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-2xl shadow-md transition cursor-pointer"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Add New Member</span>
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setAssignModalOpen(true)}
+            className="flex items-center gap-2 px-5 py-2.5 bg-white dark:bg-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-750 text-slate-700 dark:text-zinc-200 border border-slate-200 dark:border-zinc-700 font-bold text-xs rounded-2xl shadow-sm transition cursor-pointer"
+          >
+            <UserCheck className="w-4 h-4" />
+            <span>Assign Existing Client</span>
+          </button>
+          <button
+            onClick={() => navigate("/clients/add")}
+            className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-2xl shadow-md transition cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Add New Member</span>
+          </button>
+        </div>
       </div>
 
       {/* Improved Search & Filter Chips Panel */}
@@ -395,7 +441,10 @@ const Clients = () => {
       </div>
 
       {/* Directory Table Layout (Mindbody Inspired Compact List) */}
-      <div className="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-850 rounded-3xl overflow-hidden shadow-soft no-print">
+      {loading ? (
+        <SkeletonLoader type="table" count={5} />
+      ) : (
+        <div className="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-850 rounded-3xl overflow-hidden shadow-soft no-print">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead className="sticky top-0 bg-white dark:bg-zinc-900 z-10">
@@ -512,6 +561,7 @@ const Clients = () => {
           </table>
         </div>
       </div>
+      )}
 
       {/* Pagination Bar */}
       {totalPages > 1 && (
@@ -1500,6 +1550,56 @@ const Clients = () => {
                 Save Changes
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* --- ASSIGN EXISTING CLIENT DIALOG --- */}
+      {assignModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 no-print animate-fade-in">
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setAssignModalOpen(false)} />
+          <div className="relative bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl max-w-sm w-full p-6 shadow-2xl animate-in scale-in duration-200 text-left">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-base font-bold text-slate-805 dark:text-zinc-150 flex items-center gap-2">
+                <UserCheck className="w-5 h-5 text-blue-600" />
+                <span>Assign Existing Client</span>
+              </h3>
+              <button onClick={() => setAssignModalOpen(false)} className="text-slate-400 hover:text-slate-600 cursor-pointer">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <form onSubmit={handleAssignSubmit} className="space-y-4">
+              <div>
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+                  Client ID (UUID) *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. 123e4567-e89b-12d3-a456-426614174000"
+                  value={assignClientId}
+                  onChange={(e) => setAssignClientId(e.target.value)}
+                  className="w-full px-3.5 py-2 text-xs border border-slate-200 dark:border-zinc-800 rounded-xl bg-slate-50 dark:bg-zinc-950 text-slate-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                />
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setAssignModalOpen(false)}
+                  className="flex-1 py-2 border border-slate-205 dark:border-zinc-800 rounded-xl text-xs font-semibold text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-850 transition cursor-pointer text-center"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold shadow-sm transition cursor-pointer text-center"
+                >
+                  Assign Client
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

@@ -87,6 +87,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       "chest_cm",
       "waist_cm",
       "hips_cm",
+      "thigh_cm",
       "biceps_cm",
       "notes",
     ];
@@ -143,7 +144,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     }
 
     // Body measurements check
-    const measurements = ["body_fat_pct", "chest_cm", "waist_cm", "hips_cm", "biceps_cm"];
+    const measurements = ["body_fat_pct", "chest_cm", "waist_cm", "hips_cm", "thigh_cm", "biceps_cm"];
     for (const m of measurements) {
       if (updatePayload[m] !== undefined && updatePayload[m] !== null && (typeof updatePayload[m] !== "number" || (updatePayload[m] as number) <= 0)) {
         return NextResponse.json(

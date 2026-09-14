@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useCRM } from "../context/CRMContext";
 import { useNavigate } from "react-router-dom";
 import {
@@ -15,7 +15,7 @@ import {
   Moon
 } from "lucide-react";
 import { toast } from "sonner";
-import { EmptyState } from "../components/FeedbackStates";
+import { EmptyState, SkeletonLoader } from "../components/FeedbackStates";
 
 const WorkoutPlanner = () => {
   const navigate = useNavigate();
@@ -23,7 +23,12 @@ const WorkoutPlanner = () => {
     clients,
     workouts,
     updateWorkout,
-    duplicateWorkoutWeek
+    duplicateWorkoutWeek,
+    exercises,
+    fetchExercises,
+    fetchWorkoutPlanForClient,
+    loading,
+    error
   } = useCRM();
 
   const [selectedClientId, setSelectedClientId] = useState(clients[0]?.id || "");
@@ -56,6 +61,18 @@ const WorkoutPlanner = () => {
   const activeClient = clients.find((c) => c.id === selectedClientId);
   const clientWorkouts = activeClient ? workouts[activeClient.id] || {} : {};
 
+  // Fetch exercises list on mount
+  useEffect(() => {
+    fetchExercises();
+  }, []);
+
+  // Fetch client workout plan when active client changes
+  useEffect(() => {
+    if (selectedClientId) {
+      fetchWorkoutPlanForClient(selectedClientId);
+    }
+  }, [selectedClientId]);
+
   // Handlers for edit
   const handleEditWorkoutDay = (day) => {
     const wDay = clientWorkouts[day.toLowerCase()] || {};
@@ -82,11 +99,17 @@ const WorkoutPlanner = () => {
     );
   };
 
-  const handleSaveWorkoutDay = (e) => {
+  const handleSaveWorkoutDay = async (e) => {
     e.preventDefault();
-    updateWorkout(activeClient.id, selectedDay, muscleGroup, restTime, duration, dayNotes, dayExercises);
-    toast.success(`Workout schedule for ${selectedDay} updated.`);
-    setWorkoutModalOpen(false);
+    const toastId = toast.loading(`Updating workout schedule for ${selectedDay}...`);
+    try {
+      await updateWorkout(activeClient.id, selectedDay, muscleGroup, restTime, duration, dayNotes, dayExercises);
+      toast.success(`Workout schedule for ${selectedDay} updated.`, { id: toastId });
+      setWorkoutModalOpen(false);
+    } catch (err) {
+      console.error(err);
+      toast.error(`Failed to update workout: ${err instanceof Error ? err.message : String(err)}`, { id: toastId });
+    }
   };
 
   const toggleDay = (day) => {
@@ -104,15 +127,20 @@ const WorkoutPlanner = () => {
     }));
   };
 
-  const handleDuplicateWeek = () => {
+  const handleDuplicateWeek = async () => {
     if (!targetClientId) {
       toast.warning("Please select a target client.");
       return;
     }
-    duplicateWorkoutWeek(activeClient.id, targetClientId);
-    const targetName = clients.find(c => c.id === targetClientId)?.name || "target client";
-    toast.success(`Copied weekly routine from ${activeClient.name} to ${targetName}.`);
-    setDuplicateModalOpen(false);
+    const toastId = toast.loading(`Duplicating workout week program...`);
+    try {
+      await duplicateWorkoutWeek(activeClient.id, targetClientId);
+      toast.success("Workout program duplicated successfully!", { id: toastId });
+      setDuplicateModalOpen(false);
+    } catch (err) {
+      console.error(err);
+      toast.error(`Duplication failed: ${err instanceof Error ? err.message : String(err)}`, { id: toastId });
+    }
   };
 
   const handlePrint = () => {
@@ -203,7 +231,10 @@ const WorkoutPlanner = () => {
               </button>
             </div>
           </div>          {/* Days split accordion schedule */}
-          <div className="space-y-4 no-print">
+          {loading ? (
+            <SkeletonLoader type="table" count={5} />
+          ) : (
+            <div className="space-y-4 no-print">
             {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].map((day) => {
               const wDay = clientWorkouts[day.toLowerCase()] || { muscleGroup: "Rest Day", exercises: [], notes: "", duration: "N/A", restTime: "N/A" };
               const isRest = day.toLowerCase() === "sunday" || wDay.muscleGroup === "Rest Day" || wDay.exercises?.length === 0;
@@ -384,6 +415,7 @@ const WorkoutPlanner = () => {
               );
             })}
           </div>
+          )}
         </div>
       ) : (
         <div className="text-center py-20 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl no-print">
@@ -509,6 +541,7 @@ const WorkoutPlanner = () => {
                         placeholder="Exercise Name"
                         onChange={(e) => handleExerciseChange(idx, "name", e.target.value)}
                         className="flex-1 min-w-[120px] px-2 py-1 border border-slate-200 dark:border-zinc-800 rounded-lg text-xs bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-100"
+                        list="exercises-datalist"
                         required
                       />
                       <select
@@ -557,6 +590,11 @@ const WorkoutPlanner = () => {
                     </div>
                   ))}
                 </div>
+                <datalist id="exercises-datalist">
+                  {exercises.map((item) => (
+                    <option key={item.id} value={item.name} />
+                  ))}
+                </datalist>
               </div>
             </div>
 

@@ -96,10 +96,16 @@ export async function POST(request: Request) {
       emergency_contact: emergencyContact || null,
     };
 
-    // Use admin client if available to bypass RLS restrictions (e.g. if email confirmation is pending
-    // and because normal users cannot self-register as 'trainer' under default RLS insert policies)
-    const clientToUse = supabaseAdmin || supabase;
-    const { error: profileError } = await clientToUse
+    // Privileged server-side admin client is required to insert 'trainer' profiles under RLS
+    if (!supabaseAdmin) {
+      console.error("Trainer registration failed: Server-side SUPABASE_SECRET_KEY is not configured.");
+      return NextResponse.json(
+        { success: false, message: "Server configuration error: SUPABASE_SECRET_KEY is not configured." },
+        { status: 500 }
+      );
+    }
+
+    const { error: profileError } = await supabaseAdmin
       .from("profiles")
       .insert(profilePayload);
 
@@ -107,13 +113,11 @@ export async function POST(request: Request) {
       console.error("Profile synchronization failed for trainer:", profileError);
 
       // Rollback Auth user if profile creation fails to prevent inconsistent data
-      if (supabaseAdmin) {
-        try {
-          await supabaseAdmin.auth.admin.deleteUser(userId);
-          console.log(`Successfully rolled back Auth user ${userId} after profile failure.`);
-        } catch (rollbackErr) {
-          console.error("Failed to delete orphaned Auth user on rollback:", rollbackErr);
-        }
+      try {
+        await supabaseAdmin.auth.admin.deleteUser(userId);
+        console.log(`Successfully rolled back Auth user ${userId} after profile failure.`);
+      } catch (rollbackErr) {
+        console.error("Failed to delete orphaned Auth user on rollback:", rollbackErr);
       }
 
       return NextResponse.json(
