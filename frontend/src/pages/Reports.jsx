@@ -93,8 +93,8 @@ const Reports = () => {
         </div>
         <EmptyState
           title="No Data Available for Reports"
-          description="Register athletes and log payments to populate reports and charts."
-          actionText="Register Athlete"
+          description="Register clients and log payments to populate reports and charts."
+          actionText="Register Client"
           onAction={() => navigate("/clients/add")}
           icon={TrendingUp}
         />
@@ -116,9 +116,9 @@ const Reports = () => {
         </div>
         <button
           onClick={handlePrint}
-          className="flex items-center gap-1.5 px-4 py-2 border border-slate-200 dark:border-zinc-800 rounded-xl bg-white hover:bg-slate-50 text-slate-650 cursor-pointer shadow-sm transition"
+          className="inline-flex items-center gap-1.5 px-4 py-2 border border-slate-200 dark:border-zinc-800 rounded-xl bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 cursor-pointer shadow-sm transition"
         >
-          <Printer className="w-4 h-4" />
+          <Printer className="w-4 h-4 shrink-0" />
           <span>Print All Analytics</span>
         </button>
       </div>
@@ -134,6 +134,7 @@ const Reports = () => {
               onClick={() => handleExportCSV("Revenue")}
               className="p-1 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded text-slate-400 cursor-pointer"
               title="Export CSV"
+              aria-label="Export CSV"
             >
               <Download className="w-4 h-4" />
             </button>
@@ -154,10 +155,12 @@ const Reports = () => {
         {/* Report 2: Client Growth */}
         <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl p-5 shadow-sm no-print">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">Athlete Growth Trend</h3>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">Client Growth Trend</h3>
             <button
               onClick={() => handleExportCSV("Client Growth")}
               className="p-1 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded text-slate-400 cursor-pointer"
+              title="Export CSV"
+              aria-label="Export CSV"
             >
               <Download className="w-4 h-4" />
             </button>
@@ -188,6 +191,8 @@ const Reports = () => {
             <button
               onClick={() => handleExportCSV("Fitness Goals")}
               className="p-1 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded text-slate-400 cursor-pointer"
+              title="Export CSV"
+              aria-label="Export CSV"
             >
               <Download className="w-4 h-4" />
             </button>
@@ -229,6 +234,8 @@ const Reports = () => {
             <button
               onClick={() => handleExportCSV("Membership Tiers")}
               className="p-1 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded text-slate-400 cursor-pointer"
+              title="Export CSV"
+              aria-label="Export CSV"
             >
               <Download className="w-4 h-4" />
             </button>
@@ -278,7 +285,7 @@ const Reports = () => {
               <thead>
                 <tr className="bg-slate-100">
                   <th className="p-2 border">Plan Tier</th>
-                  <th className="p-2 border text-center">Athlete Count</th>
+                  <th className="p-2 border text-center">Client Count</th>
                 </tr>
               </thead>
               <tbody>
@@ -293,12 +300,12 @@ const Reports = () => {
           </div>
 
           <div>
-            <h3 className="text-sm font-bold border-b pb-2 mb-3">Athlete Fitness Goals Distributions</h3>
+            <h3 className="text-sm font-bold border-b pb-2 mb-3">Client Fitness Goals Distributions</h3>
             <table className="w-full text-left text-xs border">
               <thead>
                 <tr className="bg-slate-100">
                   <th className="p-2 border">Primary Goal Target</th>
-                  <th className="p-2 border text-center">Athlete Count</th>
+                  <th className="p-2 border text-center">Client Count</th>
                 </tr>
               </thead>
               <tbody>

@@ -188,7 +188,7 @@ const DashboardLayout = ({ children }) => {
       subtitle = "Good Morning,";
     } else if (isClients) {
       title = "Clients";
-      subtitle = `${clients.length} members`;
+      subtitle = `${clients.length} clients`;
     } else if (isAttendance) {
       title = "Attendance";
       subtitle = new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" });
@@ -254,7 +254,7 @@ const DashboardLayout = ({ children }) => {
               <div className="absolute top-11 right-0 w-52 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border border-slate-200/80 dark:border-zinc-800 rounded-2xl shadow-xl z-50 p-2 divide-y divide-slate-100 dark:divide-zinc-800/40 animate-in fade-in slide-in-from-top-2 duration-200 text-left">
                 <div className="px-3 py-2">
                   <span className="text-[9px] text-slate-400 font-bold block uppercase tracking-wider">Coach Account</span>
-                  <span className="text-xs font-black text-slate-805 dark:text-zinc-100 block mt-0.5 truncate">{settings.trainerName}</span>
+                  <span className="text-xs font-black text-slate-800 dark:text-zinc-100 block mt-0.5 truncate">{settings.trainerName}</span>
                 </div>
                 <div className="py-1">
                   <button
@@ -264,7 +264,7 @@ const DashboardLayout = ({ children }) => {
                     }}
                     className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-bold hover:bg-slate-50 dark:hover:bg-zinc-800/40 text-slate-700 dark:text-zinc-200 rounded-xl transition text-left cursor-pointer"
                   >
-                    <User className="w-3.5 h-3.5 text-slate-400 dark:text-zinc-550" />
+                    <User className="w-3.5 h-3.5 text-slate-400 dark:text-zinc-500 shrink-0" />
                     <span>My Profile</span>
                   </button>
                   <button
@@ -274,7 +274,7 @@ const DashboardLayout = ({ children }) => {
                     }}
                     className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-bold hover:bg-slate-50 dark:hover:bg-zinc-800/40 text-slate-700 dark:text-zinc-200 rounded-xl transition text-left mt-0.5 cursor-pointer"
                   >
-                    <SettingsIcon className="w-3.5 h-3.5 text-slate-400 dark:text-zinc-550" />
+                    <SettingsIcon className="w-3.5 h-3.5 text-slate-400 dark:text-zinc-500 shrink-0" />
                     <span>Settings</span>
                   </button>
                   <button
@@ -284,7 +284,7 @@ const DashboardLayout = ({ children }) => {
                     }}
                     className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-bold hover:bg-slate-50 dark:hover:bg-zinc-800/40 text-slate-700 dark:text-zinc-200 rounded-xl transition text-left mt-0.5 cursor-pointer"
                   >
-                    <Users className="w-3.5 h-3.5 text-slate-400 dark:text-zinc-550" />
+                    <Users className="w-3.5 h-3.5 text-slate-400 dark:text-zinc-500 shrink-0" />
                     <span>Switch to Client</span>
                   </button>
                 </div>
@@ -294,9 +294,9 @@ const DashboardLayout = ({ children }) => {
                       setShowRoleDropdown(false);
                       handleLogout();
                     }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-bold hover:bg-red-50 dark:hover:bg-red-950/20 text-red-650 rounded-xl transition-all text-left mt-0.5 cursor-pointer"
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-bold hover:bg-rose-50 dark:hover:bg-rose-950/20 text-rose-600 dark:text-rose-400 rounded-xl transition-all text-left mt-0.5 cursor-pointer"
                   >
-                    <span className="text-sm">🚪</span>
+                    <LogOut className="w-3.5 h-3.5 text-rose-500 shrink-0" />
                     <span>Logout</span>
                   </button>
                 </div>
@@ -360,9 +360,9 @@ const DashboardLayout = ({ children }) => {
               localStorage.setItem("gym_role", "client");
               toast.success("Switched to Client View Portal 👤");
             }}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-extrabold text-blue-600 dark:text-blue-405 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-all duration-200"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-extrabold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-all duration-200"
           >
-            <User className="w-4 h-4" />
+            <User className="w-4 h-4 shrink-0" />
             <span>Client View Portal</span>
           </Link>
         </nav>
@@ -450,9 +450,9 @@ const DashboardLayout = ({ children }) => {
                   localStorage.setItem("gym_role", "client");
                   toast.success("Switched to Client View Portal 👤");
                 }}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-extrabold text-blue-600 dark:text-blue-405 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-all duration-200"
+                className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-extrabold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-all duration-200"
               >
-                <User className="w-4 h-4" />
+                <User className="w-4 h-4 shrink-0" />
                 <span>Client View Portal</span>
               </Link>
             </nav>
@@ -551,7 +551,7 @@ const DashboardLayout = ({ children }) => {
                   alt="Trainer Avatar"
                   className="w-6.5 h-6.5 rounded-lg object-cover border border-slate-200 dark:border-zinc-800"
                 />
-                <span className="hidden sm:inline-block text-[10px] font-black text-slate-550 dark:text-zinc-450 uppercase tracking-wider">
+                <span className="hidden sm:inline-block text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-wider">
                   👨‍🏫 Trainer Mode
                 </span>
               </button>
@@ -560,7 +560,7 @@ const DashboardLayout = ({ children }) => {
                 <div className="absolute top-11 right-0 w-52 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border border-slate-200/80 dark:border-zinc-800 rounded-2xl shadow-xl z-50 p-2 divide-y divide-slate-100 dark:divide-zinc-800/40 animate-in fade-in slide-in-from-top-2 duration-200 text-left">
                   <div className="px-3 py-2">
                     <span className="text-[9px] text-slate-400 font-bold block uppercase tracking-wider">Coach Account</span>
-                    <span className="text-xs font-black text-slate-805 dark:text-zinc-100 block mt-0.5 truncate">{settings.trainerName}</span>
+                    <span className="text-xs font-black text-slate-800 dark:text-zinc-100 block mt-0.5 truncate">{settings.trainerName}</span>
                   </div>
                   <div className="py-1">
                     <button
@@ -570,7 +570,7 @@ const DashboardLayout = ({ children }) => {
                       }}
                       className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-bold hover:bg-slate-50 dark:hover:bg-zinc-800/40 text-slate-700 dark:text-zinc-200 rounded-xl transition text-left cursor-pointer"
                     >
-                      <User className="w-3.5 h-3.5 text-slate-400 dark:text-zinc-550" />
+                      <User className="w-3.5 h-3.5 text-slate-400 dark:text-zinc-500 shrink-0" />
                       <span>My Profile</span>
                     </button>
                     <button
@@ -580,7 +580,7 @@ const DashboardLayout = ({ children }) => {
                       }}
                       className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-bold hover:bg-slate-50 dark:hover:bg-zinc-800/40 text-slate-700 dark:text-zinc-200 rounded-xl transition text-left mt-0.5 cursor-pointer"
                     >
-                      <SettingsIcon className="w-3.5 h-3.5 text-slate-400 dark:text-zinc-550" />
+                      <SettingsIcon className="w-3.5 h-3.5 text-slate-400 dark:text-zinc-500 shrink-0" />
                       <span>Settings</span>
                     </button>
                     <button
@@ -590,7 +590,7 @@ const DashboardLayout = ({ children }) => {
                       }}
                       className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-bold hover:bg-slate-50 dark:hover:bg-zinc-800/40 text-slate-700 dark:text-zinc-200 rounded-xl transition text-left mt-0.5 cursor-pointer"
                     >
-                      <Users className="w-3.5 h-3.5 text-slate-400 dark:text-zinc-550" />
+                      <Users className="w-3.5 h-3.5 text-slate-400 dark:text-zinc-500 shrink-0" />
                       <span>Switch to Client</span>
                     </button>
                   </div>
@@ -600,9 +600,9 @@ const DashboardLayout = ({ children }) => {
                         setShowRoleDropdown(false);
                         handleLogout();
                       }}
-                      className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-bold hover:bg-red-50 dark:hover:bg-red-950/20 text-red-650 rounded-xl transition-all text-left mt-0.5 cursor-pointer"
+                      className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-bold hover:bg-rose-50 dark:hover:bg-rose-950/20 text-rose-600 dark:text-rose-400 rounded-xl transition-all text-left mt-0.5 cursor-pointer"
                     >
-                      <span className="text-sm">🚪</span>
+                      <LogOut className="w-3.5 h-3.5 text-rose-500 shrink-0" />
                       <span>Logout</span>
                     </button>
                   </div>

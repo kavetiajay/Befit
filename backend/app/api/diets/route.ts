@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAuthenticatedUser, requireTrainer, getRequestClient, isAssignedClient } from "@/lib/supabase/auth";
 import { supabase, supabaseAdmin } from "@/lib/supabase/client";
+import { notifyDietPlanCreated } from "@/lib/supabase/notifications";
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -145,7 +146,7 @@ export async function POST(request: Request) {
     const dbClient = supabaseAdmin || supabase;
     const { data: targetProfile, error: profileError } = await dbClient
       .from("profiles")
-      .select("role")
+      .select("role, full_name")
       .eq("id", clientId)
       .single();
 
@@ -201,6 +202,14 @@ export async function POST(request: Request) {
         { status: 500 }
       );
     }
+
+    // 6. Trigger automated notification safely
+    notifyDietPlanCreated({
+      clientId,
+      clientName: targetProfile.full_name,
+      planName: newPlan.name,
+      trainerId: user.id,
+    }).catch((err) => console.error("Diet plan notification trigger failed:", err));
 
     return NextResponse.json(
       {

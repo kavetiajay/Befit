@@ -151,7 +151,7 @@ const WorkoutPlanner = () => {
     return (
       <div className="space-y-6 text-left">
         <div>
-          <h1 className="text-2xl font-bold font-display text-slate-805 dark:text-zinc-50 flex items-center gap-2">
+          <h1 className="text-2xl font-bold font-display text-slate-800 dark:text-zinc-50 flex items-center gap-2">
             Weekly Workout Planner
           </h1>
           <p className="text-slate-400 dark:text-zinc-500 text-sm mt-0.5">
@@ -159,9 +159,9 @@ const WorkoutPlanner = () => {
           </p>
         </div>
         <EmptyState
-          title="No Active Members Loaded"
-          description="Register your gym athletes first in order to build customized weekly workout splits."
-          actionText="Onboard New Member"
+          title="No Active Clients Loaded"
+          description="Register your gym clients first in order to build customized weekly workout splits."
+          actionText="Onboard New Client"
           onAction={() => navigate("/clients/add")}
           icon={Dumbbell}
         />
@@ -185,13 +185,13 @@ const WorkoutPlanner = () => {
         {/* Client Selector & Print */}
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <div className="flex items-center gap-2 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl px-3 py-1.5 shadow-sm flex-1 sm:flex-initial">
-            <User className="w-4 h-4 text-slate-400" />
+            <User className="w-4 h-4 text-slate-400 shrink-0" />
             <select
               value={selectedClientId}
               onChange={(e) => setSelectedClientId(e.target.value)}
-              className="text-xs font-semibold text-slate-700 bg-transparent border-none focus:outline-none cursor-pointer"
+              className="text-xs font-semibold text-slate-700 dark:text-zinc-200 bg-transparent border-none focus:outline-none cursor-pointer"
             >
-              <option value="" disabled>Select Athlete</option>
+              <option value="" disabled>Select Client</option>
               {clients.map((c) => (
                 <option key={c.id} value={c.id}>{c.name}</option>
               ))}
@@ -200,10 +200,11 @@ const WorkoutPlanner = () => {
           {activeClient && (
             <button
               onClick={handlePrint}
-              className="p-2 border border-slate-200 dark:border-zinc-800 rounded-xl bg-white hover:bg-slate-50 text-slate-600 cursor-pointer shadow-sm transition"
+              className="inline-flex items-center justify-center p-2 border border-slate-200 dark:border-zinc-800 rounded-xl bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-300 cursor-pointer shadow-sm transition"
               title="Print Weekly Routine"
+              aria-label="Print Weekly Routine"
             >
-              <Printer className="w-4.5 h-4.5" />
+              <Printer className="w-4 h-4" />
             </button>
           )}
         </div>
@@ -224,13 +225,15 @@ const WorkoutPlanner = () => {
             <div className="flex gap-2 w-full sm:w-auto">
               <button
                 onClick={() => setDuplicateModalOpen(true)}
-                className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-2 border border-slate-200 dark:border-zinc-800 rounded-xl text-xs font-semibold text-slate-600 dark:text-zinc-400 hover:bg-slate-50 cursor-pointer transition"
+                className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3 py-2 border border-slate-200 dark:border-zinc-800 rounded-xl text-xs font-semibold text-slate-600 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-zinc-800 cursor-pointer transition"
               >
-                <Copy className="w-3.5 h-3.5" />
+                <Copy className="w-3.5 h-3.5 shrink-0" />
                 <span>Duplicate Week</span>
               </button>
             </div>
-          </div>          {/* Days split accordion schedule */}
+          </div>
+
+          {/* Days split accordion schedule */}
           {loading ? (
             <SkeletonLoader type="table" count={5} />
           ) : (
@@ -247,20 +250,20 @@ const WorkoutPlanner = () => {
               return (
                 <div
                   key={day}
-                  className={`bg-white dark:bg-zinc-900 border border-slate-205 dark:border-zinc-800 rounded-3xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 text-left`}
+                  className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 text-left"
                 >
                   {/* Accordion Header */}
                   <div
                     onClick={() => toggleDay(day)}
-                    className="p-5 flex justify-between items-center cursor-pointer hover:bg-slate-50/50 dark:hover:bg-zinc-850/50 transition-colors select-none"
+                    className="p-5 flex justify-between items-center cursor-pointer hover:bg-slate-50/50 dark:hover:bg-zinc-800/50 transition-colors select-none"
                   >
                     <div className="flex items-center gap-3">
-                      <div className={`p-2.5 rounded-2xl ${
+                      <div className={`p-2.5 rounded-2xl flex items-center justify-center ${
                         isRest
                           ? "bg-purple-100/60 dark:bg-purple-950/20 text-purple-600 dark:text-purple-400"
                           : "bg-blue-50 dark:bg-blue-950/20 text-blue-600 dark:text-blue-400"
                       }`}>
-                        {isRest ? <Moon className="w-5 h-5" /> : <Dumbbell className="w-5 h-5" />}
+                        {isRest ? <Moon className="w-5 h-5 shrink-0" /> : <Dumbbell className="w-5 h-5 shrink-0" />}
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
@@ -292,12 +295,13 @@ const WorkoutPlanner = () => {
                         }}
                         className="p-2 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-400 dark:text-zinc-500 rounded-xl transition cursor-pointer"
                         title="Edit schedule"
+                        aria-label="Edit schedule"
                       >
                         <Edit className="w-4 h-4" />
                       </button>
 
                       {/* Expand Chevron */}
-                      <div className="text-slate-400 dark:text-zinc-500 p-1">
+                      <div className="text-slate-400 dark:text-zinc-500 p-1 flex items-center justify-center">
                         {isExpanded ? (
                           <ChevronUp className="w-5 h-5" />
                         ) : (
@@ -309,13 +313,13 @@ const WorkoutPlanner = () => {
 
                   {/* Accordion Content */}
                   {isExpanded && (
-                    <div className="px-5 pb-5 pt-1 border-t border-slate-150/60 dark:border-zinc-800/40">
+                    <div className="px-5 pb-5 pt-1 border-t border-slate-100 dark:border-zinc-800">
                       {isRest ? (
                         /* Visual distinct Sunday Recovery Card */
                         <div className="p-6 bg-gradient-to-br from-purple-50/50 to-indigo-50/50 dark:from-purple-950/10 dark:to-indigo-950/10 rounded-2xl border border-purple-100/30 dark:border-purple-950/20 text-center sm:text-left flex flex-col sm:flex-row justify-between items-center gap-6">
                           <div className="space-y-2">
                             <span className="text-[10px] bg-purple-100 dark:bg-purple-950 text-purple-600 dark:text-purple-400 font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider">Rest Period</span>
-                            <h5 className="text-sm font-bold text-slate-800 dark:text-zinc-150">CNS & Muscle Hypertrophy Decompression</h5>
+                            <h5 className="text-sm font-bold text-slate-800 dark:text-zinc-100">CNS & Muscle Hypertrophy Decompression</h5>
                             <p className="text-xs text-slate-500 dark:text-zinc-400 leading-relaxed max-w-lg">
                               {wDay.notes || "No exercises scheduled. Sundays are dedicated to cellular repair, muscle rebuilding, hydration, and 8+ hours of restful sleep."}
                             </p>
@@ -323,7 +327,7 @@ const WorkoutPlanner = () => {
                           
                           {/* Active Recovery Suggestion Tips */}
                           <div className="p-4 bg-white dark:bg-zinc-950 rounded-xl border border-slate-100 dark:border-zinc-800 shadow-sm shrink-0 w-full sm:w-auto text-xs space-y-2 text-left">
-                            <span className="font-extrabold text-slate-700 dark:text-zinc-350 block border-b pb-1.5 mb-1.5 uppercase tracking-wide text-[9px]">Recovery Checklist</span>
+                            <span className="font-extrabold text-slate-700 dark:text-zinc-300 block border-b pb-1.5 mb-1.5 uppercase tracking-wide text-[9px]">Recovery Checklist</span>
                             <div className="flex items-center gap-2 text-slate-500">
                               <span className="w-1.5 h-1.5 rounded-full bg-purple-500" />
                               <span>20-Min Foam Rolling & Stretching</span>
@@ -355,14 +359,14 @@ const WorkoutPlanner = () => {
                                     <th className="py-2.5 px-3 text-right">Target Load</th>
                                   </tr>
                                 </thead>
-                                <tbody className="divide-y divide-slate-50 dark:divide-zinc-800/20 text-slate-700 dark:text-zinc-350">
+                                <tbody className="divide-y divide-slate-50 dark:divide-zinc-800/20 text-slate-700 dark:text-zinc-300">
                                   {exercises.map((ex, idx) => {
                                     const compKey = `${activeClient.id}-${day.toLowerCase()}-${idx}`;
                                     const isDone = completedExercises[compKey];
                                     return (
                                       <tr
                                         key={idx}
-                                        className={`hover:bg-slate-50/30 dark:hover:bg-zinc-850/20 transition ${
+                                        className={`hover:bg-slate-50/30 dark:hover:bg-zinc-800/20 transition ${
                                           isDone ? "opacity-60 bg-slate-50/20 dark:bg-zinc-950/10 line-through" : ""
                                         }`}
                                       >
@@ -371,7 +375,7 @@ const WorkoutPlanner = () => {
                                             type="checkbox"
                                             checked={!!isDone}
                                             onChange={() => toggleExerciseCompletion(day, idx)}
-                                            className="w-4.5 h-4.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                                            className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer accent-blue-600"
                                           />
                                         </td>
                                         <td className="py-3 px-3">
@@ -384,8 +388,8 @@ const WorkoutPlanner = () => {
                                           </span>
                                         </td>
                                         <td className="py-3 px-3 text-center font-bold">{ex.sets}</td>
-                                        <td className="py-3 px-3 text-center font-bold text-slate-655">{ex.reps}</td>
-                                        <td className="py-3 px-3 text-right font-extrabold text-slate-850 dark:text-zinc-200">
+                                        <td className="py-3 px-3 text-center font-bold text-slate-600">{ex.reps}</td>
+                                        <td className="py-3 px-3 text-right font-extrabold text-slate-800 dark:text-zinc-200">
                                           {ex.weight && ex.weight !== "N/A" ? ex.weight : "—"}
                                         </td>
                                       </tr>
@@ -395,15 +399,15 @@ const WorkoutPlanner = () => {
                               </table>
                             </div>
                           ) : (
-                            <div className="py-8 text-center text-xs text-slate-450 border border-dashed border-slate-200 dark:border-zinc-800 rounded-2xl">
+                            <div className="py-8 text-center text-xs text-slate-400 border border-dashed border-slate-200 dark:border-zinc-800 rounded-2xl">
                               No exercises pre-populated. Click edit to plan this workout day.
                             </div>
                           )}
 
                           {/* Trainer note segment inside expanded card */}
                           {wDay.notes && (
-                            <div className="p-3 bg-slate-50/50 dark:bg-zinc-950/30 border border-slate-100 dark:border-zinc-850 rounded-2xl flex items-start gap-2.5 text-xs text-slate-500">
-                              <span className="font-bold text-slate-700 dark:text-zinc-350 shrink-0 uppercase tracking-wide text-[9px] bg-slate-100 dark:bg-zinc-800 px-2 py-0.5 rounded">Note</span>
+                            <div className="p-3 bg-slate-50/50 dark:bg-zinc-950/30 border border-slate-100 dark:border-zinc-800 rounded-2xl flex items-start gap-2.5 text-xs text-slate-500">
+                              <span className="font-bold text-slate-700 dark:text-zinc-300 shrink-0 uppercase tracking-wide text-[9px] bg-slate-100 dark:bg-zinc-800 px-2 py-0.5 rounded">Note</span>
                               <span className="italic leading-relaxed">"{wDay.notes}"</span>
                             </div>
                           )}
@@ -419,7 +423,7 @@ const WorkoutPlanner = () => {
         </div>
       ) : (
         <div className="text-center py-20 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl no-print">
-          <AlertCircle className="w-12 h-12 text-slate-350 mx-auto mb-4" />
+          <AlertCircle className="w-12 h-12 text-slate-400 mx-auto mb-4" />
           <h3 className="text-lg font-bold text-slate-800 dark:text-zinc-200">No Clients Registered</h3>
           <p className="text-xs text-slate-400 dark:text-zinc-500 mt-1">Please add a client from the Client Directory before planning workouts.</p>
         </div>
@@ -431,17 +435,17 @@ const WorkoutPlanner = () => {
           <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setDuplicateModalOpen(false)} />
           <div className="relative bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl max-w-sm w-full p-6 shadow-2xl animate-in scale-in duration-200">
             <h3 className="text-sm font-bold text-slate-800 dark:text-zinc-100 mb-4 font-display">Duplicate Workout Program</h3>
-            <p className="text-xs text-slate-450 mb-4 leading-relaxed">
+            <p className="text-xs text-slate-400 mb-4 leading-relaxed">
               Copy this week's workout schedule from <strong>{activeClient.name}</strong> to:
             </p>
             <div className="space-y-3">
-              <label className="text-[10px] font-bold text-slate-400 block">Select Target Athlete</label>
+              <label className="text-[10px] font-bold text-slate-400 block">Select Target Client</label>
               <select
                 value={targetClientId}
                 onChange={(e) => setTargetClientId(e.target.value)}
-                className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg bg-slate-50"
+                className="w-full px-3 py-2 text-xs border border-slate-200 dark:border-zinc-800 rounded-xl bg-slate-50 dark:bg-zinc-950 text-slate-800 dark:text-zinc-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="">Select Athlete</option>
+                <option value="">Select Client</option>
                 {clients.filter(c => c.id !== activeClient.id).map(c => (
                   <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
@@ -451,13 +455,13 @@ const WorkoutPlanner = () => {
               <button
                 type="button"
                 onClick={() => setDuplicateModalOpen(false)}
-                className="flex-1 py-2 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700"
+                className="flex-1 py-2 border border-slate-200 dark:border-zinc-800 rounded-xl text-xs font-semibold text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 cursor-pointer transition"
               >
                 Cancel
               </button>
               <button
                 onClick={handleDuplicateWeek}
-                className="flex-1 py-2 bg-blue-600 text-white rounded-xl text-xs font-semibold"
+                className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold shadow cursor-pointer transition"
               >
                 Duplicate Program
               </button>
@@ -483,7 +487,7 @@ const WorkoutPlanner = () => {
                     type="text"
                     value={muscleGroup}
                     onChange={(e) => setMuscleGroup(e.target.value)}
-                    className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs"
+                    className="w-full px-2.5 py-1.5 border border-slate-200 dark:border-zinc-800 rounded-xl text-xs bg-slate-50 dark:bg-zinc-950 text-slate-800 dark:text-zinc-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="e.g. Legs Focus"
                   />
                 </div>
@@ -493,7 +497,7 @@ const WorkoutPlanner = () => {
                     type="text"
                     value={restTime}
                     onChange={(e) => setRestTime(e.target.value)}
-                    className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs"
+                    className="w-full px-2.5 py-1.5 border border-slate-200 dark:border-zinc-800 rounded-xl text-xs bg-slate-50 dark:bg-zinc-950 text-slate-800 dark:text-zinc-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="e.g. 90 sec"
                   />
                 </div>
@@ -503,7 +507,7 @@ const WorkoutPlanner = () => {
                     type="text"
                     value={duration}
                     onChange={(e) => setDuration(e.target.value)}
-                    className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs"
+                    className="w-full px-2.5 py-1.5 border border-slate-200 dark:border-zinc-800 rounded-xl text-xs bg-slate-50 dark:bg-zinc-950 text-slate-800 dark:text-zinc-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="e.g. 45 min"
                   />
                 </div>
@@ -515,7 +519,7 @@ const WorkoutPlanner = () => {
                   type="text"
                   value={dayNotes}
                   onChange={(e) => setDayNotes(e.target.value)}
-                  className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs"
+                  className="w-full px-2.5 py-1.5 border border-slate-200 dark:border-zinc-800 rounded-xl text-xs bg-slate-50 dark:bg-zinc-950 text-slate-800 dark:text-zinc-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Warmup routines, hydration reminders, eccentric focus details..."
                 />
               </div>
@@ -526,7 +530,7 @@ const WorkoutPlanner = () => {
                   <button
                     type="button"
                     onClick={handleAddExerciseRow}
-                    className="text-[10px] text-blue-600 font-bold hover:underline"
+                    className="text-[10px] text-blue-600 font-bold hover:underline cursor-pointer"
                   >
                     + Add Exercise
                   </button>
@@ -547,7 +551,7 @@ const WorkoutPlanner = () => {
                       <select
                         value={ex.category || "Compound"}
                         onChange={(e) => handleExerciseChange(idx, "category", e.target.value)}
-                        className="px-2 py-1 border border-slate-200 dark:border-zinc-800 rounded-lg text-xs bg-white dark:bg-zinc-900 text-slate-705 dark:text-zinc-300"
+                        className="px-2 py-1 border border-slate-200 dark:border-zinc-800 rounded-lg text-xs bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-300"
                       >
                         <option value="Compound">Compound</option>
                         <option value="Isolation">Isolation</option>
@@ -582,7 +586,9 @@ const WorkoutPlanner = () => {
                         <button
                           type="button"
                           onClick={() => handleRemoveExerciseRow(idx)}
-                          className="p-1 text-red-500 hover:bg-red-55 dark:hover:bg-red-950/20 rounded-lg transition"
+                          className="p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg transition cursor-pointer"
+                          aria-label="Remove exercise"
+                          title="Remove exercise"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -602,13 +608,13 @@ const WorkoutPlanner = () => {
               <button
                 type="button"
                 onClick={() => setWorkoutModalOpen(false)}
-                className="flex-1 py-2 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700"
+                className="flex-1 py-2 border border-slate-200 dark:border-zinc-800 rounded-xl text-xs font-semibold text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 cursor-pointer transition"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="flex-1 py-2 bg-blue-600 text-white rounded-xl text-xs font-semibold"
+                className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold shadow cursor-pointer transition"
               >
                 Save Changes
               </button>
@@ -625,7 +631,7 @@ const WorkoutPlanner = () => {
             <p className="text-xs text-slate-500">Weekly Workout Schedule Sheet</p>
           </div>
           <div className="grid grid-cols-2 gap-4 text-xs mb-6 border-b pb-4">
-            <div><strong>Athlete Name:</strong> {activeClient.name}</div>
+            <div><strong>Client Name:</strong> {activeClient.name}</div>
             <div><strong>Membership Plan:</strong> {activeClient.membership}</div>
             <div><strong>Fitness Goal:</strong> {activeClient.goal}</div>
           </div>

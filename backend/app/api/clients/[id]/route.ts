@@ -337,6 +337,11 @@ export async function PATCH(request: Request, context: RouteContext) {
       "address",
       "emergency_contact",
       "profile_image_url",
+      "goal",
+      "height",
+      "medical_conditions",
+      "allergies",
+      "injuries",
     ];
 
     const updatePayload: Record<string, unknown> = {};
@@ -370,7 +375,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       .update(updatePayload)
       .eq("id", clientId)
       .select(
-        "id, full_name, email, phone, dob, gender, address, emergency_contact, profile_image_url, role, created_at, updated_at"
+        "id, full_name, email, phone, dob, gender, address, emergency_contact, profile_image_url, role, goal, height, medical_conditions, allergies, injuries, created_at, updated_at"
       )
       .single();
 

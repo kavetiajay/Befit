@@ -165,3 +165,55 @@ export async function POST(request: Request) {
     );
   }
 }
+
+export async function PATCH(request: Request) {
+  try {
+    // 1. Enforce authentication
+    const authResult = await requireAuthenticatedUser(request);
+    if (authResult instanceof NextResponse) {
+      return authResult;
+    }
+
+    const { user } = authResult;
+    const authHeader = request.headers.get("Authorization")!;
+    const token = authHeader.substring(7).trim();
+
+    const requestClient = getRequestClient(token);
+    
+    // Batch update all unread notifications for authenticated user under RLS
+    const { data: updated, error } = await requestClient
+      .from("notifications")
+      .update({
+        is_read: true,
+        read_at: new Date().toISOString(),
+      })
+      .eq("user_id", user.id)
+      .eq("is_read", false)
+      .select();
+
+    if (error) {
+      console.error("Error marking all notifications as read:", error.message);
+      return NextResponse.json(
+        { success: false, message: "Failed to update notification status." },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json(
+      {
+        success: true,
+        message: "All notifications marked as read successfully",
+        data: {
+          count: updated?.length || 0,
+        },
+      },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("PATCH /api/notifications exception caught:", error);
+    return NextResponse.json(
+      { success: false, message: "An unexpected error occurred." },
+      { status: 500 }
+    );
+  }
+}

@@ -262,7 +262,7 @@ const ResetPassword = () => {
                   New Password
                 </label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-zinc-500">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-zinc-500 flex items-center justify-center pointer-events-none">
                     <Lock className="w-5 h-5" />
                   </span>
                   <input
@@ -275,12 +275,13 @@ const ResetPassword = () => {
                       passwordError
                         ? "border-red-500 focus:ring-red-200 dark:focus:ring-red-950"
                         : "border-slate-100 dark:border-zinc-800/80 focus:border-blue-500 focus:ring-blue-100 dark:focus:ring-blue-900/30"
-                    } text-sm text-slate-800 dark:text-zinc-150 placeholder-slate-400 dark:placeholder-zinc-600 focus:outline-none focus:ring-4 transition-all`}
+                    } text-sm text-slate-800 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-600 focus:outline-none focus:ring-4 transition-all`}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-zinc-500 hover:text-slate-600 dark:hover:text-zinc-300 focus:outline-none cursor-pointer"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-zinc-500 hover:text-slate-600 dark:hover:text-zinc-300 focus:outline-none cursor-pointer flex items-center justify-center"
                   >
                     {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
@@ -296,7 +297,7 @@ const ResetPassword = () => {
                   Confirm Password
                 </label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-zinc-500">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-zinc-500 flex items-center justify-center pointer-events-none">
                     <Lock className="w-5 h-5" />
                   </span>
                   <input
@@ -309,12 +310,13 @@ const ResetPassword = () => {
                       confirmPasswordError
                         ? "border-red-500 focus:ring-red-200 dark:focus:ring-red-950"
                         : "border-slate-100 dark:border-zinc-800/80 focus:border-blue-500 focus:ring-blue-100 dark:focus:ring-blue-900/30"
-                    } text-sm text-slate-800 dark:text-zinc-150 placeholder-slate-400 dark:placeholder-zinc-600 focus:outline-none focus:ring-4 transition-all`}
+                    } text-sm text-slate-800 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-600 focus:outline-none focus:ring-4 transition-all`}
                   />
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-zinc-500 hover:text-slate-600 dark:hover:text-zinc-300 focus:outline-none cursor-pointer"
+                    aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-zinc-500 hover:text-slate-600 dark:hover:text-zinc-300 focus:outline-none cursor-pointer flex items-center justify-center"
                   >
                     {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
@@ -331,11 +333,11 @@ const ResetPassword = () => {
                 className="w-full h-[52px] bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 disabled:from-slate-100 disabled:to-slate-100 dark:disabled:from-zinc-800 dark:disabled:to-zinc-800 text-white disabled:text-slate-400 dark:disabled:text-zinc-600 text-sm font-black rounded-xl transition-all shadow-md shadow-blue-500/10 flex items-center justify-center gap-2 group cursor-pointer disabled:cursor-not-allowed"
               >
                 {isLoading ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <Loader2 className="w-5 h-5 animate-spin shrink-0" />
                 ) : (
                   <>
                     <span>Reset Password</span>
-                    <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                    <ArrowRight className="w-4 h-4 shrink-0 transition-transform group-hover:translate-x-1" />
                   </>
                 )}
               </button>

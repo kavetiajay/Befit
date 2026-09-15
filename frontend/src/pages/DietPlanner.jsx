@@ -162,7 +162,7 @@ const DietPlanner = () => {
     return (
       <div className="space-y-6 text-left">
         <div>
-          <h1 className="text-2xl font-bold font-display text-slate-808 dark:text-zinc-50 flex items-center gap-2">
+          <h1 className="text-2xl font-bold font-display text-slate-800 dark:text-zinc-50 flex items-center gap-2">
             Weekly Diet Planner
           </h1>
           <p className="text-slate-400 dark:text-zinc-500 text-sm mt-0.5">
@@ -170,9 +170,9 @@ const DietPlanner = () => {
           </p>
         </div>
         <EmptyState
-          title="No Active Members Loaded"
-          description="Register your gym athletes first in order to build customized weekly diet schedules."
-          actionText="Onboard New Member"
+          title="No Active Clients Loaded"
+          description="Register your gym clients first in order to build customized weekly diet schedules."
+          actionText="Onboard New Client"
           onAction={() => navigate("/clients/add")}
           icon={Apple}
         />
@@ -196,13 +196,13 @@ const DietPlanner = () => {
         {/* Client Selector & Print */}
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <div className="flex items-center gap-2 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl px-3 py-1.5 shadow-sm flex-1 sm:flex-initial">
-            <User className="w-4 h-4 text-slate-400" />
+            <User className="w-4 h-4 text-slate-400 shrink-0" />
             <select
               value={selectedClientId}
               onChange={(e) => setSelectedClientId(e.target.value)}
-              className="text-xs font-semibold text-slate-700 bg-transparent border-none focus:outline-none cursor-pointer"
+              className="text-xs font-semibold text-slate-700 dark:text-zinc-200 bg-transparent border-none focus:outline-none cursor-pointer"
             >
-              <option value="" disabled>Select Athlete</option>
+              <option value="" disabled>Select Client</option>
               {clients.map((c) => (
                 <option key={c.id} value={c.id}>{c.name}</option>
               ))}
@@ -211,10 +211,11 @@ const DietPlanner = () => {
           {activeClient && (
             <button
               onClick={handlePrint}
-              className="p-2 border border-slate-200 dark:border-zinc-800 rounded-xl bg-white hover:bg-slate-50 text-slate-600 cursor-pointer shadow-sm transition"
+              className="inline-flex items-center justify-center p-2 border border-slate-200 dark:border-zinc-800 rounded-xl bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-300 cursor-pointer shadow-sm transition"
               title="Print Weekly Diet"
+              aria-label="Print Weekly Diet"
             >
-              <Printer className="w-4.5 h-4.5" />
+              <Printer className="w-4 h-4" />
             </button>
           )}
         </div>
@@ -237,13 +238,13 @@ const DietPlanner = () => {
             <div className="flex flex-wrap gap-2 w-full sm:w-auto">
               <button
                 onClick={() => handleApplyPreset("Weight Loss")}
-                className="px-2.5 py-1.5 border border-slate-200 dark:border-zinc-800 rounded-lg text-xs font-semibold text-slate-650 hover:bg-slate-50 cursor-pointer"
+                className="inline-flex items-center justify-center px-3 py-1.5 border border-slate-200 dark:border-zinc-800 rounded-xl text-xs font-semibold text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 cursor-pointer transition"
               >
                 Load Weight Loss
               </button>
               <button
                 onClick={() => handleApplyPreset("Muscle Gain")}
-                className="px-2.5 py-1.5 border border-slate-200 dark:border-zinc-800 rounded-lg text-xs font-semibold text-slate-650 hover:bg-slate-50 cursor-pointer"
+                className="inline-flex items-center justify-center px-3 py-1.5 border border-slate-200 dark:border-zinc-800 rounded-xl text-xs font-semibold text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 cursor-pointer transition"
               >
                 Load Muscle Gain
               </button>
@@ -268,20 +269,20 @@ const DietPlanner = () => {
               return (
                 <div
                   key={day}
-                  className={`bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 text-left`}
+                  className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 text-left"
                 >
                   {/* Accordion Header */}
                   <div
                     onClick={() => toggleDay(day)}
-                    className="p-5 flex justify-between items-center cursor-pointer hover:bg-slate-50/50 dark:hover:bg-zinc-850/50 transition-colors select-none"
+                    className="p-5 flex justify-between items-center cursor-pointer hover:bg-slate-50/50 dark:hover:bg-zinc-800/50 transition-colors select-none"
                   >
                     <div className="flex items-center gap-3">
-                      <div className={`p-2.5 rounded-2xl ${
+                      <div className={`p-2.5 rounded-2xl flex items-center justify-center ${
                         isRest
                           ? "bg-emerald-100/60 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400"
                           : "bg-orange-50 dark:bg-orange-950/20 text-orange-600 dark:text-orange-400"
                       }`}>
-                        {isRest ? <Coffee className="w-5 h-5" /> : <Apple className="w-5 h-5" />}
+                        {isRest ? <Coffee className="w-5 h-5 shrink-0" /> : <Apple className="w-5 h-5 shrink-0" />}
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
@@ -301,7 +302,7 @@ const DietPlanner = () => {
                     <div className="flex items-center gap-2">
                       {/* Macro summaries in header */}
                       {!isRest && dayCals > 0 && (
-                        <span className="hidden sm:inline-block text-[10px] font-bold text-slate-450 dark:text-zinc-550 bg-slate-50 dark:bg-zinc-950 px-2.5 py-1 rounded-xl border border-slate-100 dark:border-zinc-800 mr-2">
+                        <span className="hidden sm:inline-block text-[10px] font-bold text-slate-500 dark:text-zinc-400 bg-slate-50 dark:bg-zinc-950 px-2.5 py-1 rounded-xl border border-slate-100 dark:border-zinc-800 mr-2">
                           P: {dayProtein}g • C: {dayCarbs}g • F: {dayFat}g
                         </span>
                       )}
@@ -315,7 +316,7 @@ const DietPlanner = () => {
                             e.target.value = ""; // reset
                           }
                         }}
-                        className="text-[10px] text-blue-600 bg-blue-50/50 dark:bg-zinc-950 px-2 py-1 rounded-xl border border-blue-100/20 dark:border-zinc-800 focus:outline-none cursor-pointer hover:bg-blue-100/50 transition mr-2"
+                        className="text-[10px] text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-zinc-950 px-2.5 py-1 rounded-xl border border-blue-100/30 dark:border-zinc-800 focus:outline-none cursor-pointer hover:bg-blue-100/50 transition mr-2"
                       >
                         <option value="">Copy to...</option>
                         {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].filter(d => d !== day).map(d => (
@@ -324,7 +325,7 @@ const DietPlanner = () => {
                       </select>
 
                       {/* Expand Chevron */}
-                      <div className="text-slate-400 dark:text-zinc-500 p-1">
+                      <div className="text-slate-400 dark:text-zinc-500 p-1 flex items-center justify-center">
                         {isExpanded ? (
                           <ChevronUp className="w-5 h-5" />
                         ) : (
@@ -336,36 +337,36 @@ const DietPlanner = () => {
 
                   {/* Accordion Content */}
                   {isExpanded && (
-                    <div className="px-5 pb-5 pt-1 border-t border-slate-150/60 dark:border-zinc-800/40">
+                    <div className="px-5 pb-5 pt-1 border-t border-slate-100 dark:border-zinc-800">
                       {isRest ? (
                         /* Sunday Recovery Diet View */
                         <div className="p-6 bg-gradient-to-br from-emerald-50/40 to-teal-50/40 dark:from-emerald-950/10 dark:to-teal-950/10 rounded-2xl border border-emerald-100/30 dark:border-emerald-950/20 flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-6">
                           <div className="space-y-2">
                             <span className="text-[10px] bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider">Recovery Diet</span>
-                            <h5 className="text-sm font-bold text-slate-800 dark:text-zinc-150">Nutritional Reset & Alkaline Rebalance</h5>
+                            <h5 className="text-sm font-bold text-slate-800 dark:text-zinc-100">Nutritional Reset & Alkaline Rebalance</h5>
                             <p className="text-xs text-slate-500 dark:text-zinc-400 leading-relaxed max-w-lg">
                               Sundays are configured to rest the digestive system while retaining amino acid balance. Prioritize whole fruits, coconut water, green tea, clear bone/lentil soups, and dynamic mineral loading.
                             </p>
                             <div className="pt-2 flex flex-wrap gap-2 text-xs">
-                              <span className="bg-white/80 dark:bg-zinc-950 border px-3 py-1 rounded-xl text-slate-650 font-medium">💧 Water Target: 4.0 Liters</span>
-                              <span className="bg-white/80 dark:bg-zinc-950 border px-3 py-1 rounded-xl text-slate-650 font-medium">🍵 Lemon Detox & Green Tea</span>
+                              <span className="bg-white/80 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 px-3 py-1 rounded-xl text-slate-700 dark:text-zinc-300 font-medium">💧 Water Target: 4.0 Liters</span>
+                              <span className="bg-white/80 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 px-3 py-1 rounded-xl text-slate-700 dark:text-zinc-300 font-medium">🍵 Lemon Detox & Green Tea</span>
                             </div>
                           </div>
                           
                           {/* Sunday Recovery Meal list */}
-                          <div className="bg-white dark:bg-zinc-950 rounded-2xl p-4 border border-slate-100 dark:border-zinc-850 shadow-sm space-y-2 text-xs min-w-[240px]">
-                            <span className="font-extrabold text-slate-800 dark:text-zinc-350 block border-b pb-1.5 mb-1.5 uppercase tracking-wide text-[9px]">Sunday Meals</span>
+                          <div className="bg-white dark:bg-zinc-950 rounded-2xl p-4 border border-slate-100 dark:border-zinc-800 shadow-sm space-y-2 text-xs min-w-[240px]">
+                            <span className="font-extrabold text-slate-800 dark:text-zinc-200 block border-b pb-1.5 mb-1.5 uppercase tracking-wide text-[9px] dark:border-zinc-800">Sunday Meals</span>
                             <div className="flex justify-between gap-4">
                               <span className="text-slate-400">Breakfast:</span>
-                              <span className="font-semibold text-slate-600">Oats & Blueberries</span>
+                              <span className="font-semibold text-slate-600 dark:text-zinc-300">Oats & Blueberries</span>
                             </div>
                             <div className="flex justify-between gap-4">
                               <span className="text-slate-400">Lunch:</span>
-                              <span className="font-semibold text-slate-600">Lentil Khichdi & Salad</span>
+                              <span className="font-semibold text-slate-600 dark:text-zinc-300">Lentil Khichdi & Salad</span>
                             </div>
                             <div className="flex justify-between gap-4">
                               <span className="text-slate-400">Dinner:</span>
-                              <span className="font-semibold text-slate-600">Veg/Chicken Clear Soup</span>
+                              <span className="font-semibold text-slate-600 dark:text-zinc-300">Veg/Chicken Clear Soup</span>
                             </div>
                           </div>
                         </div>
@@ -379,14 +380,14 @@ const DietPlanner = () => {
                               <div
                                 key={meal.key}
                                 onClick={() => handleEditDietMeal(day, meal.key)}
-                                className="group p-3 rounded-2xl border border-slate-150/60 dark:border-zinc-800/40 hover:border-blue-500 bg-slate-50/50 dark:bg-zinc-950/20 hover:bg-white dark:hover:bg-zinc-900 cursor-pointer transition shadow-sm flex flex-col justify-between text-left"
+                                className="group p-3 rounded-2xl border border-slate-100 dark:border-zinc-800 hover:border-blue-500 bg-slate-50/50 dark:bg-zinc-950/20 hover:bg-white dark:hover:bg-zinc-900 cursor-pointer transition shadow-sm flex flex-col justify-between text-left"
                               >
                                 <div>
-                                  <div className="flex justify-between items-center mb-1 border-b border-slate-100 dark:border-zinc-850 pb-1">
+                                  <div className="flex justify-between items-center mb-1 border-b border-slate-100 dark:border-zinc-800 pb-1">
                                     <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{meal.label}</span>
                                     {loggedMeal.waterIntake > 0 && (
-                                      <span className="flex items-center gap-0.5 text-[9px] bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 px-1.5 py-0.2 rounded-full font-bold">
-                                        <Droplets className="w-2.5 h-2.5" />
+                                      <span className="inline-flex items-center gap-0.5 text-[9px] bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 px-1.5 py-0.5 rounded-full font-bold">
+                                        <Droplets className="w-2.5 h-2.5 shrink-0" />
                                         <span>{loggedMeal.waterIntake}L H2O</span>
                                       </span>
                                     )}
@@ -398,17 +399,17 @@ const DietPlanner = () => {
                                         <span className="text-[10px] text-slate-400 block">Qty: {loggedMeal.quantity}</span>
                                       )}
                                       {loggedMeal.notes && (
-                                        <p className="text-[10px] text-slate-450 dark:text-zinc-500 italic leading-snug">"{loggedMeal.notes}"</p>
+                                        <p className="text-[10px] text-slate-400 dark:text-zinc-500 italic leading-snug">"{loggedMeal.notes}"</p>
                                       )}
                                     </div>
                                   ) : (
-                                    <span className="text-xs text-slate-350 italic font-medium mt-1 block">Add meal plan...</span>
+                                    <span className="text-xs text-slate-400 italic font-medium mt-1 block">Add meal plan...</span>
                                   )}
                                 </div>
 
                                 {hasFood && (
-                                  <div className="mt-3 pt-2 border-t border-slate-100 dark:border-zinc-850 flex justify-between items-center text-[10px]">
-                                    <span className="font-extrabold text-slate-700 dark:text-zinc-350">{loggedMeal.calories} kcal</span>
+                                  <div className="mt-3 pt-2 border-t border-slate-100 dark:border-zinc-800 flex justify-between items-center text-[10px]">
+                                    <span className="font-extrabold text-slate-700 dark:text-zinc-300">{loggedMeal.calories} kcal</span>
                                     <div className="flex gap-1 text-slate-400 font-semibold uppercase tracking-wider text-[9px]">
                                       <span>P:{loggedMeal.protein}g</span>
                                       <span>C:{loggedMeal.carbs}g</span>
@@ -432,7 +433,7 @@ const DietPlanner = () => {
         </div>
       ) : (
         <div className="text-center py-20 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl no-print">
-          <AlertCircle className="w-12 h-12 text-slate-350 mx-auto mb-4" />
+          <AlertCircle className="w-12 h-12 text-slate-400 mx-auto mb-4" />
           <h3 className="text-lg font-bold text-slate-800 dark:text-zinc-200">No Clients Registered</h3>
           <p className="text-xs text-slate-400 mt-1">Please add a client from the Client Directory before planning diet plans.</p>
         </div>
@@ -455,7 +456,7 @@ const DietPlanner = () => {
                   required
                   value={mealInput.meal}
                   onChange={(e) => setMealInput({ ...mealInput, meal: e.target.value })}
-                  className="w-full px-3 py-2 text-xs border border-slate-205 dark:border-zinc-800 rounded-lg bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-150"
+                  className="w-full px-3 py-2 text-xs border border-slate-200 dark:border-zinc-800 rounded-xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="e.g. Oats with sliced banana & scoop whey"
                 />
               </div>
@@ -466,7 +467,7 @@ const DietPlanner = () => {
                     type="text"
                     value={mealInput.quantity}
                     onChange={(e) => setMealInput({ ...mealInput, quantity: e.target.value })}
-                    className="w-full px-3 py-2 text-xs border border-slate-205 dark:border-zinc-800 rounded-lg bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-150"
+                    className="w-full px-3 py-2 text-xs border border-slate-200 dark:border-zinc-800 rounded-xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="e.g. 150g, 2 slices"
                   />
                 </div>
@@ -477,7 +478,7 @@ const DietPlanner = () => {
                     step="0.1"
                     value={mealInput.waterIntake}
                     onChange={(e) => setMealInput({ ...mealInput, waterIntake: e.target.value })}
-                    className="w-full px-3 py-2 text-xs border border-slate-205 dark:border-zinc-800 rounded-lg bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-150"
+                    className="w-full px-3 py-2 text-xs border border-slate-200 dark:border-zinc-800 rounded-xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="e.g. 0.5"
                   />
                 </div>
@@ -489,7 +490,7 @@ const DietPlanner = () => {
                     type="number"
                     value={mealInput.calories}
                     onChange={(e) => setMealInput({ ...mealInput, calories: e.target.value })}
-                    className="w-full px-3 py-2 text-xs border border-slate-205 dark:border-zinc-800 rounded-lg bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-150"
+                    className="w-full px-3 py-2 text-xs border border-slate-200 dark:border-zinc-800 rounded-xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
                 <div>
@@ -498,7 +499,7 @@ const DietPlanner = () => {
                     type="number"
                     value={mealInput.protein}
                     onChange={(e) => setMealInput({ ...mealInput, protein: e.target.value })}
-                    className="w-full px-3 py-2 text-xs border border-slate-205 dark:border-zinc-800 rounded-lg bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-150"
+                    className="w-full px-3 py-2 text-xs border border-slate-200 dark:border-zinc-800 rounded-xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
                 <div>
@@ -507,7 +508,7 @@ const DietPlanner = () => {
                     type="number"
                     value={mealInput.carbs}
                     onChange={(e) => setMealInput({ ...mealInput, carbs: e.target.value })}
-                    className="w-full px-3 py-2 text-xs border border-slate-205 dark:border-zinc-800 rounded-lg bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-150"
+                    className="w-full px-3 py-2 text-xs border border-slate-200 dark:border-zinc-800 rounded-xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
               </div>
@@ -518,7 +519,7 @@ const DietPlanner = () => {
                     type="number"
                     value={mealInput.fat}
                     onChange={(e) => setMealInput({ ...mealInput, fat: e.target.value })}
-                    className="w-full px-3 py-2 text-xs border border-slate-205 dark:border-zinc-800 rounded-lg bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-150"
+                    className="w-full px-3 py-2 text-xs border border-slate-200 dark:border-zinc-800 rounded-xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
                 <div>
@@ -527,7 +528,7 @@ const DietPlanner = () => {
                     type="text"
                     value={mealInput.notes}
                     onChange={(e) => setMealInput({ ...mealInput, notes: e.target.value })}
-                    className="w-full px-3 py-2 text-xs border border-slate-205 dark:border-zinc-800 rounded-lg bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-150"
+                    className="w-full px-3 py-2 text-xs border border-slate-200 dark:border-zinc-800 rounded-xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="Optional tips..."
                   />
                 </div>
@@ -538,13 +539,13 @@ const DietPlanner = () => {
               <button
                 type="button"
                 onClick={() => setDietModalOpen(false)}
-                className="flex-1 py-2 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700"
+                className="flex-1 py-2 border border-slate-200 dark:border-zinc-800 rounded-xl text-xs font-semibold text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 cursor-pointer transition"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="flex-1 py-2 bg-blue-600 text-white rounded-xl text-xs font-semibold"
+                className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold shadow cursor-pointer transition"
               >
                 Save
               </button>
@@ -561,7 +562,7 @@ const DietPlanner = () => {
             <p className="text-xs text-slate-500">Weekly Nutrition Program Sheet</p>
           </div>
           <div className="grid grid-cols-2 gap-4 text-xs mb-6 border-b pb-4">
-            <div><strong>Athlete Name:</strong> {activeClient.name}</div>
+            <div><strong>Client Name:</strong> {activeClient.name}</div>
             <div><strong>Fitness Goal:</strong> {activeClient.goal}</div>
             <div><strong>Plan Template:</strong> {clientDiet.template}</div>
           </div>

@@ -405,7 +405,7 @@ const Login = () => {
                   onBlur={handleEmailBlur}
                   disabled={isLoading || isGoogleLoading}
                   style={{ paddingLeft: "56px" }}
-                  className={`w-full h-14 pl-[56px] pr-4 bg-white dark:bg-zinc-950 border rounded-[14px] text-slate-800 dark:text-zinc-100 text-sm font-semibold placeholder-slate-400 dark:placeholder-zinc-650 focus:outline-none focus:ring-4 transition-all duration-200 login-input ${emailError && isEmailTouched
+                  className={`w-full h-14 pl-[56px] pr-4 bg-white dark:bg-zinc-950 border rounded-[14px] text-slate-800 dark:text-zinc-100 text-sm font-semibold placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-4 transition-all duration-200 login-input ${emailError && isEmailTouched
                       ? "border-red-500 focus:border-red-500 focus:ring-red-500/10 dark:focus:ring-red-500/20"
                       : "border-slate-200 dark:border-zinc-800 focus:border-blue-500 focus:ring-blue-500/10 dark:focus:ring-blue-500/20"
                     }`}
@@ -446,7 +446,7 @@ const Login = () => {
                     paddingLeft: "56px",
                     paddingRight: "56px",
                   }}
-                  className={`w-full h-14 pl-[56px] pr-[56px] bg-white dark:bg-zinc-950 border rounded-[14px] text-slate-800 dark:text-zinc-100 text-sm font-semibold placeholder-slate-400 dark:placeholder-zinc-650 focus:outline-none focus:ring-4 transition-all duration-200 login-input ${passwordError && isPasswordTouched
+                  className={`w-full h-14 pl-[56px] pr-[56px] bg-white dark:bg-zinc-950 border rounded-[14px] text-slate-800 dark:text-zinc-100 text-sm font-semibold placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-4 transition-all duration-200 login-input ${passwordError && isPasswordTouched
                       ? "border-red-500 focus:border-red-500 focus:ring-red-500/10 dark:focus:ring-red-500/20"
                       : "border-slate-200 dark:border-zinc-800 focus:border-blue-500 focus:ring-blue-500/10 dark:focus:ring-blue-500/20"
                     }`}
@@ -456,7 +456,8 @@ const Login = () => {
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   disabled={isLoading || isGoogleLoading}
-                  className="absolute right-[18px] text-slate-400 hover:text-slate-650 dark:hover:text-zinc-300 transition-colors flex items-center justify-center cursor-pointer login-password-toggle"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  className="absolute right-[18px] text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300 transition-colors flex items-center justify-center cursor-pointer login-password-toggle"
                 >
                   {showPassword ? (
                     <EyeOff className="w-5 h-5" />
@@ -485,7 +486,7 @@ const Login = () => {
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
                   disabled={isLoading || isGoogleLoading}
-                  className="w-4 h-4 rounded border-slate-350 dark:border-zinc-750 text-blue-600 focus:ring-blue-500/20 focus:ring-2 cursor-pointer transition-all duration-150"
+                  className="w-4 h-4 rounded border-slate-300 dark:border-zinc-700 text-blue-600 focus:ring-blue-500/20 focus:ring-2 cursor-pointer transition-all duration-150"
                 />
 
                 <span className="group-hover:text-slate-700 dark:group-hover:text-zinc-200 transition-colors login-remember-text">
@@ -516,13 +517,13 @@ const Login = () => {
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <Loader2 className="w-5 h-5 animate-spin shrink-0" />
                   <span>Signing In...</span>
                 </>
               ) : (
                 <>
                   <span>Sign In</span>
-                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-200" />
+                  <ArrowRight className="w-5 h-5 shrink-0 group-hover:translate-x-1 transition-transform duration-200" />
                 </>
               )}
             </button>
@@ -550,7 +551,7 @@ const Login = () => {
             className="w-full h-14 bg-white dark:bg-zinc-950 hover:bg-slate-50 dark:hover:bg-zinc-800/60 border border-slate-200 dark:border-zinc-800 rounded-[14px] text-slate-700 dark:text-zinc-200 text-sm font-bold shadow-sm hover:shadow active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isGoogleLoading ? (
-              <Loader2 className="w-5 h-5 animate-spin text-slate-500 dark:text-zinc-400" />
+              <Loader2 className="w-5 h-5 animate-spin text-slate-500 dark:text-zinc-400 shrink-0" />
             ) : (
               <GoogleIcon />
             )}
@@ -561,7 +562,7 @@ const Login = () => {
           {/* SECURITY */}
           <div className="mt-6 flex items-center justify-center gap-2 text-[10px] text-slate-400 dark:text-zinc-500 font-bold text-center leading-none">
 
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-500/90 dark:text-emerald-450/90 shrink-0" />
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-500/90 dark:text-emerald-400/90 shrink-0" />
 
             <span>
               Your information is securely protected and encrypted.
@@ -638,7 +639,7 @@ const Login = () => {
                       onBlur={handleForgotEmailBlur}
                       disabled={isForgotLoading}
                       style={{ paddingLeft: "56px" }}
-                      className={`w-full h-14 pl-[56px] pr-4 bg-white dark:bg-zinc-950 border rounded-[14px] text-slate-800 dark:text-zinc-100 text-sm font-semibold placeholder-slate-400 dark:placeholder-zinc-650 focus:outline-none focus:ring-4 transition-all duration-200 ${forgotEmailError && isForgotEmailTouched
+                      className={`w-full h-14 pl-[56px] pr-4 bg-white dark:bg-zinc-950 border rounded-[14px] text-slate-800 dark:text-zinc-100 text-sm font-semibold placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-4 transition-all duration-200 ${forgotEmailError && isForgotEmailTouched
                           ? "border-red-500 focus:border-red-500 focus:ring-red-500/10 dark:focus:ring-red-500/20"
                           : "border-slate-200 dark:border-zinc-800 focus:border-blue-500 focus:ring-blue-500/10 dark:focus:ring-blue-500/20"
                         }`}

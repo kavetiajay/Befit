@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAuthenticatedUser, requireTrainer, getRequestClient, isAssignedClient } from "@/lib/supabase/auth";
 import { supabase, supabaseAdmin } from "@/lib/supabase/client";
+import { notifyPaymentRecorded } from "@/lib/supabase/notifications";
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
@@ -24,7 +25,9 @@ export async function GET(request: Request) {
     const clientIdParam = searchParams.get("clientId") || searchParams.get("client_id");
 
     const requestClient = getRequestClient(token);
-    let query = requestClient.from("payments").select("*, client:profiles!client_id(id, full_name, email)");
+    let query = requestClient
+      .from("payments")
+      .select("*, client:profiles!client_id(id, full_name, email, phone, profile_image_url)");
 
     // Authorization & filtering
     if (role === "client") {
@@ -145,7 +148,8 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
-    if (amount === undefined || typeof amount !== "number" || amount <= 0) {
+    const numAmount = Number(amount);
+    if (isNaN(numAmount) || numAmount <= 0) {
       return NextResponse.json(
         { success: false, message: "Amount must be a positive number." },
         { status: 400 }
@@ -169,6 +173,12 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
+    if (membership_start > membership_end) {
+      return NextResponse.json(
+        { success: false, message: "Membership start date cannot be later than membership end date." },
+        { status: 400 }
+      );
+    }
     if (!status || !ALLOWED_STATUS.includes(status)) {
       return NextResponse.json(
         { success: false, message: `Status must be one of: ${ALLOWED_STATUS.join(", ")}` },
@@ -186,7 +196,7 @@ export async function POST(request: Request) {
     const dbClient = supabaseAdmin || supabase;
     const { data: targetProfile, error: profileError } = await dbClient
       .from("profiles")
-      .select("role")
+      .select("role, full_name")
       .eq("id", clientId)
       .single();
 
@@ -257,6 +267,15 @@ export async function POST(request: Request) {
         { status: 500 }
       );
     }
+
+    // 7. Trigger automated notification safely
+    notifyPaymentRecorded({
+      clientId,
+      clientName: targetProfile.full_name,
+      amount: numAmount,
+      notes: notes || undefined,
+      trainerId: user.id,
+    }).catch((err) => console.error("Payment notification trigger failed:", err));
 
     return NextResponse.json(
       {

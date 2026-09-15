@@ -69,7 +69,8 @@ const ClientProfile = () => {
     fetchClientById,
     fetchAttendance,
     fetchWeightProgress,
-    addWeightProgress
+    addWeightProgress,
+    deleteWeightProgress
   } = useCRM();
 
   // Find active client
@@ -198,7 +199,7 @@ const ClientProfile = () => {
 
   if (!client) {
     return (
-      <div className="text-center py-20 bg-white dark:bg-zinc-900 border border-slate-205 dark:border-zinc-800 rounded-3xl shadow-sm">
+      <div className="text-center py-20 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl shadow-sm">
         <XCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
         <h3 className="text-lg font-bold text-slate-800 dark:text-zinc-200">Client Not Found</h3>
         <button
@@ -455,7 +456,7 @@ const ClientProfile = () => {
               {client.name}
             </h1>
             <p className="text-xs text-slate-400 dark:text-zinc-500 mt-1">
-              Goal: <span className="font-semibold text-slate-600 dark:text-zinc-350">{client.goal}</span>
+              Goal: <span className="font-semibold text-slate-600 dark:text-zinc-400">{client.goal}</span>
             </p>
             <div className="flex flex-wrap items-center gap-2 mt-2">
               <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
@@ -478,16 +479,18 @@ const ClientProfile = () => {
               setEditFormData({ ...client });
               setEditModalOpen(true);
             }}
-            className="flex-1 md:flex-initial flex items-center justify-center gap-1.5 px-3.5 py-2 border border-slate-205 dark:border-zinc-800 rounded-xl text-xs font-semibold text-slate-600 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-zinc-850 cursor-pointer transition"
+            aria-label="Edit Profile"
+            className="flex-1 md:flex-initial flex items-center justify-center gap-1.5 px-3.5 py-2 border border-slate-200 dark:border-zinc-800 rounded-xl text-xs font-semibold text-slate-600 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-zinc-800 cursor-pointer transition"
           >
-            <Edit className="w-3.5 h-3.5" />
+            <Edit className="w-3.5 h-3.5 shrink-0" />
             <span>Edit Profile</span>
           </button>
           <button
             onClick={() => window.print()}
-            className="flex-1 md:flex-initial flex items-center justify-center gap-1.5 px-3.5 py-2 border border-slate-205 dark:border-zinc-800 rounded-xl text-xs font-semibold text-slate-600 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-zinc-850 cursor-pointer transition"
+            aria-label="Print Profile"
+            className="flex-1 md:flex-initial flex items-center justify-center gap-1.5 px-3.5 py-2 border border-slate-200 dark:border-zinc-800 rounded-xl text-xs font-semibold text-slate-600 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-zinc-800 cursor-pointer transition"
           >
-            <Printer className="w-3.5 h-3.5" />
+            <Printer className="w-3.5 h-3.5 shrink-0" />
             <span>Print Profile</span>
           </button>
         </div>
@@ -541,8 +544,8 @@ const ClientProfile = () => {
                     { name: "BMI", val: <AnimatedNumber value={client.bmi} />, sub: client.bmi > 25 ? "Overweight" : "Normal", color: "text-amber-500" },
                     { name: "Body Fat / Blood", val: <><AnimatedNumber value={client.bodyFat} />% / {client.bloodGroup || "O+"}</>, sub: "Tape & diagnostics", color: "text-rose-500" }
                   ].map((stat, i) => (
-                    <div key={i} className="p-4 rounded-2xl border border-slate-205 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex flex-col justify-between h-28 shadow-soft hover:-translate-y-0.5 transition-all">
-                      <span className="text-[10px] font-bold text-slate-450 uppercase tracking-wider block">{stat.name}</span>
+                    <div key={i} className="p-4 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex flex-col justify-between h-28 shadow-soft hover:-translate-y-0.5 transition-all">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">{stat.name}</span>
                       <div>
                         <h4 className="text-base sm:text-lg font-black text-slate-800 dark:text-zinc-100 leading-none mt-1">{stat.val}</h4>
                         <p className="text-[10px] text-slate-400 mt-1.5">{stat.sub}</p>
@@ -555,12 +558,12 @@ const ClientProfile = () => {
                 <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl p-5 shadow-sm">
                   <div className="flex justify-between items-center mb-4">
                     <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                      <TrendingUp className="w-4 h-4 text-blue-500" /> Goal Weight Progress Roadmap
+                      <TrendingUp className="w-4 h-4 text-blue-500 shrink-0" /> Goal Weight Progress Roadmap
                     </h3>
                     <span className="text-[10px] font-extrabold text-blue-600 bg-blue-50 dark:bg-blue-900/10 px-2 py-0.5 rounded-lg">{client.goal}</span>
                   </div>
                   <div className="space-y-2">
-                    <div className="flex justify-between text-xs font-bold text-slate-700 dark:text-zinc-350">
+                    <div className="flex justify-between text-xs font-bold text-slate-700 dark:text-zinc-400">
                       <span>Weight Goal Accomplishment</span>
                       <span>{weightProgressPercent}%</span>
                     </div>
@@ -575,20 +578,20 @@ const ClientProfile = () => {
 
                 {/* Private Notes block */}
                 <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl p-5 shadow-sm space-y-4">
-                  <div className="flex items-center gap-1.5 border-b border-slate-50 dark:border-zinc-850 pb-2">
-                    <FileText className="w-4 h-4 text-blue-500" />
+                  <div className="flex items-center gap-1.5 border-b border-slate-100 dark:border-zinc-800 pb-2">
+                    <FileText className="w-4 h-4 text-blue-500 shrink-0" />
                     <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">Trainer Private Log Notes</h3>
                   </div>
                   <textarea
                     rows={4}
                     value={notesText}
                     onChange={(e) => setNotesText(e.target.value)}
-                    className="w-full p-3.5 text-xs border border-slate-200 dark:border-zinc-800 rounded-2xl bg-slate-50/50 dark:bg-zinc-950 text-slate-800 dark:text-zinc-150 focus:outline-none"
-                    placeholder="Record notes on athlete commitments, injuries, specific targets..."
+                    className="w-full p-3.5 text-xs border border-slate-200 dark:border-zinc-800 rounded-2xl bg-slate-50/50 dark:bg-zinc-950 text-slate-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Record notes on client commitments, injuries, specific targets..."
                   />
                   <button
                     onClick={handleNotesSave}
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow cursor-pointer transition"
+                    className="inline-flex items-center justify-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow cursor-pointer transition active:scale-95"
                   >
                     Save Notes
                   </button>
@@ -602,32 +605,32 @@ const ClientProfile = () => {
                 {/* Contact Card */}
                 <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl p-5 shadow-sm">
                   <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-1.5">
-                    <HeartPulse className="w-4 h-4 text-blue-500" /> Contact & Emergency Info
+                    <HeartPulse className="w-4 h-4 text-blue-500 shrink-0" /> Contact & Emergency Info
                   </h3>
                   <div className="space-y-3.5 text-xs">
-                    <div className="flex justify-between border-b border-slate-50 dark:border-zinc-850/60 pb-2">
+                    <div className="flex justify-between border-b border-slate-100 dark:border-zinc-800 pb-2">
                       <span className="text-slate-400">Phone</span>
                       <span className="font-semibold text-slate-800 dark:text-zinc-200">{client.phone}</span>
                     </div>
-                    <div className="flex justify-between border-b border-slate-50 dark:border-zinc-850/60 pb-2">
+                    <div className="flex justify-between border-b border-slate-100 dark:border-zinc-800 pb-2">
                       <span className="text-slate-400">Email</span>
                       <span className="font-semibold text-slate-800 dark:text-zinc-200 truncate max-w-[170px]">{client.email || "—"}</span>
                     </div>
-                    <div className="flex justify-between border-b border-slate-50 dark:border-zinc-850/60 pb-2">
+                    <div className="flex justify-between border-b border-slate-100 dark:border-zinc-800 pb-2">
                       <span className="text-slate-400">Address</span>
                       <span className="font-semibold text-slate-800 dark:text-zinc-200 text-right max-w-[170px] truncate" title={client.address}>{client.address || "—"}</span>
                     </div>
-                    <div className="flex justify-between border-b border-slate-50 dark:border-zinc-850/60 pb-2">
+                    <div className="flex justify-between border-b border-slate-100 dark:border-zinc-800 pb-2">
                       <span className="text-slate-400">Emergency contact</span>
                       <span className="font-semibold text-slate-800 dark:text-zinc-200 text-right max-w-[170px] truncate" title={client.emergencyContact}>{client.emergencyContact || "—"}</span>
                     </div>
-                    <div className="flex justify-between border-b border-slate-50 dark:border-zinc-850/60 pb-2">
+                    <div className="flex justify-between border-b border-slate-100 dark:border-zinc-800 pb-2">
                       <span className="text-slate-400">Medical notes</span>
                       <span className="font-semibold text-red-500 text-right max-w-[170px] truncate" title={client.medicalConditions}>{client.medicalConditions || "None"}</span>
                     </div>
                     <div className="flex justify-between pb-1">
                       <span className="text-slate-400">Assigned Trainer</span>
-                      <span className="font-bold text-slate-700 dark:text-zinc-350">{client.assignedTrainer || settings.trainerName || "Coach Marcus"}</span>
+                      <span className="font-bold text-slate-700 dark:text-zinc-400">{client.assignedTrainer || settings.trainerName || "Coach Marcus"}</span>
                     </div>
                   </div>
                 </div>
@@ -635,18 +638,18 @@ const ClientProfile = () => {
                 {/* Membership Details */}
                 <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl p-5 shadow-sm space-y-3.5 text-xs">
                   <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1 flex items-center gap-1.5">
-                    <User className="w-4 h-4 text-emerald-500" /> Plan & Registration Detail
+                    <User className="w-4 h-4 text-emerald-500 shrink-0" /> Plan & Registration Detail
                   </h3>
-                  <div className="flex justify-between border-b border-slate-50 dark:border-zinc-850/60 pb-2">
-                    <span className="text-slate-405">Membership Tier</span>
+                  <div className="flex justify-between border-b border-slate-100 dark:border-zinc-800 pb-2">
+                    <span className="text-slate-400">Membership Tier</span>
                     <span className="font-extrabold text-slate-700 dark:text-zinc-300">{client.membership}</span>
                   </div>
-                  <div className="flex justify-between border-b border-slate-50 dark:border-zinc-850/60 pb-2">
-                    <span className="text-slate-405">Registration Date</span>
+                  <div className="flex justify-between border-b border-slate-100 dark:border-zinc-800 pb-2">
+                    <span className="text-slate-400">Registration Date</span>
                     <span className="font-semibold text-slate-700 dark:text-zinc-300">{client.joinDate}</span>
                   </div>
                   <div className="flex justify-between pb-1">
-                    <span className="text-slate-405">Expiry Date</span>
+                    <span className="text-slate-400">Expiry Date</span>
                     <span className="font-bold text-rose-500">{client.expiryDate || "—"}</span>
                   </div>
                 </div>
@@ -667,7 +670,7 @@ const ClientProfile = () => {
               </div>
               <button
                 onClick={() => handleSaveWorkoutDay({ preventDefault: () => {} })} // dummy trigger
-                className="hidden sm:inline-block px-4 py-2 border border-slate-200 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-850 rounded-xl text-xs font-bold text-slate-650 cursor-pointer"
+                className="hidden sm:inline-block px-4 py-2 border border-slate-200 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-800 rounded-xl text-xs font-bold text-slate-600 dark:text-zinc-300 cursor-pointer"
               >
                 Duplicate Routine Week
               </button>
@@ -689,13 +692,13 @@ const ClientProfile = () => {
                     {/* Header */}
                     <div
                       onClick={() => toggleWorkoutDay(day)}
-                      className="p-5 flex justify-between items-center cursor-pointer hover:bg-slate-50/50 dark:hover:bg-zinc-850/30 select-none"
+                      className="p-5 flex justify-between items-center cursor-pointer hover:bg-slate-50/50 dark:hover:bg-zinc-800/30 select-none"
                     >
                       <div className="flex items-center gap-3">
-                        <div className={`p-2.5 rounded-2xl ${
+                        <div className={`p-2.5 rounded-2xl shrink-0 ${
                           isRest ? "bg-purple-500/10 text-purple-600" : "bg-blue-500/10 text-blue-600"
                         }`}>
-                          {isRest ? <Moon className="w-5 h-5" /> : <Dumbbell className="w-5 h-5" />}
+                          {isRest ? <Moon className="w-5 h-5 shrink-0" /> : <Dumbbell className="w-5 h-5 shrink-0" />}
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
@@ -706,7 +709,7 @@ const ClientProfile = () => {
                               </span>
                             )}
                           </div>
-                          <h4 className="text-base font-black text-slate-805 dark:text-zinc-150 mt-0.5">
+                          <h4 className="text-base font-black text-slate-800 dark:text-zinc-100 mt-0.5">
                             {isRest ? "Rest & Cellular Recovery" : `${getDayGoalName(day)} split: ${wDay.muscleGroup}`}
                           </h4>
                         </div>
@@ -720,12 +723,13 @@ const ClientProfile = () => {
                         )}
                         <button
                           onClick={(e) => { e.stopPropagation(); handleEditWorkoutDay(day); }}
-                          className="p-1.5 hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-400 hover:text-slate-600 rounded-lg cursor-pointer"
+                          aria-label={`Edit ${day} workout`}
+                          className="p-1.5 hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-400 hover:text-slate-600 rounded-lg cursor-pointer inline-flex items-center justify-center"
                         >
-                          <Edit className="w-4 h-4" />
+                          <Edit className="w-4 h-4 shrink-0" />
                         </button>
-                        <div className="text-slate-400 p-1">
-                          {isExpanded ? <ChevronUp className="w-4.5 h-4.5" /> : <ChevronDown className="w-4.5 h-4.5" />}
+                        <div className="text-slate-400 p-1 inline-flex items-center justify-center">
+                          {isExpanded ? <ChevronUp className="w-4.5 h-4.5 shrink-0" /> : <ChevronDown className="w-4.5 h-4.5 shrink-0" />}
                         </div>
                       </div>
                     </div>
@@ -737,11 +741,11 @@ const ClientProfile = () => {
                           <div className="p-6 bg-gradient-to-br from-purple-50/50 to-indigo-50/50 dark:from-purple-950/10 dark:to-indigo-950/10 rounded-2xl border border-purple-100/30 text-center sm:text-left flex flex-col sm:flex-row justify-between items-center gap-4">
                             <div className="space-y-1">
                               <span className="text-[9px] bg-purple-500/10 text-purple-600 font-extrabold px-2.5 py-0.5 rounded-full uppercase">Rest Block</span>
-                              <h5 className="text-sm font-bold text-slate-805 dark:text-zinc-200 mt-1">Muscle Protein Synthesis & Decompression</h5>
+                              <h5 className="text-sm font-bold text-slate-800 dark:text-zinc-100 mt-1">Muscle Protein Synthesis & Decompression</h5>
                               <p className="text-xs text-slate-500 max-w-md">Sundays are dedicated to complete physiological recovery, stretching, hydration, and cellular repair.</p>
                             </div>
-                            <div className="p-3.5 bg-white dark:bg-zinc-950 border border-slate-100 dark:border-zinc-850 rounded-xl space-y-1.5 text-xs text-slate-500 w-full sm:w-auto">
-                              <span className="font-extrabold text-slate-700 block border-b pb-1 mb-1 text-[9px] uppercase tracking-wide">Sunday Checklist</span>
+                            <div className="p-3.5 bg-white dark:bg-zinc-950 border border-slate-100 dark:border-zinc-800 rounded-xl space-y-1.5 text-xs text-slate-500 w-full sm:w-auto">
+                              <span className="font-extrabold text-slate-700 dark:text-zinc-200 block border-b pb-1 mb-1 text-[9px] uppercase tracking-wide">Sunday Checklist</span>
                               <div>• 20-min stretching & foam roll</div>
                               <div>• 4L hydration load</div>
                               <div>• 8+ hours restorative sleep</div>
@@ -753,7 +757,7 @@ const ClientProfile = () => {
                               <div className="overflow-x-auto">
                                 <table className="w-full text-left text-xs border-collapse">
                                   <thead>
-                                    <tr className="border-b border-slate-100 dark:border-zinc-850 pb-2 text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                                    <tr className="border-b border-slate-100 dark:border-zinc-800 pb-2 text-[10px] text-slate-400 font-bold uppercase tracking-wider">
                                       <th className="py-2.5">Exercise Name</th>
                                       <th className="py-2.5 text-center">Sets</th>
                                       <th className="py-2.5 text-center">Reps</th>
@@ -762,9 +766,9 @@ const ClientProfile = () => {
                                       <th className="py-2.5 text-right">Completion Status</th>
                                     </tr>
                                   </thead>
-                                  <tbody className="divide-y divide-slate-50 dark:divide-zinc-850/50">
+                                  <tbody className="divide-y divide-slate-50 dark:divide-zinc-800/50">
                                     {exercises.map((ex, idx) => (
-                                      <tr key={idx} className="hover:bg-slate-50/20 dark:hover:bg-zinc-850/10">
+                                      <tr key={idx} className="hover:bg-slate-50/20 dark:hover:bg-zinc-800/10">
                                         <td className="py-3 font-bold text-slate-800 dark:text-zinc-200">{ex.name}</td>
                                         <td className="py-3 text-center font-semibold">{ex.sets}</td>
                                         <td className="py-3 text-center text-slate-500">{ex.reps}</td>
@@ -787,7 +791,7 @@ const ClientProfile = () => {
                                                       ? btn.status === "Pending" ? "bg-amber-500 text-white border-transparent" :
                                                         btn.status === "Completed" ? "bg-emerald-600 text-white border-transparent" :
                                                         "bg-rose-600 text-white border-transparent"
-                                                      : `bg-slate-50 dark:bg-zinc-950 border-slate-200 dark:border-zinc-850/65 text-slate-400 ${btn.bg}`
+                                                      : `bg-slate-50 dark:bg-zinc-950 border-slate-200 dark:border-zinc-800 text-slate-400 ${btn.bg}`
                                                   }`}
                                                 >
                                                   {btn.status}
@@ -807,7 +811,7 @@ const ClientProfile = () => {
                               </div>
                             )}
                             {wDay.notes && (
-                              <div className="p-3 bg-slate-50 dark:bg-zinc-950/30 border border-slate-100 dark:border-zinc-850/60 rounded-xl text-xs text-slate-500 italic">
+                              <div className="p-3 bg-slate-50 dark:bg-zinc-950/30 border border-slate-100 dark:border-zinc-800 rounded-xl text-xs text-slate-500 italic">
                                 <strong>Trainer notes:</strong> "{wDay.notes}"
                               </div>
                             )}
@@ -835,13 +839,13 @@ const ClientProfile = () => {
               <div className="flex gap-2">
                 <button
                   onClick={() => handleApplyDietTemplate("Weight Loss")}
-                  className="px-3 py-1.5 border border-slate-205 dark:border-zinc-800 hover:bg-slate-50 rounded-xl text-xs font-bold text-slate-600"
+                  className="px-3 py-1.5 border border-slate-200 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-800 rounded-xl text-xs font-bold text-slate-600 dark:text-zinc-300"
                 >
                   Load Weight Loss
                 </button>
                 <button
                   onClick={() => handleApplyDietTemplate("Muscle Gain")}
-                  className="px-3 py-1.5 border border-slate-205 dark:border-zinc-800 hover:bg-slate-50 rounded-xl text-xs font-bold text-slate-600"
+                  className="px-3 py-1.5 border border-slate-200 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-800 rounded-xl text-xs font-bold text-slate-600 dark:text-zinc-300"
                 >
                   Load Muscle Gain
                 </button>
@@ -853,23 +857,23 @@ const ClientProfile = () => {
               
               {/* Daily overview */}
               <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl p-5 shadow-sm space-y-4">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-450 flex items-center gap-1.5 border-b pb-2">
-                  <Apple className="w-4.5 h-4.5 text-emerald-500" /> Daily Target (Calorie Summary)
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5 border-b pb-2 border-slate-100 dark:border-zinc-800">
+                  <Apple className="w-4.5 h-4.5 text-emerald-500 shrink-0" /> Daily Target (Calorie Summary)
                 </h3>
                 
                 {/* Micro metrics */}
                 <div className="grid grid-cols-3 gap-2 text-center text-xs">
-                  <div className="p-2 border border-slate-100 dark:border-zinc-850 rounded-xl bg-slate-50/50">
+                  <div className="p-2 border border-slate-100 dark:border-zinc-800 rounded-xl bg-slate-50/50 dark:bg-zinc-950/30">
                     <span className="text-[9px] text-slate-400 block font-bold">PROTEIN</span>
                     <span className="font-extrabold text-emerald-600 mt-0.5 block">{getDayDietTotals("monday").p}g</span>
                   </div>
-                  <div className="p-2 border border-slate-100 dark:border-zinc-850 rounded-xl bg-slate-50/50">
+                  <div className="p-2 border border-slate-100 dark:border-zinc-800 rounded-xl bg-slate-50/50 dark:bg-zinc-950/30">
                     <span className="text-[9px] text-slate-400 block font-bold">CARBS</span>
-                    <span className="font-extrabold text-slate-700 mt-0.5 block">{getDayDietTotals("monday").c}g</span>
+                    <span className="font-extrabold text-slate-700 dark:text-zinc-300 mt-0.5 block">{getDayDietTotals("monday").c}g</span>
                   </div>
-                  <div className="p-2 border border-slate-100 dark:border-zinc-850 rounded-xl bg-slate-50/50">
+                  <div className="p-2 border border-slate-100 dark:border-zinc-800 rounded-xl bg-slate-50/50 dark:bg-zinc-950/30">
                     <span className="text-[9px] text-slate-400 block font-bold">FAT</span>
-                    <span className="font-extrabold text-slate-700 mt-0.5 block">{getDayDietTotals("monday").f}g</span>
+                    <span className="font-extrabold text-slate-700 dark:text-zinc-300 mt-0.5 block">{getDayDietTotals("monday").f}g</span>
                   </div>
                 </div>
 
@@ -884,18 +888,18 @@ const ClientProfile = () => {
 
               {/* Weekly Diet Progress (Calorie targets checklist) */}
               <div className="lg:col-span-2 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl p-5 shadow-sm">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-450 mb-4 flex items-center gap-1.5">
-                  <TrendingUp className="w-4 h-4 text-emerald-500" /> Weekly Diet Progress Tracker
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-1.5">
+                  <TrendingUp className="w-4 h-4 text-emerald-500 shrink-0" /> Weekly Diet Progress Tracker
                 </h3>
                 <div className="grid grid-cols-2 sm:grid-cols-7 gap-3 text-center">
                   {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].map((day) => {
                     const totals = getDayDietTotals(day.toLowerCase());
                     const pct = calorieTarget > 0 ? Math.min(Math.round((totals.cal / calorieTarget) * 100), 100) : 0;
                     return (
-                      <div key={day} className="p-2.5 border border-slate-100 dark:border-zinc-850 rounded-xl bg-slate-50/50 flex flex-col justify-between h-20">
+                      <div key={day} className="p-2.5 border border-slate-100 dark:border-zinc-800 rounded-xl bg-slate-50/50 dark:bg-zinc-950/30 flex flex-col justify-between h-20">
                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight block">{day.slice(0, 3)}</span>
                         <span className="text-xs font-extrabold text-slate-800 dark:text-zinc-200 block mt-1">{totals.cal} cal</span>
-                        <div className="w-full h-1 bg-slate-250 dark:bg-zinc-800 rounded-full overflow-hidden mt-1.5">
+                        <div className="w-full h-1 bg-slate-200 dark:bg-zinc-800 rounded-full overflow-hidden mt-1.5">
                           <div className="h-full bg-emerald-500" style={{ width: `${pct}%` }} />
                         </div>
                       </div>
@@ -921,29 +925,29 @@ const ClientProfile = () => {
                 ];
 
                 return (
-                  <div key={day} className="bg-white dark:bg-zinc-900 border border-slate-205 dark:border-zinc-800 rounded-3xl overflow-hidden shadow-sm hover:shadow-md transition">
+                  <div key={day} className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl overflow-hidden shadow-sm hover:shadow-md transition">
                     
                     {/* Header */}
                     <div
                       onClick={() => toggleDietDay(day)}
-                      className="p-5 flex justify-between items-center cursor-pointer hover:bg-slate-50/50 dark:hover:bg-zinc-850/30 select-none"
+                      className="p-5 flex justify-between items-center cursor-pointer hover:bg-slate-50/50 dark:hover:bg-zinc-800/30 select-none"
                     >
                       <div className="flex items-center gap-3">
                         <div className={`p-2.5 rounded-2xl ${
                           isRest ? "bg-emerald-500/10 text-emerald-600" : "bg-orange-500/10 text-orange-600"
                         }`}>
-                          {isRest ? <Coffee className="w-5 h-5" /> : <Apple className="w-5 h-5" />}
+                          {isRest ? <Coffee className="w-5 h-5 shrink-0" /> : <Apple className="w-5 h-5 shrink-0" />}
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
                             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{day}</span>
                             {!isRest && (
-                              <span className="text-[9px] bg-slate-100 dark:bg-zinc-800 text-slate-505 font-extrabold px-2 py-0.2 rounded-full">
+                              <span className="text-[9px] bg-slate-100 dark:bg-zinc-800 text-slate-500 font-extrabold px-2 py-0.2 rounded-full">
                                 {getDayDietTotals(day.toLowerCase()).cal} kcal
                               </span>
                             )}
                           </div>
-                          <h4 className="text-base font-black text-slate-805 dark:text-zinc-150 mt-0.5">
+                          <h4 className="text-base font-black text-slate-800 dark:text-zinc-100 mt-0.5">
                             {isRest ? "Sunday Recovery & Hydration Balance" : `${client.goal} Diet Split`}
                           </h4>
                         </div>
@@ -968,14 +972,14 @@ const ClientProfile = () => {
                           <div className="p-6 bg-gradient-to-br from-emerald-50/50 to-teal-50/50 dark:from-emerald-950/10 dark:to-teal-950/10 border border-emerald-100/30 rounded-2xl flex flex-col sm:flex-row justify-between items-center gap-6">
                             <div className="space-y-1">
                               <span className="text-[9px] bg-emerald-500/10 text-emerald-600 font-extrabold px-2.5 py-0.5 rounded-full uppercase">Nutritional Reset</span>
-                              <h5 className="text-sm font-bold text-slate-805 dark:text-zinc-200 mt-1">Decompression & Alkalinity Loading</h5>
-                              <p className="text-xs text-slate-505 dark:text-zinc-400">Prioritize clear soups, raw greens, coconut water, lemons, and low protein loading to decompress liver/kidneys.</p>
+                              <h5 className="text-sm font-bold text-slate-800 dark:text-zinc-200 mt-1">Decompression & Alkalinity Loading</h5>
+                              <p className="text-xs text-slate-500 dark:text-zinc-400">Prioritize clear soups, raw greens, coconut water, lemons, and low protein loading to decompress liver/kidneys.</p>
                               <div className="pt-2 flex flex-wrap gap-1.5 text-[10px]">
                                 <span className="bg-white/80 dark:bg-zinc-950 border px-2.5 py-1 rounded-lg">💧 Target: 4.5 Liters</span>
                                 <span className="bg-white/80 dark:bg-zinc-950 border px-2.5 py-1 rounded-lg">🍵 Detox lemon warm tea</span>
                               </div>
                             </div>
-                            <div className="p-3.5 bg-white dark:bg-zinc-950 border border-slate-100 dark:border-zinc-850 rounded-xl space-y-2 text-xs min-w-[200px]">
+                            <div className="p-3.5 bg-white dark:bg-zinc-950 border border-slate-100 dark:border-zinc-800 rounded-xl space-y-2 text-xs min-w-[200px]">
                               <span className="font-extrabold text-slate-800 block border-b pb-1 text-[9px] uppercase tracking-wide">Sunday Recovery Meals</span>
                               <div className="flex justify-between">
                                 <span className="text-slate-400">Breakfast:</span>
@@ -998,32 +1002,32 @@ const ClientProfile = () => {
                                 <div
                                   key={meal.key}
                                   onClick={() => handleEditDietMeal(day, mealKey)}
-                                  className="group p-4 border border-slate-150/60 dark:border-zinc-800 hover:border-blue-500 rounded-2xl bg-slate-50/50 dark:bg-zinc-950/20 hover:bg-white dark:hover:bg-zinc-900 cursor-pointer transition flex flex-col justify-between min-h-[140px]"
+                                  className="group p-4 border border-slate-200/60 dark:border-zinc-800 hover:border-blue-500 rounded-2xl bg-slate-50/50 dark:bg-zinc-950/20 hover:bg-white dark:hover:bg-zinc-900 cursor-pointer transition flex flex-col justify-between min-h-[140px]"
                                 >
                                   <div>
-                                    <div className="flex justify-between items-center border-b border-slate-100 dark:border-zinc-850 pb-1.5 mb-2">
+                                    <div className="flex justify-between items-center border-b border-slate-100 dark:border-zinc-800 pb-1.5 mb-2">
                                       <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{meal.label}</span>
                                       {loggedMeal.waterIntake > 0 && (
                                         <span className="flex items-center gap-0.5 text-[8.5px] bg-blue-500/10 text-blue-500 px-1 py-0.2 rounded font-extrabold">
-                                          <Droplets className="w-2.5 h-2.5" />
+                                          <Droplets className="w-2.5 h-2.5 shrink-0" />
                                           <span>{loggedMeal.waterIntake}L</span>
                                         </span>
                                       )}
                                     </div>
                                     {hasFood ? (
                                       <div className="space-y-1">
-                                        <p className="text-xs font-bold text-slate-805 dark:text-zinc-200 leading-tight">{loggedMeal.meal}</p>
+                                        <p className="text-xs font-bold text-slate-800 dark:text-zinc-200 leading-tight">{loggedMeal.meal}</p>
                                         {loggedMeal.quantity && <span className="text-[9.5px] text-slate-400 block">Qty: {loggedMeal.quantity}</span>}
                                         {loggedMeal.supplements && <span className="text-[9.5px] text-emerald-600 block">Supp: {loggedMeal.supplements}</span>}
                                       </div>
                                     ) : (
-                                      <span className="text-xs text-slate-350 italic font-medium block">Add meal log...</span>
+                                      <span className="text-xs text-slate-400 italic font-medium block">Add meal log...</span>
                                     )}
                                   </div>
 
                                   {hasFood && (
-                                    <div className="border-t border-slate-100 dark:border-zinc-850 pt-2 mt-3 flex justify-between items-center text-[9px]">
-                                      <span className="font-extrabold text-slate-750">{loggedMeal.calories} kcal</span>
+                                    <div className="border-t border-slate-100 dark:border-zinc-800 pt-2 mt-3 flex justify-between items-center text-[9px]">
+                                      <span className="font-extrabold text-slate-700 dark:text-zinc-200">{loggedMeal.calories} kcal</span>
                                       <div className="flex gap-1 text-slate-400 font-bold uppercase">
                                         <span>P:{loggedMeal.protein}g</span>
                                         <span>C:{loggedMeal.carbs}g</span>
@@ -1116,7 +1120,7 @@ const ClientProfile = () => {
             {/* Check-ins lists */}
             <div className="md:col-span-2 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl p-5 shadow-sm">
               <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4">Historical Attendance Entries</h3>
-              <div className="max-h-80 overflow-y-auto divide-y divide-slate-100 dark:divide-zinc-850">
+              <div className="max-h-80 overflow-y-auto divide-y divide-slate-100 dark:divide-zinc-800">
                 {clientAttendance.length > 0 ? (
                   clientAttendance.map((att) => (
                     <div key={att.id} className="py-3 flex justify-between items-center text-xs">
@@ -1151,9 +1155,9 @@ const ClientProfile = () => {
               </div>
               <button
                 onClick={() => setPaymentModalOpen(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold shadow transition"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold shadow transition cursor-pointer"
               >
-                <Plus className="w-3.5 h-3.5" />
+                <Plus className="w-3.5 h-3.5 shrink-0" />
                 <span>Record Fee</span>
               </button>
             </div>
@@ -1172,10 +1176,10 @@ const ClientProfile = () => {
                       <th className="py-3 px-6 text-right">Receipt Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-zinc-800/40 text-xs text-slate-700 dark:text-zinc-350">
+                  <tbody className="divide-y divide-slate-100 dark:divide-zinc-800/40 text-xs text-slate-700 dark:text-zinc-300">
                     {clientPayments.length > 0 ? (
                       clientPayments.map((p) => (
-                        <tr key={p.id} className="hover:bg-slate-50/20 dark:hover:bg-zinc-850/10">
+                        <tr key={p.id} className="hover:bg-slate-50/20 dark:hover:bg-zinc-800/10">
                           <td className="py-3.5 px-6 font-bold text-slate-800 dark:text-zinc-200">{p.invoiceNumber}</td>
                           <td className="py-3.5 px-4">{p.date}</td>
                           <td className="py-3.5 px-4">{p.method}</td>
@@ -1193,7 +1197,7 @@ const ClientProfile = () => {
                                 setActiveInvoice(p);
                                 setTimeout(() => window.print(), 100);
                               }}
-                              className="px-2 py-1 bg-slate-50 dark:bg-zinc-950 border border-slate-205 hover:bg-slate-100 text-[10px] font-extrabold rounded-lg cursor-pointer"
+                              className="px-2 py-1 bg-slate-50 dark:bg-zinc-950 border border-slate-200 hover:bg-slate-100 text-[10px] font-extrabold rounded-lg cursor-pointer"
                             >
                               Print Invoice
                             </button>
@@ -1215,57 +1219,141 @@ const ClientProfile = () => {
         {/* 6. PROGRESS TAB (Tape & Weight metrics line chart) */}
         {activeTab === "progress" && (
           <div className="space-y-6 animate-in fade-in duration-200 text-left">
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div>
-                <h3 className="text-sm sm:text-base font-bold text-slate-800 dark:text-zinc-200">Tape & Weight Logs</h3>
-                <p className="text-slate-400 text-xs">Track historical dimensions and weight patterns</p>
+                <h3 className="text-sm sm:text-base font-bold text-slate-800 dark:text-zinc-200 flex items-center gap-2">
+                  <Scale className="w-4 h-4 text-blue-500" />
+                  <span>Client Progress & Measurements</span>
+                </h3>
+                <p className="text-slate-400 text-xs mt-0.5">
+                  Track historical body transformations, weight velocity, and circumferences.
+                </p>
               </div>
               <button
                 onClick={() => setMeasurementModalOpen(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold shadow transition"
+                className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold shadow-sm transition cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" />
-                <span>Log Metrics</span>
+                <span>Log Measurements</span>
               </button>
             </div>
+
+            {/* KPI Overview Grid */}
+            {(() => {
+              const sorted = [...clientMeasurements].sort((a, b) => new Date(a.date) - new Date(b.date));
+              const latest = sorted.length > 0 ? sorted[sorted.length - 1] : null;
+              const baseline = sorted.length > 0 ? sorted[0] : null;
+              const curW = latest ? Number(latest.weight) : Number(client.currentWeight || 70);
+              const baseW = baseline ? Number(baseline.weight) : curW;
+              const deltaW = Number((curW - baseW).toFixed(1));
+              const bf = latest?.bodyFat !== null && latest?.bodyFat !== undefined && latest?.bodyFat > 0 ? latest.bodyFat : (client.bodyFat || null);
+              const heightM = (client.height || 170) / 100;
+              const curBmi = Number((curW / (heightM * heightM)).toFixed(1));
+
+              return (
+                <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl p-5 shadow-sm">
+                  <div className="p-3 bg-slate-50 dark:bg-zinc-950/60 rounded-2xl border border-slate-100 dark:border-zinc-800/60">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Current Weight</span>
+                    <span className="text-base font-black text-slate-800 dark:text-zinc-100 mt-1 block">{curW} <span className="text-[10px] font-bold text-slate-400">kg</span></span>
+                  </div>
+                  <div className="p-3 bg-slate-50 dark:bg-zinc-950/60 rounded-2xl border border-slate-100 dark:border-zinc-800/60">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Baseline Weight</span>
+                    <span className="text-base font-black text-slate-700 dark:text-zinc-300 mt-1 block">{baseW} <span className="text-[10px] font-bold text-slate-400">kg</span></span>
+                  </div>
+                  <div className="p-3 bg-slate-50 dark:bg-zinc-950/60 rounded-2xl border border-slate-100 dark:border-zinc-800/60">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Weight Change</span>
+                    <span className={`text-base font-black mt-1 block ${
+                      deltaW < 0 ? "text-emerald-600 dark:text-emerald-400" : deltaW > 0 ? "text-blue-600 dark:text-blue-400" : "text-slate-600 dark:text-zinc-300"
+                    }`}>
+                      {deltaW > 0 ? `+${deltaW}` : deltaW} <span className="text-[10px] font-bold text-slate-400">kg</span>
+                    </span>
+                  </div>
+                  <div className="p-3 bg-slate-50 dark:bg-zinc-950/60 rounded-2xl border border-slate-100 dark:border-zinc-800/60">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Body Fat</span>
+                    <span className="text-base font-black text-emerald-600 dark:text-emerald-400 mt-1 block">{bf ? `${bf}%` : "—"}</span>
+                  </div>
+                  <div className="p-3 bg-slate-50 dark:bg-zinc-950/60 rounded-2xl border border-slate-100 dark:border-zinc-800/60">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Chest</span>
+                    <span className="text-base font-bold text-slate-800 dark:text-zinc-200 mt-1 block">{latest?.chest || client.chest || "—"} <span className="text-[10px] text-slate-400">cm</span></span>
+                  </div>
+                  <div className="p-3 bg-slate-50 dark:bg-zinc-950/60 rounded-2xl border border-slate-100 dark:border-zinc-800/60">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Waist</span>
+                    <span className="text-base font-bold text-slate-800 dark:text-zinc-200 mt-1 block">{latest?.waist || client.waist || "—"} <span className="text-[10px] text-slate-400">cm</span></span>
+                  </div>
+                  <div className="p-3 bg-slate-50 dark:bg-zinc-950/60 rounded-2xl border border-slate-100 dark:border-zinc-800/60">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Biceps / Thigh</span>
+                    <span className="text-xs font-bold text-slate-800 dark:text-zinc-200 mt-1 block">
+                      {latest?.arms || client.arms || "—"} / {latest?.thigh || client.thigh || "—"} <span className="text-[10px] text-slate-400">cm</span>
+                    </span>
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* Recharts trend graphs */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               
               <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl p-5 shadow-sm">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4">Weight Trend Tracker (kg)</h4>
-                <div className="h-60">
-                  {weightTrendData.length > 0 ? (
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={weightTrendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(156,163,175,0.1)" />
-                        <XAxis dataKey="date" stroke="#9ca3af" fontSize={10} tickLine={false} />
-                        <YAxis stroke="#9ca3af" fontSize={10} tickLine={false} domain={['dataMin - 3', 'dataMax + 3']} />
-                        <Tooltip />
-                        <Line type="monotone" dataKey="Weight" stroke="#3b82f6" strokeWidth={2} dot={{ fill: "#3b82f6" }} />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  ) : (
-                    <div className="h-full flex items-center justify-center text-xs text-slate-400">No weight points loaded</div>
-                  )}
+                <div className="flex justify-between items-center mb-4">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                    <Scale className="w-3.5 h-3.5 text-blue-500" />
+                    <span>Weight Trend Tracker (kg)</span>
+                  </h4>
+                  <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 px-2.5 py-1 rounded-lg border border-blue-100 dark:border-blue-500/20">
+                    Target: {client.targetWeight || 70} kg
+                  </span>
                 </div>
-              </div>
-
-              <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl p-5 shadow-sm">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-455 mb-4">Body Fat Ratio Tracker (%)</h4>
                 <div className="h-60">
-                  {weightTrendData.length > 0 ? (
+                  {weightTrendData.length > 1 ? (
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart data={weightTrendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(156,163,175,0.1)" />
                         <XAxis dataKey="date" stroke="#9ca3af" fontSize={10} tickLine={false} />
                         <YAxis stroke="#9ca3af" fontSize={10} tickLine={false} domain={['dataMin - 2', 'dataMax + 2']} />
                         <Tooltip />
-                        <Line type="monotone" dataKey="BodyFat" stroke="#10b981" strokeWidth={2} dot={{ fill: "#10b981" }} />
+                        <Line type="monotone" dataKey="Weight" stroke="#3b82f6" strokeWidth={2.5} dot={{ fill: "#3b82f6", r: 4 }} activeDot={{ r: 6 }} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  ) : weightTrendData.length === 1 ? (
+                    <div className="h-full flex flex-col items-center justify-center text-xs text-slate-400 text-center p-4 bg-slate-50/50 dark:bg-zinc-950/30 rounded-2xl border border-dashed border-slate-200 dark:border-zinc-800">
+                      <Scale className="w-6 h-6 text-blue-500 mb-1 opacity-80" />
+                      <span className="font-bold text-slate-700 dark:text-zinc-200">Baseline Weight Logged ({weightTrendData[0].Weight} kg)</span>
+                      <span className="text-[10px] text-slate-400 mt-0.5">Log another measurement to view trajectory curve</span>
+                    </div>
+                  ) : (
+                    <div className="h-full flex flex-col items-center justify-center text-xs text-slate-400 text-center p-4 bg-slate-50/50 dark:bg-zinc-950/30 rounded-2xl border border-dashed border-slate-200 dark:border-zinc-800">
+                      <span>No weight records loaded</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl p-5 shadow-sm">
+                <div className="flex justify-between items-center mb-4">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                    <Activity className="w-3.5 h-3.5 text-emerald-500" />
+                    <span>Body Fat Ratio Tracker (%)</span>
+                  </h4>
+                </div>
+                <div className="h-60">
+                  {weightTrendData.filter(d => d.BodyFat !== null && d.BodyFat > 0).length > 1 ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={weightTrendData.filter(d => d.BodyFat !== null && d.BodyFat > 0)} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(156,163,175,0.1)" />
+                        <XAxis dataKey="date" stroke="#9ca3af" fontSize={10} tickLine={false} />
+                        <YAxis stroke="#9ca3af" fontSize={10} tickLine={false} domain={['dataMin - 1', 'dataMax + 1']} />
+                        <Tooltip />
+                        <Line type="monotone" dataKey="BodyFat" stroke="#10b981" strokeWidth={2.5} dot={{ fill: "#10b981", r: 4 }} activeDot={{ r: 6 }} />
                       </LineChart>
                     </ResponsiveContainer>
                   ) : (
-                    <div className="h-full flex items-center justify-center text-xs text-slate-400">No body fat points loaded</div>
+                    <div className="h-full flex flex-col items-center justify-center text-xs text-slate-400 text-center p-4 bg-slate-50/50 dark:bg-zinc-950/30 rounded-2xl border border-dashed border-slate-200 dark:border-zinc-800">
+                      <Activity className="w-6 h-6 text-emerald-500 mb-1 opacity-80" />
+                      <span className="font-bold text-slate-700 dark:text-zinc-200">
+                        {client.bodyFat ? `Current Body Fat: ${client.bodyFat}%` : "No Body Fat Points Recorded"}
+                      </span>
+                      <span className="text-[10px] text-slate-400 mt-0.5">Log 2+ body fat values to plot ratio trends</span>
+                    </div>
                   )}
                 </div>
               </div>
@@ -1274,33 +1362,64 @@ const ClientProfile = () => {
 
             {/* Stats list tape table */}
             <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl overflow-hidden shadow-sm">
+              <div className="p-4 border-b border-slate-100 dark:border-zinc-800 flex justify-between items-center">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                  Recorded Measurement Timeline ({clientMeasurements.length})
+                </span>
+              </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="bg-slate-50/50 dark:bg-zinc-950/40 border-b border-slate-100 dark:border-zinc-800 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                      <th className="py-3.5 px-6">Record Date</th>
-                      <th className="py-3.5 px-4">Weight</th>
-                      <th className="py-3.5 px-4">BMI</th>
-                      <th className="py-3.5 px-4">Body Fat</th>
-                      <th className="py-3.5 px-4">Chest</th>
-                      <th className="py-3.5 px-4">Waist</th>
-                      <th className="py-3.5 px-4">Arms</th>
-                      <th className="py-3.5 px-6 text-right">Thigh</th>
+                      <th className="py-3 px-4">Record Date</th>
+                      <th className="py-3 px-4">Weight</th>
+                      <th className="py-3 px-4">BMI</th>
+                      <th className="py-3 px-4">Body Fat</th>
+                      <th className="py-3 px-4">Chest</th>
+                      <th className="py-3 px-4">Waist</th>
+                      <th className="py-3 px-4">Biceps</th>
+                      <th className="py-3 px-4">Thigh</th>
+                      <th className="py-3 px-4">Notes</th>
+                      <th className="py-3 px-4 text-right">Action</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-zinc-800/40 text-xs text-slate-750 dark:text-zinc-300">
-                    {[...clientMeasurements].reverse().map((m, i) => (
-                      <tr key={i} className="hover:bg-slate-50/20 dark:hover:bg-zinc-850/10">
-                        <td className="py-3 px-6 font-bold text-slate-805 dark:text-zinc-200">{m.date}</td>
-                        <td className="py-3 px-4 font-semibold text-blue-650 dark:text-blue-400">{m.weight} kg</td>
-                        <td className="py-3 px-4">{m.bmi}</td>
-                        <td className="py-3 px-4 text-emerald-600">{m.bodyFat}%</td>
-                        <td className="py-3 px-4">{m.chest || "—"} cm</td>
-                        <td className="py-3 px-4">{m.waist || "—"} cm</td>
-                        <td className="py-3 px-4">{m.arms || "—"} cm</td>
-                        <td className="py-3 px-6 text-right">{m.thigh || "—"} cm</td>
+                  <tbody className="divide-y divide-slate-100 dark:divide-zinc-800/40 text-xs text-slate-700 dark:text-zinc-300">
+                    {clientMeasurements.length > 0 ? (
+                      [...clientMeasurements].reverse().map((m, i) => {
+                        const heightM = (client.height || 170) / 100;
+                        const logBmi = (Number(m.weight) / (heightM * heightM)).toFixed(1);
+                        return (
+                          <tr key={m.id || i} className="hover:bg-slate-50/20 dark:hover:bg-zinc-800/10">
+                            <td className="py-3 px-4 font-bold text-slate-800 dark:text-zinc-200">{m.date}</td>
+                            <td className="py-3 px-4 font-semibold text-blue-600 dark:text-blue-400">{m.weight} kg</td>
+                            <td className="py-3 px-4">{logBmi}</td>
+                            <td className="py-3 px-4 text-emerald-600">{m.bodyFat ? `${m.bodyFat}%` : "—"}</td>
+                            <td className="py-3 px-4">{m.chest ? `${m.chest} cm` : "—"}</td>
+                            <td className="py-3 px-4">{m.waist ? `${m.waist} cm` : "—"}</td>
+                            <td className="py-3 px-4">{m.arms ? `${m.arms} cm` : "—"}</td>
+                            <td className="py-3 px-4">{m.thigh ? `${m.thigh} cm` : "—"}</td>
+                            <td className="py-3 px-4 text-slate-400 truncate max-w-xs">{m.notes || "—"}</td>
+                            <td className="py-3 px-4 text-right">
+                              {m.id && (
+                                <button
+                                  onClick={() => deleteWeightProgress(m.id, client.id)}
+                                  className="p-1 rounded text-slate-400 hover:text-rose-600 transition cursor-pointer"
+                                  title="Delete Log"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })
+                    ) : (
+                      <tr>
+                        <td colSpan={10} className="py-8 text-center text-slate-400">
+                          No measurement records logged yet.
+                        </td>
                       </tr>
-                    ))}
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -1322,7 +1441,7 @@ const ClientProfile = () => {
           <div className="grid grid-cols-2 gap-4 text-xs mb-6 border-b pb-4">
             <div><strong>Invoice Number:</strong> {activeInvoice.invoiceNumber}</div>
             <div><strong>Billing Date:</strong> {activeInvoice.date}</div>
-            <div><strong>Athlete Name:</strong> {client.name}</div>
+            <div><strong>Client Name:</strong> {client.name}</div>
             <div><strong>Payment Method:</strong> {activeInvoice.method}</div>
             <div><strong>Membership Plan:</strong> {client.membership}</div>
             <div><strong>Payment Status:</strong> {activeInvoice.status}</div>
@@ -1412,13 +1531,13 @@ const ClientProfile = () => {
               <button
                 type="button"
                 onClick={() => setMeasurementModalOpen(false)}
-                className="flex-1 py-2 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700"
+                className="flex-1 py-2 border border-slate-200 dark:border-zinc-800 rounded-xl text-xs font-semibold text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 transition cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="flex-1 py-2 bg-blue-600 text-white rounded-xl text-xs font-semibold"
+                className="flex-1 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold shadow-sm transition cursor-pointer"
               >
                 Save Stats
               </button>
@@ -1541,13 +1660,13 @@ const ClientProfile = () => {
               <button
                 type="button"
                 onClick={() => setWorkoutModalOpen(false)}
-                className="flex-1 py-2 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700"
+                className="flex-1 py-2 border border-slate-200 dark:border-zinc-800 rounded-xl text-xs font-semibold text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 transition cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="flex-1 py-2 bg-blue-600 text-white rounded-xl text-xs font-semibold animate-none"
+                className="flex-1 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold shadow-sm transition cursor-pointer"
               >
                 Save Splits
               </button>
@@ -1573,7 +1692,7 @@ const ClientProfile = () => {
                   required
                   value={dietMealInput.meal}
                   onChange={(e) => setDietMealInput({ ...dietMealInput, meal: e.target.value })}
-                  className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg bg-slate-50 dark:bg-zinc-950 text-slate-850"
+                  className="w-full px-3 py-2 text-xs border border-slate-200 dark:border-zinc-800 rounded-lg bg-slate-50 dark:bg-zinc-950 text-slate-800 dark:text-zinc-100"
                   placeholder="e.g. Oats, banana and whey protein"
                 />
               </div>
@@ -1585,7 +1704,7 @@ const ClientProfile = () => {
                     type="text"
                     value={dietMealInput.quantity}
                     onChange={(e) => setDietMealInput({ ...dietMealInput, quantity: e.target.value })}
-                    className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg bg-slate-50 dark:bg-zinc-950 text-slate-850"
+                    className="w-full px-3 py-2 text-xs border border-slate-200 dark:border-zinc-800 rounded-lg bg-slate-50 dark:bg-zinc-950 text-slate-800 dark:text-zinc-100"
                   />
                 </div>
                 <div>
@@ -1595,7 +1714,7 @@ const ClientProfile = () => {
                     step="0.1"
                     value={dietMealInput.waterIntake}
                     onChange={(e) => setDietMealInput({ ...dietMealInput, waterIntake: e.target.value })}
-                    className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg bg-slate-50 dark:bg-zinc-950 text-slate-850"
+                    className="w-full px-3 py-2 text-xs border border-slate-200 dark:border-zinc-800 rounded-lg bg-slate-50 dark:bg-zinc-950 text-slate-800 dark:text-zinc-100"
                   />
                 </div>
               </div>
@@ -1607,7 +1726,7 @@ const ClientProfile = () => {
                     type="number"
                     value={dietMealInput.calories}
                     onChange={(e) => setDietMealInput({ ...dietMealInput, calories: e.target.value })}
-                    className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg bg-slate-50 dark:bg-zinc-950 text-slate-850"
+                    className="w-full px-3 py-2 text-xs border border-slate-200 dark:border-zinc-800 rounded-lg bg-slate-50 dark:bg-zinc-950 text-slate-800 dark:text-zinc-100"
                   />
                 </div>
                 <div>
@@ -1616,7 +1735,7 @@ const ClientProfile = () => {
                     type="number"
                     value={dietMealInput.protein}
                     onChange={(e) => setDietMealInput({ ...dietMealInput, protein: e.target.value })}
-                    className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg bg-slate-50 dark:bg-zinc-950 text-slate-850"
+                    className="w-full px-3 py-2 text-xs border border-slate-200 dark:border-zinc-800 rounded-lg bg-slate-50 dark:bg-zinc-950 text-slate-800 dark:text-zinc-100"
                   />
                 </div>
               </div>
@@ -1628,7 +1747,7 @@ const ClientProfile = () => {
                     type="number"
                     value={dietMealInput.carbs}
                     onChange={(e) => setDietMealInput({ ...dietMealInput, carbs: e.target.value })}
-                    className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg bg-slate-50 dark:bg-zinc-950 text-slate-850"
+                    className="w-full px-3 py-2 text-xs border border-slate-200 dark:border-zinc-800 rounded-lg bg-slate-50 dark:bg-zinc-950 text-slate-800 dark:text-zinc-100"
                   />
                 </div>
                 <div>
@@ -1637,7 +1756,7 @@ const ClientProfile = () => {
                     type="number"
                     value={dietMealInput.fat}
                     onChange={(e) => setDietMealInput({ ...dietMealInput, fat: e.target.value })}
-                    className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg bg-slate-50 dark:bg-zinc-950 text-slate-850"
+                    className="w-full px-3 py-2 text-xs border border-slate-200 dark:border-zinc-800 rounded-lg bg-slate-50 dark:bg-zinc-950 text-slate-800 dark:text-zinc-100"
                   />
                 </div>
               </div>
@@ -1648,7 +1767,7 @@ const ClientProfile = () => {
                   type="text"
                   value={dietMealInput.supplements}
                   onChange={(e) => setDietMealInput({ ...dietMealInput, supplements: e.target.value })}
-                  className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg bg-slate-50 dark:bg-zinc-950 text-slate-850"
+                  className="w-full px-3 py-2 text-xs border border-slate-200 dark:border-zinc-800 rounded-lg bg-slate-50 dark:bg-zinc-950 text-slate-800 dark:text-zinc-100"
                   placeholder="e.g. Whey, Creatine, Multivitamin"
                 />
               </div>
@@ -1658,13 +1777,13 @@ const ClientProfile = () => {
               <button
                 type="button"
                 onClick={() => setDietModalOpen(false)}
-                className="flex-1 py-2 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700"
+                className="flex-1 py-2 border border-slate-200 dark:border-zinc-800 rounded-xl text-xs font-semibold text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 transition cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="flex-1 py-2 bg-blue-600 text-white rounded-xl text-xs font-semibold"
+                className="flex-1 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold shadow-sm transition cursor-pointer"
               >
                 Save
               </button>
@@ -1678,7 +1797,7 @@ const ClientProfile = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setPaymentModalOpen(false)} />
           <form onSubmit={handleRecordPayment} className="relative bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl max-w-sm w-full p-6 shadow-2xl animate-in scale-in duration-200 text-left">
-            <h3 className="text-sm font-bold text-slate-800 dark:text-zinc-105 mb-4 font-display">Record Member Payment</h3>
+            <h3 className="text-sm font-bold text-slate-800 dark:text-zinc-100 mb-4 font-display">Record Client Payment</h3>
             <div className="space-y-3">
               <div>
                 <label className="text-[10px] font-bold text-slate-400 block mb-1">Amount (₹)</label>
@@ -1687,7 +1806,7 @@ const ClientProfile = () => {
                   required
                   value={paymentInput.amount}
                   onChange={(e) => setPaymentInput({ ...paymentInput, amount: e.target.value })}
-                  className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg bg-slate-50 dark:bg-zinc-950 text-slate-805"
+                  className="w-full px-3 py-2 text-xs border border-slate-200 dark:border-zinc-800 rounded-lg bg-slate-50 dark:bg-zinc-950 text-slate-800 dark:text-zinc-100"
                   placeholder={client.monthlyFees}
                 />
               </div>
@@ -1696,7 +1815,7 @@ const ClientProfile = () => {
                 <select
                   value={paymentInput.method}
                   onChange={(e) => setPaymentInput({ ...paymentInput, method: e.target.value })}
-                  className="w-full px-3 py-2 text-xs border border-slate-205 rounded-lg bg-slate-50 dark:bg-zinc-950 text-slate-805"
+                  className="w-full px-3 py-2 text-xs border border-slate-200 dark:border-zinc-800 rounded-lg bg-slate-50 dark:bg-zinc-950 text-slate-800 dark:text-zinc-100"
                 >
                   <option value="UPI">UPI / GPay</option>
                   <option value="Card">Credit Card</option>
@@ -1709,7 +1828,7 @@ const ClientProfile = () => {
               <button
                 type="button"
                 onClick={() => setPaymentModalOpen(false)}
-                className="flex-1 py-2 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700"
+                className="flex-1 py-2 border border-slate-200 dark:border-zinc-800 rounded-xl text-xs font-semibold text-slate-700 dark:text-zinc-300"
               >
                 Cancel
               </button>
@@ -1739,9 +1858,10 @@ const ClientProfile = () => {
                 </h2>
                 <button
                   onClick={() => setEditModalOpen(false)}
-                  className="p-1 rounded-md hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-400 cursor-pointer"
+                  aria-label="Close edit modal"
+                  className="p-1 rounded-md hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-400 cursor-pointer inline-flex items-center justify-center"
                 >
-                  <XCircle className="w-5 h-5" />
+                  <XCircle className="w-5 h-5 shrink-0" />
                 </button>
               </div>
 
@@ -1774,7 +1894,7 @@ const ClientProfile = () => {
                     <select
                       value={editFormData.gender || "Male"}
                       onChange={(e) => setEditFormData({ ...editFormData, gender: e.target.value })}
-                      className="w-full px-3 py-2 text-xs border border-slate-205 dark:border-zinc-800 rounded-xl bg-slate-50 dark:bg-zinc-950 text-slate-805 focus:outline-none"
+                      className="w-full px-3 py-2 text-xs border border-slate-200 dark:border-zinc-800 rounded-xl bg-slate-50 dark:bg-zinc-950 text-slate-800 dark:text-zinc-200 focus:outline-none"
                     >
                       <option value="Male">Male</option>
                       <option value="Female">Female</option>
@@ -1796,7 +1916,7 @@ const ClientProfile = () => {
                         const bmiVal = h > 0 ? (w / ((h / 100) * (h / 100))).toFixed(1) : 0;
                         setEditFormData({ ...editFormData, height: h, bmi: bmiVal });
                       }}
-                      className="w-full px-3 py-2 text-xs border border-slate-205 dark:border-zinc-800 rounded-xl bg-slate-50 dark:bg-zinc-950 text-slate-805 focus:outline-none"
+                      className="w-full px-3 py-2 text-xs border border-slate-200 dark:border-zinc-800 rounded-xl bg-slate-50 dark:bg-zinc-950 text-slate-800 dark:text-zinc-200 focus:outline-none"
                     />
                   </div>
                   <div>
@@ -1811,7 +1931,7 @@ const ClientProfile = () => {
                         const bmiVal = h > 0 ? (w / ((h / 100) * (h / 100))).toFixed(1) : 0;
                         setEditFormData({ ...editFormData, currentWeight: w, bmi: bmiVal });
                       }}
-                      className="w-full px-3 py-2 text-xs border border-slate-205 dark:border-zinc-800 rounded-xl bg-slate-50 dark:bg-zinc-950 text-slate-805 focus:outline-none"
+                      className="w-full px-3 py-2 text-xs border border-slate-200 dark:border-zinc-800 rounded-xl bg-slate-50 dark:bg-zinc-950 text-slate-800 dark:text-zinc-200 focus:outline-none"
                     />
                   </div>
                 </div>
@@ -1825,7 +1945,7 @@ const ClientProfile = () => {
                       step="0.1"
                       value={editFormData.targetWeight || ""}
                       onChange={(e) => setEditFormData({ ...editFormData, targetWeight: parseFloat(e.target.value) || 0 })}
-                      className="w-full px-3 py-2 text-xs border border-slate-205 dark:border-zinc-800 rounded-xl bg-slate-50 dark:bg-zinc-950 text-slate-805 focus:outline-none"
+                      className="w-full px-3 py-2 text-xs border border-slate-200 dark:border-zinc-800 rounded-xl bg-slate-50 dark:bg-zinc-950 text-slate-800 dark:text-zinc-200 focus:outline-none"
                     />
                   </div>
                   <div>
@@ -1834,7 +1954,7 @@ const ClientProfile = () => {
                       type="text"
                       value={editFormData.bloodGroup || ""}
                       onChange={(e) => setEditFormData({ ...editFormData, bloodGroup: e.target.value })}
-                      className="w-full px-3 py-2 text-xs border border-slate-205 dark:border-zinc-800 rounded-xl bg-slate-50 dark:bg-zinc-950 text-slate-805 focus:outline-none"
+                      className="w-full px-3 py-2 text-xs border border-slate-200 dark:border-zinc-800 rounded-xl bg-slate-50 dark:bg-zinc-950 text-slate-800 dark:text-zinc-200 focus:outline-none"
                       placeholder="e.g. O+"
                     />
                   </div>
@@ -1848,7 +1968,7 @@ const ClientProfile = () => {
                       type="text"
                       value={editFormData.phone || ""}
                       onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
-                      className="w-full px-3 py-2 text-xs border border-slate-205 dark:border-zinc-800 rounded-xl bg-slate-50 dark:bg-zinc-950 text-slate-805 focus:outline-none"
+                      className="w-full px-3 py-2 text-xs border border-slate-200 dark:border-zinc-800 rounded-xl bg-slate-50 dark:bg-zinc-950 text-slate-800 dark:text-zinc-200 focus:outline-none"
                       required
                     />
                   </div>
@@ -1858,7 +1978,7 @@ const ClientProfile = () => {
                       type="email"
                       value={editFormData.email || ""}
                       onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
-                      className="w-full px-3 py-2 text-xs border border-slate-205 dark:border-zinc-800 rounded-xl bg-slate-50 dark:bg-zinc-950 text-slate-805 focus:outline-none"
+                      className="w-full px-3 py-2 text-xs border border-slate-200 dark:border-zinc-800 rounded-xl bg-slate-50 dark:bg-zinc-950 text-slate-800 dark:text-zinc-200 focus:outline-none"
                     />
                   </div>
                 </div>
@@ -1870,7 +1990,7 @@ const ClientProfile = () => {
                     type="text"
                     value={editFormData.address || ""}
                     onChange={(e) => setEditFormData({ ...editFormData, address: e.target.value })}
-                    className="w-full px-3 py-2 text-xs border border-slate-205 dark:border-zinc-800 rounded-xl bg-slate-50 dark:bg-zinc-950 text-slate-855 focus:outline-none"
+                    className="w-full px-3 py-2 text-xs border border-slate-200 dark:border-zinc-800 rounded-xl bg-slate-50 dark:bg-zinc-950 text-slate-800 dark:text-zinc-200 focus:outline-none"
                   />
                 </div>
 
@@ -1881,7 +2001,7 @@ const ClientProfile = () => {
                     type="text"
                     value={editFormData.emergencyContact || ""}
                     onChange={(e) => setEditFormData({ ...editFormData, emergencyContact: e.target.value })}
-                    className="w-full px-3 py-2 text-xs border border-slate-205 dark:border-zinc-800 rounded-xl bg-slate-50 dark:bg-zinc-950 text-slate-855 focus:outline-none"
+                    className="w-full px-3 py-2 text-xs border border-slate-200 dark:border-zinc-800 rounded-xl bg-slate-50 dark:bg-zinc-950 text-slate-800 dark:text-zinc-200 focus:outline-none"
                   />
                 </div>
 
@@ -1892,7 +2012,7 @@ const ClientProfile = () => {
                     type="text"
                     value={editFormData.medicalConditions || ""}
                     onChange={(e) => setEditFormData({ ...editFormData, medicalConditions: e.target.value })}
-                    className="w-full px-3 py-2 text-xs border border-slate-205 dark:border-zinc-800 rounded-xl bg-slate-50 dark:bg-zinc-950 text-slate-855 focus:outline-none"
+                    className="w-full px-3 py-2 text-xs border border-slate-200 dark:border-zinc-800 rounded-xl bg-slate-50 dark:bg-zinc-950 text-slate-800 dark:text-zinc-200 focus:outline-none"
                   />
                 </div>
               </form>
@@ -1902,7 +2022,7 @@ const ClientProfile = () => {
               <button
                 type="button"
                 onClick={() => setEditModalOpen(false)}
-                className="flex-1 py-2 border border-slate-205 dark:border-zinc-800 rounded-xl text-xs font-semibold text-slate-705 hover:bg-slate-50 transition cursor-pointer"
+                className="flex-1 py-2 border border-slate-200 dark:border-zinc-800 rounded-xl text-xs font-semibold text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 transition cursor-pointer"
               >
                 Cancel
               </button>

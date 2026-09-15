@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAuthenticatedUser, requireTrainer, getRequestClient, isAssignedClient } from "@/lib/supabase/auth";
 import { supabase, supabaseAdmin } from "@/lib/supabase/client";
+import { notifyPaymentRecorded, notifyPaymentOverdue } from "@/lib/supabase/notifications";
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
@@ -35,7 +36,7 @@ export async function GET(request: Request, context: RouteContext) {
     const dbClient = supabaseAdmin || supabase;
     const { data: payment, error: findError } = await dbClient
       .from("payments")
-      .select("*, client:profiles!client_id(id, full_name, email)")
+      .select("*, client:profiles!client_id(id, full_name, email, phone, profile_image_url)")
       .eq("id", paymentId)
       .single();
 
@@ -175,11 +176,15 @@ export async function PATCH(request: Request, context: RouteContext) {
     }
 
     // Validate inputs
-    if (updatePayload.amount !== undefined && (typeof updatePayload.amount !== "number" || updatePayload.amount <= 0)) {
-      return NextResponse.json(
-        { success: false, message: "Amount must be a positive number." },
-        { status: 400 }
-      );
+    if (updatePayload.amount !== undefined) {
+      const numAmount = Number(updatePayload.amount);
+      if (isNaN(numAmount) || numAmount <= 0) {
+        return NextResponse.json(
+          { success: false, message: "Amount must be a positive number." },
+          { status: 400 }
+        );
+      }
+      updatePayload.amount = numAmount;
     }
 
     const dateFields = ["due_date", "membership_start", "membership_end"];
@@ -190,6 +195,15 @@ export async function PATCH(request: Request, context: RouteContext) {
           { status: 400 }
         );
       }
+    }
+
+    const effectiveStart = (updatePayload.membership_start as string) || payment.membership_start;
+    const effectiveEnd = (updatePayload.membership_end as string) || payment.membership_end;
+    if (effectiveStart && effectiveEnd && effectiveStart > effectiveEnd) {
+      return NextResponse.json(
+        { success: false, message: "Membership start date cannot be later than membership end date." },
+        { status: 400 }
+      );
     }
 
     if (updatePayload.status !== undefined && !ALLOWED_STATUS.includes(updatePayload.status as string)) {
@@ -243,6 +257,23 @@ export async function PATCH(request: Request, context: RouteContext) {
         { success: false, message: "Failed to update payment record: " + updateError.message },
         { status: 500 }
       );
+    }
+
+    // 7. Trigger automated notification safely if status transitioned or changed
+    if (updatePayload.status === "paid") {
+      notifyPaymentRecorded({
+        clientId: payment.client_id,
+        amount: updatedPayment.amount,
+        notes: updatedPayment.notes || undefined,
+        trainerId: user.id,
+      }).catch((err) => console.error("Payment notification trigger failed:", err));
+    } else if (updatePayload.status === "overdue") {
+      notifyPaymentOverdue({
+        clientId: payment.client_id,
+        amount: updatedPayment.amount,
+        dueDate: updatedPayment.due_date,
+        trainerId: user.id,
+      }).catch((err) => console.error("Payment overdue notification trigger failed:", err));
     }
 
     return NextResponse.json(

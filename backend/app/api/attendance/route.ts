@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAuthenticatedUser, requireTrainer, getRequestClient, isAssignedClient } from "@/lib/supabase/auth";
 import { supabase, supabaseAdmin } from "@/lib/supabase/client";
+import { notifyAttendanceLogged } from "@/lib/supabase/notifications";
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
@@ -172,7 +173,7 @@ export async function POST(request: Request) {
     const dbClient = supabaseAdmin || supabase;
     const { data: targetProfile, error: profileError } = await dbClient
       .from("profiles")
-      .select("role")
+      .select("role, full_name")
       .eq("id", clientId)
       .single();
 
@@ -237,6 +238,15 @@ export async function POST(request: Request) {
         { status: 500 }
       );
     }
+
+    // 7. Trigger automated notification safely
+    notifyAttendanceLogged({
+      clientId,
+      clientName: targetProfile.full_name,
+      date,
+      status: status as "present" | "absent",
+      trainerId: user.id,
+    }).catch((err) => console.error("Attendance notification trigger failed:", err));
 
     return NextResponse.json(
       {

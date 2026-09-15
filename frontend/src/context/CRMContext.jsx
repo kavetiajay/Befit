@@ -883,11 +883,11 @@ export const CRMProvider = ({ children }) => {
     clientId: p.client_id,
     date: p.date,
     weight: Number(p.weight_kg),
-    bodyFat: p.body_fat_pct !== null && p.body_fat_pct !== undefined ? Number(p.body_fat_pct) : 0,
-    chest: p.chest_cm !== null && p.chest_cm !== undefined ? Number(p.chest_cm) : 0,
-    waist: p.waist_cm !== null && p.waist_cm !== undefined ? Number(p.waist_cm) : 0,
-    arms: p.biceps_cm !== null && p.biceps_cm !== undefined ? Number(p.biceps_cm) : 0,
-    thigh: p.thigh_cm !== null && p.thigh_cm !== undefined ? Number(p.thigh_cm) : (p.hips_cm !== null && p.hips_cm !== undefined ? Number(p.hips_cm) : 0),
+    bodyFat: p.body_fat_pct !== null && p.body_fat_pct !== undefined ? Number(p.body_fat_pct) : null,
+    chest: p.chest_cm !== null && p.chest_cm !== undefined ? Number(p.chest_cm) : null,
+    waist: p.waist_cm !== null && p.waist_cm !== undefined ? Number(p.waist_cm) : null,
+    arms: p.biceps_cm !== null && p.biceps_cm !== undefined ? Number(p.biceps_cm) : null,
+    thigh: p.thigh_cm !== null && p.thigh_cm !== undefined ? Number(p.thigh_cm) : (p.hips_cm !== null && p.hips_cm !== undefined ? Number(p.hips_cm) : null),
     notes: p.notes || ""
   });
 
@@ -983,6 +983,24 @@ export const CRMProvider = ({ children }) => {
     }
   };
 
+  const deleteClientAttendance = async (logId, clientId) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await api.delete(`/api/attendance/${logId}`);
+      if (res && res.success) {
+        await fetchAttendance(clientId);
+        toast.success("Attendance record cleared.");
+      }
+    } catch (err) {
+      console.error(err);
+      setError(err instanceof Error ? err.message : String(err));
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const addWeightProgress = async (clientId, progressData) => {
     setLoading(true);
     setError(null);
@@ -1031,22 +1049,67 @@ export const CRMProvider = ({ children }) => {
     }
   };
 
+  const deleteWeightProgress = async (progressId, clientId) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await api.delete(`/api/progress/weight/${progressId}`);
+      if (res && res.success) {
+        if (clientId) {
+          await fetchWeightProgress(clientId);
+        }
+        toast.success("Measurement record removed.");
+      }
+    } catch (err) {
+      console.error(err);
+      setError(err instanceof Error ? err.message : String(err));
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // 5. Payments Actions
-  const transformBackendPayment = (p) => ({
-    id: p.id,
-    clientId: p.client_id,
-    clientName: p.client?.full_name || "Client",
-    clientEmail: p.client?.email || "",
-    amount: Number(p.amount),
-    date: p.payment_date ? p.payment_date.split("T")[0] : p.created_at.split("T")[0],
-    dueDate: p.due_date,
-    status: p.status ? (p.status.charAt(0).toUpperCase() + p.status.slice(1)) : "Paid",
-    method: p.payment_method ? (p.payment_method === "upi" ? "UPI" : p.payment_method.charAt(0).toUpperCase() + p.payment_method.slice(1)) : "Cash",
-    transactionId: p.transaction_id || "-",
-    membershipPlan: p.notes && p.notes.includes("Renewed") ? p.notes : "Standard Monthly",
-    notes: p.notes || "",
-    invoiceNumber: p.transaction_id ? `INV-${p.transaction_id}` : `INV-2026-${p.id.slice(0, 4).toUpperCase()}`
-  });
+  const transformBackendPayment = (p) => {
+    const rawStatus = (p.status || "paid").toLowerCase();
+    const formattedStatus = rawStatus === "paid" ? "Paid" :
+                            rawStatus === "pending" ? "Pending" :
+                            rawStatus === "overdue" ? "Overdue" :
+                            rawStatus === "expired" ? "Expired" :
+                            (rawStatus.charAt(0).toUpperCase() + rawStatus.slice(1));
+
+    let formattedMethod = "Cash";
+    if (p.payment_method) {
+      const lower = p.payment_method.toLowerCase();
+      if (lower === "upi") formattedMethod = "UPI";
+      else if (lower === "card") formattedMethod = "Card";
+      else if (lower === "bank_transfer" || lower === "bank transfer") formattedMethod = "Bank Transfer";
+      else formattedMethod = "Cash";
+    }
+
+    return {
+      id: p.id,
+      clientId: p.client_id,
+      clientName: p.client?.full_name || "Client",
+      clientEmail: p.client?.email || "",
+      clientPhone: p.client?.phone || "",
+      clientPhoto: p.client?.profile_image_url || "",
+      amount: Number(p.amount),
+      date: p.payment_date ? p.payment_date.split("T")[0] : p.created_at.split("T")[0],
+      paymentDate: p.payment_date ? p.payment_date.split("T")[0] : null,
+      dueDate: p.due_date,
+      membershipStart: p.membership_start || (p.payment_date ? p.payment_date.split("T")[0] : p.created_at.split("T")[0]),
+      membershipEnd: p.membership_end || p.due_date,
+      status: formattedStatus,
+      rawStatus: rawStatus,
+      method: formattedMethod,
+      rawMethod: p.payment_method || "cash",
+      transactionId: p.transaction_id || "-",
+      membershipPlan: p.notes && p.notes.includes("Renewed") ? p.notes : "Standard Monthly",
+      notes: p.notes || "",
+      invoiceNumber: p.transaction_id ? `INV-${p.transaction_id}` : `INV-2026-${p.id.slice(0, 4).toUpperCase()}`
+    };
+  };
 
   const transformBackendNotification = (n) => ({
     id: n.id,
@@ -1057,7 +1120,7 @@ export const CRMProvider = ({ children }) => {
     read: n.is_read,
     date: n.created_at ? n.created_at.split("T")[0] : new Date().toISOString().split("T")[0],
     time: n.created_at ? new Date(n.created_at).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }) : "Just now",
-    clientId: n.type === "workout" || n.type === "diet" || n.type === "payment" ? n.user_id : null
+    clientId: n.type === "workout" || n.type === "diet" || n.type === "payment" || n.type === "attendance" ? n.user_id : null
   });
 
   const fetchPayments = async (clientId) => {
@@ -1111,17 +1174,25 @@ export const CRMProvider = ({ children }) => {
       }
 
       const backendStatus = paymentData.status ? paymentData.status.toLowerCase() : "paid";
+      const startDate = paymentData.membershipStart || paymentData.startDate || paymentData.date || new Date().toISOString().split("T")[0];
+      const endDate = paymentData.membershipEnd || paymentData.endDate || paymentData.dueDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+      const dueDate = paymentData.dueDate || endDate;
+
+      let paymentDateVal = null;
+      if (backendStatus === "paid") {
+        paymentDateVal = paymentData.paymentDate || paymentData.date || new Date().toISOString().split("T")[0];
+      }
 
       const payload = {
         client_id: paymentData.clientId,
         amount: Number(paymentData.amount),
-        payment_date: backendStatus === "paid" ? new Date().toISOString() : null,
-        due_date: paymentData.dueDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-        membership_start: paymentData.date || new Date().toISOString().split("T")[0],
-        membership_end: paymentData.dueDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+        payment_date: paymentDateVal,
+        due_date: dueDate,
+        membership_start: startDate,
+        membership_end: endDate,
         status: backendStatus,
         payment_method: backendMethod,
-        transaction_id: paymentData.transactionId || `TXN${Date.now()}`,
+        transaction_id: paymentData.transactionId ? paymentData.transactionId.trim() : `TXN${Date.now()}`,
         notes: paymentData.notes || `Log payment for ${paymentData.membershipPlan || "Standard Monthly"}`
       };
 
@@ -1137,7 +1208,7 @@ export const CRMProvider = ({ children }) => {
           await api.post("/api/notifications", {
             user_id: paymentData.clientId,
             title: "Payment Recorded",
-            message: `A payment of ₹${paymentData.amount.toLocaleString("en-IN")} has been recorded for your account.`,
+            message: `A payment of ₹${Number(paymentData.amount).toLocaleString("en-IN")} has been recorded for your account.`,
             type: "payment"
           });
         } catch (notifErr) {
@@ -1145,6 +1216,7 @@ export const CRMProvider = ({ children }) => {
         }
 
         toast.success("Payment receipt logged successfully.");
+        return res.data?.payment;
       }
     } catch (err) {
       console.error(err);
@@ -1170,11 +1242,17 @@ export const CRMProvider = ({ children }) => {
         else payload.payment_method = "cash";
       }
       if (updatedFields.payment_date !== undefined) payload.payment_date = updatedFields.payment_date;
+      if (updatedFields.due_date !== undefined) payload.due_date = updatedFields.due_date;
+      if (updatedFields.membership_start !== undefined) payload.membership_start = updatedFields.membership_start;
+      if (updatedFields.membership_end !== undefined) payload.membership_end = updatedFields.membership_end;
+      if (updatedFields.transaction_id !== undefined) payload.transaction_id = updatedFields.transaction_id ? updatedFields.transaction_id.trim() : null;
+      if (updatedFields.notes !== undefined) payload.notes = updatedFields.notes;
 
       const res = await api.patch(`/api/payments/${paymentId}`, payload);
       if (res && res.success) {
         await fetchPayments();
-        toast.success("Payment status updated successfully.");
+        toast.success("Payment record updated successfully.");
+        return res.data?.payment;
       }
     } catch (err) {
       console.error(err);
@@ -1191,31 +1269,43 @@ export const CRMProvider = ({ children }) => {
   };
 
   // 7. Notification Actions
-  const markNotificationAsRead = async (notifId) => {
+  const markNotificationAsRead = async (notifId, isRead = true) => {
     try {
-      const res = await api.patch(`/api/notifications/${notifId}`, { is_read: true });
+      const res = await api.patch(`/api/notifications/${notifId}`, { is_read: isRead });
       if (res && res.success) {
         setNotifications((prev) =>
-          prev.map((n) => (n.id === notifId ? { ...n, read: true } : n))
+          prev.map((n) => (n.id === notifId ? { ...n, read: isRead } : n))
         );
       }
     } catch (err) {
       console.error(err);
+      throw err;
     }
+  };
+
+  const toggleNotificationRead = async (notifId) => {
+    const target = notifications.find((n) => n.id === notifId);
+    const newStatus = target ? !target.read : false;
+    await markNotificationAsRead(notifId, newStatus);
   };
 
   const clearAllNotifications = async () => {
     setLoading(true);
     try {
-      const unreadList = notifications.filter(n => !n.read);
-      for (const n of unreadList) {
-        await api.patch(`/api/notifications/${n.id}`, { is_read: true });
+      const res = await api.patch("/api/notifications");
+      if (res && res.success) {
+        setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+      } else {
+        const unreadList = notifications.filter((n) => !n.read);
+        for (const n of unreadList) {
+          await api.patch(`/api/notifications/${n.id}`, { is_read: true });
+        }
+        await fetchNotifications();
       }
-      await fetchNotifications();
-      toast.success("Cleared notifications feed.");
     } catch (err) {
       console.error(err);
       setError(err instanceof Error ? err.message : String(err));
+      throw err;
     } finally {
       setLoading(false);
     }
@@ -1289,6 +1379,7 @@ export const CRMProvider = ({ children }) => {
         recordClientPayment,
         updateGymSettings,
         markNotificationAsRead,
+        toggleNotificationRead,
         clearAllNotifications,
         restoreDatabase,
         loading,
@@ -1302,9 +1393,11 @@ export const CRMProvider = ({ children }) => {
         fetchAttendance,
         fetchWeightProgress,
         addWeightProgress,
+        deleteWeightProgress,
         fetchPayments,
         fetchNotifications,
-        updateClientPayment
+        updateClientPayment,
+        deleteClientAttendance
       }}
     >
       {children}

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAuthenticatedUser, requireTrainer, getRequestClient, isAssignedClient } from "@/lib/supabase/auth";
 import { supabase, supabaseAdmin } from "@/lib/supabase/client";
+import { notifyDietPlanUpdated } from "@/lib/supabase/notifications";
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -222,6 +223,13 @@ export async function PATCH(request: Request, context: RouteContext) {
         { status: 500 }
       );
     }
+
+    // 7. Trigger automated notification safely
+    notifyDietPlanUpdated({
+      clientId: plan.client_id,
+      planName: (updatedPlan.name as string) || "Diet Plan",
+      trainerId: user.id,
+    }).catch((err) => console.error("Diet plan update notification trigger failed:", err));
 
     return NextResponse.json(
       {
