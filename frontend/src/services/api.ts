@@ -95,9 +95,9 @@ const handleResponse = async (response: Response): Promise<any> => {
         sessionStorage.removeItem("gym_client_id");
 
         toast.error(message || "Session expired. Please log in again.");
-        // Redirect to login page if we aren't already there
-        if (window.location.pathname !== "/login") {
-          window.location.href = "/login";
+        // Redirect to login page if we aren't already there (HashRouter uses #/login)
+        if (window.location.hash !== "#/login") {
+          window.location.hash = "#/login";
         }
         break;
 

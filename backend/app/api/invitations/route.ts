@@ -188,16 +188,28 @@ export async function POST(request: Request) {
       );
     }
 
-    // 7. Construct invitation URL from request origin or default port
-    const rawOrigin = request.headers.get("origin") || request.headers.get("referer") || "";
-    let origin = "http://localhost:5173";
-    if (rawOrigin) {
-      try {
-        const parsedUrl = new URL(rawOrigin);
-        origin = parsedUrl.origin;
-      } catch {
-        // keep fallback
+    // 7. Construct invitation URL using configured frontend URL, request origin, or local development fallback
+    const configuredBaseUrl = (
+      process.env.FRONTEND_URL ||
+      process.env.NEXT_PUBLIC_APP_URL ||
+      ""
+    ).trim().replace(/\/$/, "");
+
+    let origin = configuredBaseUrl;
+    if (!origin) {
+      const rawOrigin = request.headers.get("origin") || request.headers.get("referer") || "";
+      if (rawOrigin) {
+        try {
+          const parsedUrl = new URL(rawOrigin);
+          origin = parsedUrl.origin;
+        } catch {
+          // keep fallback
+        }
       }
+    }
+
+    if (!origin) {
+      origin = "http://localhost:5173";
     }
 
     const inviteUrl = `${origin}/#/invite?token=${rawToken}`;

@@ -1,16 +1,55 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const allowedOrigins = [
+// Default localhost origins for local development
+const defaultLocalOrigins = [
   "http://localhost:5173",
   "http://localhost:5174",
+  "http://localhost:5175",
   "http://localhost:5176",
   "http://localhost:5177",
+  "http://127.0.0.1:5173",
+  "http://127.0.0.1:5174",
+  "http://127.0.0.1:5175",
+  "http://127.0.0.1:5176",
+  "http://127.0.0.1:5177",
 ];
+
+function getAllowedOrigins(): string[] {
+  const origins = new Set<string>(defaultLocalOrigins);
+
+  // Parse CORS_ALLOWED_ORIGINS (comma-separated list)
+  const envCors = process.env.CORS_ALLOWED_ORIGINS;
+  if (envCors) {
+    envCors
+      .split(",")
+      .map((o) => o.trim().replace(/\/$/, ""))
+      .filter(Boolean)
+      .forEach((o) => origins.add(o));
+  }
+
+  // Parse FRONTEND_URL if provided
+  const frontendUrl = process.env.FRONTEND_URL;
+  if (frontendUrl) {
+    const cleanFrontendUrl = frontendUrl.trim().replace(/\/$/, "");
+    if (cleanFrontendUrl) {
+      origins.add(cleanFrontendUrl);
+    }
+  }
+
+  return Array.from(origins);
+}
+
+function isOriginAllowed(origin: string, allowedOrigins: string[]): boolean {
+  if (!origin) return false;
+  const cleanOrigin = origin.trim().replace(/\/$/, "");
+  return allowedOrigins.some((allowed) => allowed.replace(/\/$/, "") === cleanOrigin);
+}
 
 export function middleware(request: NextRequest) {
   const origin = request.headers.get("origin") ?? "";
-  const isAllowed = allowedOrigins.includes(origin);
+  const allowedOrigins = getAllowedOrigins();
+  const isAllowed = isOriginAllowed(origin, allowedOrigins);
 
   // 1. Global OPTIONS preflight handler for all /api/* routes
   if (request.method === "OPTIONS") {
@@ -23,13 +62,11 @@ export function middleware(request: NextRequest) {
     if (isAllowed) {
       preflightHeaders["Access-Control-Allow-Origin"] = origin;
       preflightHeaders["Vary"] = "Origin";
-    } else if (allowedOrigins.length > 0) {
-      preflightHeaders["Access-Control-Allow-Origin"] = allowedOrigins[0];
     }
 
     return new NextResponse(null, {
-      status: 204,
-      headers: preflightHeaders,
+      status: isAllowed ? 204 : 403,
+      headers: isAllowed ? preflightHeaders : undefined,
     });
   }
 
