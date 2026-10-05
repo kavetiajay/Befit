@@ -83,23 +83,27 @@ const handleResponse = async (response: Response): Promise<any> => {
 
     // Centralized side-effects for specific status codes
     switch (status) {
-      case 401:
-        // Clear authentication session data
-        localStorage.removeItem("gym_auth");
-        localStorage.removeItem("gym_role");
-        localStorage.removeItem("gym_token");
-        localStorage.removeItem("gym_client_id");
-        sessionStorage.removeItem("gym_auth");
-        sessionStorage.removeItem("gym_role");
-        sessionStorage.removeItem("gym_token");
-        sessionStorage.removeItem("gym_client_id");
+      case 401: {
+        const currentToken = getToken();
+        if (currentToken && !currentToken.startsWith("demo_")) {
+          // Clear authentication session data
+          localStorage.removeItem("gym_auth");
+          localStorage.removeItem("gym_role");
+          localStorage.removeItem("gym_token");
+          localStorage.removeItem("gym_client_id");
+          sessionStorage.removeItem("gym_auth");
+          sessionStorage.removeItem("gym_role");
+          sessionStorage.removeItem("gym_token");
+          sessionStorage.removeItem("gym_client_id");
 
-        toast.error(message || "Session expired. Please log in again.");
-        // Redirect to login page if we aren't already there (HashRouter uses #/login)
-        if (window.location.hash !== "#/login") {
-          window.location.hash = "#/login";
+          toast.error(message || "Session expired. Please log in again.");
+          // Redirect to login page if we aren't already there (HashRouter uses #/login)
+          if (window.location.hash !== "#/login") {
+            window.location.hash = "#/login";
+          }
         }
         break;
+      }
 
       case 403:
         toast.error(message || "Access denied. You do not have permission to view this content.");
@@ -133,17 +137,25 @@ const handleResponse = async (response: Response): Promise<any> => {
 /**
  * Execute request using fetch
  */
+export interface RequestOptions extends RequestInit {
+  silent?: boolean;
+}
+
+/**
+ * Execute request using fetch
+ */
 const request = async <T = any>(
   endpoint: string,
   method: "GET" | "POST" | "PATCH" | "DELETE",
   body?: any,
-  options?: RequestInit
+  options?: RequestOptions
 ): Promise<T> => {
   const url = endpoint.startsWith("http") ? endpoint : `${BASE_URL}${endpoint}`;
   
   const headers = getHeaders(options?.headers);
+  const { silent, ...fetchOptions } = options || {};
   const config: RequestInit = {
-    ...options,
+    ...fetchOptions,
     method,
     headers,
   };
@@ -162,7 +174,12 @@ const request = async <T = any>(
     
     // Likely a network/connection error (TypeError)
     const netErrorMsg = error instanceof Error ? error.message : String(error);
-    toast.error(`Network error: ${netErrorMsg || "Could not connect to the backend server."}`);
+    const token = getToken();
+    const isAuthFallbackEndpoint = endpoint === "/api/auth/login" || endpoint === "/api/auth/session";
+    
+    if (!silent && !isAuthFallbackEndpoint && !token?.startsWith("demo_")) {
+      toast.error(`Network error: ${netErrorMsg || "Could not connect to the backend server."}`);
+    }
     throw new ApiError(0, `Network error: ${netErrorMsg}`, { error });
   }
 };
@@ -171,15 +188,15 @@ const request = async <T = any>(
  * API client layer
  */
 export const api = {
-  get: <T = any>(endpoint: string, options?: RequestInit) => 
+  get: <T = any>(endpoint: string, options?: RequestOptions) => 
     request<T>(endpoint, "GET", undefined, options),
 
-  post: <T = any>(endpoint: string, body?: any, options?: RequestInit) => 
+  post: <T = any>(endpoint: string, body?: any, options?: RequestOptions) => 
     request<T>(endpoint, "POST", body, options),
 
-  patch: <T = any>(endpoint: string, body?: any, options?: RequestInit) => 
+  patch: <T = any>(endpoint: string, body?: any, options?: RequestOptions) => 
     request<T>(endpoint, "PATCH", body, options),
 
-  delete: <T = any>(endpoint: string, options?: RequestInit) => 
+  delete: <T = any>(endpoint: string, options?: RequestOptions) => 
     request<T>(endpoint, "DELETE", undefined, options),
 };

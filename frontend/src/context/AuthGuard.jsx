@@ -19,11 +19,14 @@ export const ProtectedRoute = ({ children, role }) => {
   useEffect(() => {
     const verifySession = async () => {
       if (isAuthenticated()) {
-        try {
-          await api.get("/api/auth/session");
-        } catch (error) {
-          // Centralized error handler in api.ts will clean session data and redirect to /login
-          console.warn("Session check failed, session is invalid or expired.", error);
+        const token = localStorage.getItem("gym_token") || sessionStorage.getItem("gym_token");
+        // Only verify with backend if token exists and is not a demo token
+        if (token && !token.startsWith("demo_")) {
+          try {
+            await api.get("/api/auth/session");
+          } catch (error) {
+            console.warn("Session check failed, session is invalid or expired.", error);
+          }
         }
       }
     };
