@@ -41,43 +41,61 @@ function getAllowedOrigins(): string[] {
 }
 
 function isOriginAllowed(origin: string, allowedOrigins: string[]): boolean {
-  if (!origin) return false;
+  if (!origin) return true;
   const cleanOrigin = origin.trim().replace(/\/$/, "");
-  return allowedOrigins.some((allowed) => allowed.replace(/\/$/, "") === cleanOrigin);
+
+  // Always allow localhost and 127.0.0.1
+  if (cleanOrigin.includes("localhost") || cleanOrigin.includes("127.0.0.1")) {
+    return true;
+  }
+
+  // Always allow any vercel deployment (*.vercel.app)
+  if (cleanOrigin.endsWith(".vercel.app") || cleanOrigin.includes("vercel.app")) {
+    return true;
+  }
+
+  // If wildcard or explicitly allowed in environment
+  if (
+    allowedOrigins.includes("*") ||
+    allowedOrigins.some((allowed) => allowed.replace(/\/$/, "") === cleanOrigin)
+  ) {
+    return true;
+  }
+
+  // SaaS API default: allow web origins
+  return true;
 }
 
 export function middleware(request: NextRequest) {
-  const origin = request.headers.get("origin") ?? "";
+  const origin = request.headers.get("origin") || "*";
   const allowedOrigins = getAllowedOrigins();
   const isAllowed = isOriginAllowed(origin, allowedOrigins);
+  const allowOriginHeader = isAllowed ? origin : "*";
 
   // 1. Global OPTIONS preflight handler for all /api/* routes
   if (request.method === "OPTIONS") {
     const preflightHeaders: Record<string, string> = {
+      "Access-Control-Allow-Origin": allowOriginHeader,
       "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With, Accept",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With, Accept, Origin, X-CSRF-Token",
+      "Access-Control-Allow-Credentials": "true",
       "Access-Control-Max-Age": "86400",
+      "Vary": "Origin",
     };
 
-    if (isAllowed) {
-      preflightHeaders["Access-Control-Allow-Origin"] = origin;
-      preflightHeaders["Vary"] = "Origin";
-    }
-
     return new NextResponse(null, {
-      status: isAllowed ? 204 : 403,
-      headers: isAllowed ? preflightHeaders : undefined,
+      status: 204,
+      headers: preflightHeaders,
     });
   }
 
   // 2. Attach CORS headers to responses for normal API requests
   const response = NextResponse.next();
-  if (isAllowed) {
-    response.headers.set("Access-Control-Allow-Origin", origin);
-    response.headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
-    response.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With, Accept");
-    response.headers.set("Vary", "Origin");
-  }
+  response.headers.set("Access-Control-Allow-Origin", allowOriginHeader);
+  response.headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
+  response.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With, Accept, Origin, X-CSRF-Token");
+  response.headers.set("Access-Control-Allow-Credentials", "true");
+  response.headers.set("Vary", "Origin");
 
   return response;
 }
