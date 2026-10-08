@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import crypto from "crypto";
 import { requireTrainer } from "@/lib/supabase/auth";
-import { supabase, supabaseAdmin } from "@/lib/supabase/client";
+import { supabase, supabaseAdmin, isSupabaseConfigured } from "@/lib/supabase/client";
 
 // Input validation schema using Zod
 const inviteSchema = z.object({
@@ -18,6 +18,43 @@ const patchSchema = z.object({
   action: z.enum(["revoke", "resend"], { message: "Invalid action." }),
 });
 
+/**
+ * Safely resolves the frontend base URL from environment variables or request headers.
+ * Strips any trailing slashes to guarantee clean URL construction.
+ */
+function getFrontendBaseUrl(request: Request): string | null {
+  // 1. Check configured environment variables first
+  const envFrontendUrl =
+    process.env.FRONTEND_URL ||
+    process.env.NEXT_PUBLIC_APP_URL ||
+    process.env.FRONTEND_APP_URL;
+
+  if (envFrontendUrl && typeof envFrontendUrl === "string" && envFrontendUrl.trim()) {
+    return envFrontendUrl.trim().replace(/\/+$/, "");
+  }
+
+  // 2. Fall back to request Origin header
+  const originHeader = request.headers.get("origin");
+  if (originHeader && originHeader.trim() && originHeader !== "null") {
+    return originHeader.trim().replace(/\/+$/, "");
+  }
+
+  // 3. Fall back to request Referer header
+  const refererHeader = request.headers.get("referer");
+  if (refererHeader && refererHeader.trim()) {
+    try {
+      const parsedReferer = new URL(refererHeader);
+      if (parsedReferer.origin && parsedReferer.origin !== "null") {
+        return parsedReferer.origin.replace(/\/+$/, "");
+      }
+    } catch {
+      // Ignore URL parse failures
+    }
+  }
+
+  return null;
+}
+
 // GET /api/invitations - List all invitations for the authenticated trainer
 export async function GET(request: Request) {
   try {
@@ -27,6 +64,16 @@ export async function GET(request: Request) {
     }
     const { user: trainerUser } = authResult;
     const trainerId = trainerUser.id;
+
+    if (!isSupabaseConfigured()) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Database is not configured. Please configure your Supabase credentials (NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SECRET_KEY) to load invitations.",
+        },
+        { status: 503 }
+      );
+    }
 
     const dbClient = supabaseAdmin || supabase;
 
@@ -105,7 +152,30 @@ export async function POST(request: Request) {
     const { user: trainerUser } = authResult;
     const trainerId = trainerUser.id;
 
-    // 2. Parse and validate JSON request body
+    // 2. Validate Supabase database configuration
+    if (!isSupabaseConfigured()) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Database is not configured. Please configure your Supabase credentials (NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SECRET_KEY) to generate and store client invitations.",
+        },
+        { status: 503 }
+      );
+    }
+
+    // 3. Resolve frontend base URL
+    const frontendBaseUrl = getFrontendBaseUrl(request);
+    if (!frontendBaseUrl) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Unable to determine frontend base URL for invitation link. Please configure FRONTEND_URL or ensure the request includes an Origin header.",
+        },
+        { status: 400 }
+      );
+    }
+
+    // 4. Parse and validate JSON request body
     let body: unknown;
     try {
       body = await request.json();
@@ -127,11 +197,9 @@ export async function POST(request: Request) {
     }
 
     const { client_email: clientEmail } = parseResult.data;
-
-    // Use admin client if configured, otherwise fallback to standard client
     const dbClient = supabaseAdmin || supabase;
 
-    // 3. Check for active duplicate invitation for this trainer and email
+    // 5. Check for active duplicate invitation for this trainer and email
     const nowIso = new Date().toISOString();
     const { data: existingInvite, error: checkError } = await dbClient
       .from("client_invitations")
@@ -160,14 +228,14 @@ export async function POST(request: Request) {
       );
     }
 
-    // 4. Cryptographically secure token generation and SHA-256 hashing
+    // 6. Cryptographically secure token generation and SHA-256 hashing
     const rawToken = crypto.randomBytes(32).toString("hex");
     const tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");
 
-    // 5. Expiration calculation (7 days from creation)
+    // 7. Expiration calculation (7 days from creation)
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
-    // 6. Insert new invitation record into public.client_invitations (storing ONLY token_hash)
+    // 8. Insert new invitation record into public.client_invitations (storing ONLY token_hash)
     const { data: inserted, error: insertError } = await dbClient
       .from("client_invitations")
       .insert({
@@ -183,38 +251,15 @@ export async function POST(request: Request) {
     if (insertError) {
       console.error("Error creating client invitation record:", insertError);
       return NextResponse.json(
-        { success: false, message: "Failed to create client invitation." },
+        { success: false, message: "Failed to create client invitation in database." },
         { status: 500 }
       );
     }
 
-    // 7. Construct invitation URL using configured frontend URL, request origin, or local development fallback
-    const configuredBaseUrl = (
-      process.env.FRONTEND_URL ||
-      process.env.NEXT_PUBLIC_APP_URL ||
-      ""
-    ).trim().replace(/\/$/, "");
+    // 9. Construct cleanly formatted invitation URL using HashRouter format without duplicate slashes
+    const inviteUrl = `${frontendBaseUrl}/#/invite?token=${encodeURIComponent(rawToken)}`;
 
-    let origin = configuredBaseUrl;
-    if (!origin) {
-      const rawOrigin = request.headers.get("origin") || request.headers.get("referer") || "";
-      if (rawOrigin) {
-        try {
-          const parsedUrl = new URL(rawOrigin);
-          origin = parsedUrl.origin;
-        } catch {
-          // keep fallback
-        }
-      }
-    }
-
-    if (!origin) {
-      origin = "http://localhost:5173";
-    }
-
-    const inviteUrl = `${origin}/#/invite?token=${rawToken}`;
-
-    // 8. Return successful response
+    // 10. Return successful response with the shareable invitation URL
     return NextResponse.json(
       {
         success: true,
@@ -247,6 +292,16 @@ export async function PATCH(request: Request) {
     }
     const { user: trainerUser } = authResult;
     const trainerId = trainerUser.id;
+
+    if (!isSupabaseConfigured()) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Database is not configured. Please configure your Supabase credentials to manage invitations.",
+        },
+        { status: 503 }
+      );
+    }
 
     let body: unknown;
     try {
@@ -332,3 +387,4 @@ export async function PATCH(request: Request) {
     );
   }
 }
+

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Mail,
+  User,
   Send,
   CheckCircle2,
   Copy,
@@ -33,9 +34,10 @@ const AddClient = () => {
   const navigate = useNavigate();
 
   // Form states for creating new invitation
+  const [firstName, setFirstName] = useState("");
   const [email, setEmail] = useState("");
-  const [note, setNote] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [firstNameError, setFirstNameError] = useState("");
   const [emailError, setEmailError] = useState("");
 
   // Result state after generating invitation
@@ -81,6 +83,23 @@ const AddClient = () => {
     fetchInvitations();
   }, []);
 
+  // First name validator
+  const validateFirstName = (val) => {
+    const trimmed = val.trim();
+    if (!trimmed) {
+      return "Client first name is required.";
+    }
+    return "";
+  };
+
+  const handleFirstNameChange = (e) => {
+    const val = e.target.value;
+    setFirstName(val);
+    if (firstNameError) {
+      setFirstNameError(validateFirstName(val));
+    }
+  };
+
   // Email format validator
   const validateEmail = (val) => {
     const trimmed = val.trim();
@@ -105,18 +124,29 @@ const AddClient = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const err = validateEmail(email);
-    if (err) {
-      setEmailError(err);
-      toast.error(err);
+    const fNameErr = validateFirstName(firstName);
+    const eErr = validateEmail(email);
+
+    if (fNameErr || eErr) {
+      setFirstNameError(fNameErr);
+      setEmailError(eErr);
+      if (fNameErr) {
+        toast.error(fNameErr);
+      } else if (eErr) {
+        toast.error(eErr);
+      }
       return;
     }
 
     setIsLoading(true);
+    setFirstNameError("");
     setEmailError("");
 
     try {
       const res = await api.post("/api/invitations", {
+        firstName: firstName.trim(),
+        first_name: firstName.trim(),
+        email: email.trim().toLowerCase(),
         client_email: email.trim().toLowerCase(),
       });
 
@@ -177,6 +207,8 @@ const AddClient = () => {
 
   const handleResend = (inviteEmail) => {
     setEmail(inviteEmail);
+    setFirstName("");
+    setFirstNameError("");
     setEmailError("");
     setInvitationResult(null);
     setActiveTab("invite");
@@ -184,8 +216,9 @@ const AddClient = () => {
   };
 
   const handleReset = () => {
+    setFirstName("");
     setEmail("");
-    setNote("");
+    setFirstNameError("");
     setEmailError("");
     setInvitationResult(null);
     setCopied(false);
@@ -471,10 +504,38 @@ const AddClient = () => {
             <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 shadow-sm space-y-8">
               <form onSubmit={handleSubmit} className="space-y-6">
                 
+                {/* First Name Field */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-black text-slate-700 dark:text-zinc-300 uppercase tracking-wider block">
+                    First Name <span className="text-rose-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 shrink-0" />
+                    <input
+                      type="text"
+                      value={firstName}
+                      onChange={handleFirstNameChange}
+                      placeholder="Enter client's first name"
+                      disabled={isLoading}
+                      className={`w-full h-12 pl-11 pr-4 rounded-xl bg-slate-50 dark:bg-zinc-950 border ${
+                        firstNameError
+                          ? "border-rose-500 focus:ring-rose-100"
+                          : "border-slate-200 dark:border-zinc-800 focus:border-blue-500 focus:ring-blue-100"
+                      } text-sm font-medium focus:outline-none focus:ring-4 transition-all text-slate-900 dark:text-zinc-100`}
+                    />
+                  </div>
+                  {firstNameError && (
+                    <p className="text-xs text-rose-500 font-semibold flex items-center gap-1.5 mt-1">
+                      <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                      <span>{firstNameError}</span>
+                    </p>
+                  )}
+                </div>
+
                 {/* Email Field */}
                 <div className="space-y-1.5">
                   <label className="text-xs font-black text-slate-700 dark:text-zinc-300 uppercase tracking-wider block">
-                    Client Email Address <span className="text-rose-500">*</span>
+                    Email Address <span className="text-rose-500">*</span>
                   </label>
                   <div className="relative">
                     <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 shrink-0" />
@@ -500,21 +561,6 @@ const AddClient = () => {
                   <p className="text-[11px] text-slate-400">
                     The prospective client will securely set up their login password, fitness goals, and health background.
                   </p>
-                </div>
-
-                {/* Optional Internal Note */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-black text-slate-700 dark:text-zinc-300 uppercase tracking-wider block">
-                    Internal Note <span className="text-slate-400 text-[10px] font-normal">(Optional, for your records)</span>
-                  </label>
-                  <textarea
-                    value={note}
-                    onChange={(e) => setNote(e.target.value)}
-                    placeholder="e.g. Inquired via Instagram, interested in strength coaching..."
-                    rows={2}
-                    disabled={isLoading}
-                    className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 text-sm focus:outline-none focus:border-blue-500 transition text-slate-900 dark:text-zinc-100"
-                  />
                 </div>
 
                 {/* Submit Action */}

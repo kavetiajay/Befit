@@ -144,113 +144,73 @@ const Login = () => {
 
     try {
       const normalizedEmail = email.trim().toLowerCase();
-      let loginSuccess = false;
-      let user = null;
-      let token = "";
-      let portalRole = "client";
 
-      // 1. Attempt to log in via backend API
-      try {
-        const res = await api.post("/api/auth/login", {
-          email: normalizedEmail,
-          password,
-        });
+      const res = await api.post("/api/auth/login", {
+        email: normalizedEmail,
+        password,
+      });
 
-        if (res && res.success && res.data) {
-          user = res.data.user;
-          const session = res.data.session;
-          token = session?.access_token || "auth_token";
-          portalRole = res.data.role || (normalizedEmail === "trainee@gmail.com" ? "trainer" : "client");
-          loginSuccess = true;
-        }
-      } catch (backendErr) {
-        console.warn("Backend login request failed or unreachable, checking local credentials:", backendErr);
-      }
+      if (res && res.success && res.data) {
+        const { user, session, role, profile } = res.data;
+        const portalRole = role || profile?.role || "client";
+        const token = session?.access_token || "";
+        const isTrainer = portalRole === "trainer";
 
-      // 2. Fallback / offline demo credentials validation
-      if (!loginSuccess) {
-        const isTrainerCreds =
-          (normalizedEmail === "trainee@gmail.com" && (password === "ajay@08" || password.length >= 4)) ||
-          normalizedEmail.includes("trainer") ||
-          normalizedEmail === "admin@befit.com";
+        // Save authentication information
+        if (rememberMe) {
+          localStorage.setItem("gym_auth", "true");
+          localStorage.setItem("gym_role", portalRole);
+          localStorage.setItem("gym_token", token);
 
-        if (isTrainerCreds) {
-          loginSuccess = true;
-          portalRole = "trainer";
-          token = "demo_trainer_token";
-          user = { id: "trainer_admin_1", email: normalizedEmail, fullName: "Ajay Trainer" };
-        } else {
-          // Check against known CRM clients
-          const isKnownClient =
-            normalizedEmail.includes("@") &&
-            (normalizedEmail.includes("example.com") ||
-             normalizedEmail.includes("client") ||
-             normalizedEmail.includes("sharma") ||
-             normalizedEmail.includes("patel") ||
-             password.length >= 4);
-
-          if (isKnownClient) {
-            loginSuccess = true;
-            portalRole = "client";
-            token = "demo_client_1";
-            user = { id: "client_1", email: normalizedEmail, fullName: "Client User" };
+          if (!isTrainer && user?.id) {
+            localStorage.setItem("gym_client_id", user.id);
           } else {
-            toast.error("Invalid email or password. Please check your credentials.");
-            setIsLoading(false);
-            return;
+            localStorage.removeItem("gym_client_id");
           }
-        }
-      }
 
-      const isTrainer = portalRole === "trainer";
-
-      // Save authentication information
-      if (rememberMe) {
-        localStorage.setItem("gym_auth", "true");
-        localStorage.setItem("gym_role", portalRole);
-        localStorage.setItem("gym_token", token);
-
-        if (!isTrainer && user?.id) {
-          localStorage.setItem("gym_client_id", user.id);
+          sessionStorage.removeItem("gym_auth");
+          sessionStorage.removeItem("gym_role");
+          sessionStorage.removeItem("gym_token");
+          sessionStorage.removeItem("gym_client_id");
         } else {
+          sessionStorage.setItem("gym_auth", "true");
+          sessionStorage.setItem("gym_role", portalRole);
+          sessionStorage.setItem("gym_token", token);
+
+          if (!isTrainer && user?.id) {
+            sessionStorage.setItem("gym_client_id", user.id);
+          } else {
+            sessionStorage.removeItem("gym_client_id");
+          }
+
+          localStorage.setItem("gym_role", portalRole);
+          localStorage.removeItem("gym_auth");
+          localStorage.removeItem("gym_token");
           localStorage.removeItem("gym_client_id");
         }
 
-        sessionStorage.removeItem("gym_auth");
-        sessionStorage.removeItem("gym_role");
-        sessionStorage.removeItem("gym_token");
-        sessionStorage.removeItem("gym_client_id");
-      } else {
-        sessionStorage.setItem("gym_auth", "true");
-        sessionStorage.setItem("gym_role", portalRole);
-        sessionStorage.setItem("gym_token", token);
+        // Welcome message
+        toast.success(
+          isTrainer ? "Welcome Trainer!" : "Welcome Client!"
+        );
 
-        if (!isTrainer && user?.id) {
-          sessionStorage.setItem("gym_client_id", user.id);
+        // Automatic Redirect
+        if (isTrainer) {
+          navigate("/trainer/dashboard");
         } else {
-          sessionStorage.removeItem("gym_client_id");
+          navigate("/client/dashboard");
         }
-
-        localStorage.setItem("gym_role", portalRole);
-        localStorage.removeItem("gym_auth");
-        localStorage.removeItem("gym_token");
-        localStorage.removeItem("gym_client_id");
-      }
-
-      // Welcome message
-      toast.success(
-        isTrainer ? "Welcome Trainer!" : "Welcome Client!"
-      );
-
-      // Automatic Redirect
-      if (isTrainer) {
-        navigate("/trainer/dashboard");
       } else {
-        navigate("/client/dashboard");
+        const errorMsg = res?.message || "Invalid email or password.";
+        toast.error(errorMsg);
       }
     } catch (err) {
       console.error("Login failed:", err);
-      toast.error("An error occurred during login. Please try again.");
+      const errorMsg =
+        err?.data?.message ||
+        err?.message ||
+        "Invalid email or password. Please check your credentials.";
+      toast.error(errorMsg);
     } finally {
       setIsLoading(false);
     }
@@ -548,58 +508,6 @@ const Login = () => {
 
             </div>
 
-            {/* QUICK DEMO CREDENTIALS SHORTCUTS */}
-            <div className="pt-2">
-              <div className="text-[11px] font-bold text-slate-400 dark:text-zinc-500 mb-2 flex items-center justify-between">
-                <span>Quick Demo Accounts</span>
-                <span className="text-[10px] text-blue-500 dark:text-blue-400 font-semibold">Click to autofill</span>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEmail("trainee@gmail.com");
-                    setPassword("ajay@08");
-                    setEmailError("");
-                    setPasswordError("");
-                    setIsEmailTouched(false);
-                    setIsPasswordTouched(false);
-                  }}
-                  disabled={isLoading || isGoogleLoading}
-                  className="py-2 px-3 rounded-xl bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/40 dark:hover:bg-blue-900/50 border border-blue-200 dark:border-blue-800 text-left transition-all cursor-pointer"
-                >
-                  <div className="text-xs font-black text-blue-700 dark:text-blue-300 flex items-center justify-between">
-                    <span>🏋️ Trainer</span>
-                    <span className="text-[10px] text-blue-500 dark:text-blue-400 font-normal">ajay@08</span>
-                  </div>
-                  <div className="text-[10px] text-blue-600/80 dark:text-blue-400/80 truncate font-medium">
-                    trainee@gmail.com
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEmail("rahul.sharma@example.com");
-                    setPassword("client123");
-                    setEmailError("");
-                    setPasswordError("");
-                    setIsEmailTouched(false);
-                    setIsPasswordTouched(false);
-                  }}
-                  disabled={isLoading || isGoogleLoading}
-                  className="py-2 px-3 rounded-xl bg-cyan-50 hover:bg-cyan-100 dark:bg-cyan-950/40 dark:hover:bg-cyan-900/50 border border-cyan-200 dark:border-cyan-800 text-left transition-all cursor-pointer"
-                >
-                  <div className="text-xs font-black text-cyan-700 dark:text-cyan-300 flex items-center justify-between">
-                    <span>👤 Client</span>
-                    <span className="text-[10px] text-cyan-500 dark:text-cyan-400 font-normal">client123</span>
-                  </div>
-                  <div className="text-[10px] text-cyan-600/80 dark:text-cyan-400/80 truncate font-medium">
-                    rahul.sharma@...
-                  </div>
-                </button>
-              </div>
-            </div>
 
             {/* SIGN IN */}
             <button

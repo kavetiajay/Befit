@@ -30,6 +30,7 @@ import {
 import { toast } from "sonner";
 import { useCRM } from "../../context/CRMContext";
 import { api } from "../../services/api";
+import { INITIAL_CLIENTS } from "../../data/mockData";
 
 const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 const weekdayOrder = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
@@ -193,11 +194,42 @@ const ClientDashboard = () => {
   // Retrieve authenticated client with safe fallbacks
   const client = useMemo(() => {
     const savedId = localStorage.getItem("gym_client_id") || sessionStorage.getItem("gym_client_id");
-    if (savedId) {
-      const match = clients?.find((c) => c.id === savedId);
+    if (savedId && Array.isArray(clients) && clients.length > 0) {
+      const match = clients.find((c) => c.id === savedId);
       if (match) return match;
     }
-    return clients?.find((c) => c.name === "Ajay Kaveti" || c.email === "ajay@befit.com") || clients?.[0];
+    const namedMatch = Array.isArray(clients) ? clients.find((c) => c.name === "Ajay Kaveti" || c.email === "ajay@befit.com") : null;
+    if (namedMatch) return namedMatch;
+    if (Array.isArray(clients) && clients.length > 0) return clients[0];
+    
+    // Fallback to mock data or default client structure
+    return (INITIAL_CLIENTS && INITIAL_CLIENTS[0]) ? INITIAL_CLIENTS[0] : {
+      id: savedId || "client_default",
+      name: "Ajay Kaveti",
+      email: "ajay@befit.com",
+      phone: "+91 98765 43210",
+      age: 26,
+      gender: "Male",
+      goal: "Weight Loss",
+      membership: "Premium Elite",
+      status: "Active",
+      joinDate: new Date().toISOString().split("T")[0],
+      expiryDate: "2026-12-31",
+      monthlyFees: 3500,
+      currentWeight: 75,
+      targetWeight: 70,
+      height: 175,
+      bmi: 24.5,
+      bodyFat: 18,
+      chest: 98,
+      waist: 82,
+      arms: 35,
+      thigh: 56,
+      medicalConditions: "None",
+      allergies: "None",
+      injuries: "None",
+      trainerNotes: "Consistency is key."
+    };
   }, [clients]);
 
   const [currentTime, setCurrentTime] = useState(new Date());

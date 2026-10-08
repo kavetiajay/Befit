@@ -46,23 +46,6 @@ export async function getAuthenticatedUser(request: Request): Promise<AuthUserIn
       return null;
     }
 
-    // Support offline / demo sessions
-    if (token.startsWith("demo_")) {
-      const isTrainerToken = token.includes("trainer");
-      return {
-        user: {
-          id: isTrainerToken ? "demo_trainer_1" : "client_1",
-          email: isTrainerToken ? "trainee@gmail.com" : "demo@client.com",
-        } as unknown as User,
-        profile: {
-          id: isTrainerToken ? "demo_trainer_1" : "client_1",
-          full_name: isTrainerToken ? "Ajay Trainer" : "Rahul Sharma",
-          role: isTrainerToken ? "trainer" : "client",
-        },
-        role: isTrainerToken ? "trainer" : "client",
-      };
-    }
-
     // Verify token and get user using Supabase
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     if (authError || !user) {
@@ -79,8 +62,8 @@ export async function getAuthenticatedUser(request: Request): Promise<AuthUserIn
 
     return {
       user,
-      profile: profile || { id: user.id, email: user.email, role: "trainer" },
-      role: profile?.role || "trainer",
+      profile: profile || { id: user.id, email: user.email, role: "client" },
+      role: profile?.role || "client",
     };
   } catch (err) {
     console.error("Authentication helper error:", err);

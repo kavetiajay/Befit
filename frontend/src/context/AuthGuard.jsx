@@ -20,8 +20,7 @@ export const ProtectedRoute = ({ children, role }) => {
     const verifySession = async () => {
       if (isAuthenticated()) {
         const token = localStorage.getItem("gym_token") || sessionStorage.getItem("gym_token");
-        // Only verify with backend if token exists and is not a demo token
-        if (token && !token.startsWith("demo_")) {
+        if (token) {
           try {
             await api.get("/api/auth/session");
           } catch (error) {

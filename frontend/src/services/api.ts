@@ -85,7 +85,7 @@ const handleResponse = async (response: Response): Promise<any> => {
     switch (status) {
       case 401: {
         const currentToken = getToken();
-        if (currentToken && !currentToken.startsWith("demo_")) {
+        if (currentToken) {
           // Clear authentication session data
           localStorage.removeItem("gym_auth");
           localStorage.removeItem("gym_role");
@@ -177,7 +177,7 @@ const request = async <T = any>(
     const token = getToken();
     const isAuthFallbackEndpoint = endpoint === "/api/auth/login" || endpoint === "/api/auth/session";
     
-    if (!silent && !isAuthFallbackEndpoint && !token?.startsWith("demo_")) {
+    if (!silent && !isAuthFallbackEndpoint) {
       toast.error(`Network error: ${netErrorMsg || "Could not connect to the backend server."}`);
     }
     throw new ApiError(0, `Network error: ${netErrorMsg}`, { error });

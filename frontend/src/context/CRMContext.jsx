@@ -105,23 +105,37 @@ export const CRMProvider = ({ children }) => {
         }
       } else if (role === "client") {
         const clientId = localStorage.getItem("gym_client_id") || sessionStorage.getItem("gym_client_id");
-        if (clientId) {
+        const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        if (clientId && UUID_REGEX.test(clientId)) {
           const res = await api.get(`/api/clients/${clientId}`);
           if (res.success && res.data?.client) {
             const mapped = mapBackendClient(res.data.client);
             setClients([mapped]);
+          }
+        } else if (clientId) {
+          // Non-UUID demo or offline mock client
+          const mock = INITIAL_CLIENTS.find(c => c.id === clientId) || INITIAL_CLIENTS[0];
+          if (mock) {
+            setClients(prev => (prev && prev.some(c => c.id === mock.id) ? prev : [mock, ...(prev || [])]));
           }
         }
       }
     } catch (err) {
       console.error("Error loading clients from backend:", err);
       setError(err instanceof Error ? err.message : String(err));
+      // In case of error, ensure clients has at least fallback data
+      setClients(prev => (prev && prev.length > 0 ? prev : INITIAL_CLIENTS));
     } finally {
       setLoading(false);
     }
   };
 
   const fetchClientById = async (id) => {
+    if (!id) return null;
+    const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!UUID_REGEX.test(id)) {
+      return clients.find(c => c.id === id) || INITIAL_CLIENTS.find(c => c.id === id) || null;
+    }
     setLoading(true);
     setError(null);
     try {
@@ -480,10 +494,12 @@ export const CRMProvider = ({ children }) => {
   };
 
   const fetchWorkoutPlanForClient = async (clientId) => {
+    const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     setLoading(true);
     setError(null);
     try {
-      const url = clientId ? `/api/workouts?clientId=${clientId}` : "/api/workouts";
+      const validUuid = clientId && UUID_REGEX.test(clientId) ? clientId : null;
+      const url = validUuid ? `/api/workouts?clientId=${validUuid}` : "/api/workouts";
       const listResponse = await api.get(url);
       if (listResponse && listResponse.success && listResponse.data?.workoutPlans) {
         const plans = listResponse.data.workoutPlans;
@@ -518,10 +534,12 @@ export const CRMProvider = ({ children }) => {
   };
 
   const fetchDietPlanForClient = async (clientId) => {
+    const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     setLoading(true);
     setError(null);
     try {
-      const url = clientId ? `/api/diets?clientId=${clientId}` : "/api/diets";
+      const validUuid = clientId && UUID_REGEX.test(clientId) ? clientId : null;
+      const url = validUuid ? `/api/diets?clientId=${validUuid}` : "/api/diets";
       const listResponse = await api.get(url);
       if (listResponse && listResponse.success && listResponse.data?.dietPlans) {
         const plans = listResponse.data.dietPlans;
@@ -892,15 +910,17 @@ export const CRMProvider = ({ children }) => {
   });
 
   const fetchAttendance = async (clientId) => {
+    const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     setLoading(true);
     setError(null);
     try {
-      const url = clientId ? `/api/attendance?clientId=${clientId}` : "/api/attendance";
+      const validUuid = clientId && UUID_REGEX.test(clientId) ? clientId : null;
+      const url = validUuid ? `/api/attendance?clientId=${validUuid}` : "/api/attendance";
       const res = await api.get(url);
       if (res && res.success && res.data?.attendance) {
         const transformed = res.data.attendance.map(transformBackendAttendance);
         setAttendance((prev) => {
-          const otherRecords = clientId ? prev.filter(r => r.clientId !== clientId) : [];
+          const otherRecords = validUuid ? prev.filter(r => r.clientId !== validUuid) : [];
           return [...otherRecords, ...transformed];
         });
       }
@@ -914,6 +934,11 @@ export const CRMProvider = ({ children }) => {
 
   const fetchWeightProgress = async (clientId) => {
     if (!clientId) return;
+    const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!UUID_REGEX.test(clientId)) {
+      // Non-UUID demo or offline mock client ID - skip backend request
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
@@ -1124,15 +1149,17 @@ export const CRMProvider = ({ children }) => {
   });
 
   const fetchPayments = async (clientId) => {
+    const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     setLoading(true);
     setError(null);
     try {
-      const url = clientId ? `/api/payments?clientId=${clientId}` : "/api/payments";
+      const validUuid = clientId && UUID_REGEX.test(clientId) ? clientId : null;
+      const url = validUuid ? `/api/payments?clientId=${validUuid}` : "/api/payments";
       const res = await api.get(url);
       if (res && res.success && res.data?.payments) {
         const transformed = res.data.payments.map(transformBackendPayment);
         setPayments((prev) => {
-          const otherRecords = clientId ? prev.filter(r => r.clientId !== clientId) : [];
+          const otherRecords = validUuid ? prev.filter(r => r.clientId !== validUuid) : [];
           return [...otherRecords, ...transformed];
         });
       }

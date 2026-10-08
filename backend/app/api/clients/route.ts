@@ -14,12 +14,11 @@ export async function GET(request: Request) {
     const authHeader = request.headers.get("Authorization")!;
     const token = authHeader.substring(7).trim();
 
-    // 2. Query assigned clients from the trainer_client join table
-    if (token.startsWith("demo_") || !isSupabaseConfigured()) {
+    if (!isSupabaseConfigured()) {
       return NextResponse.json(
         {
           success: true,
-          message: "Demo clients retrieved successfully",
+          message: "Clients retrieved successfully",
           data: {
             clients: [],
           },

@@ -21,12 +21,11 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const clientIdParam = searchParams.get("clientId") || searchParams.get("client_id");
 
-    // Support offline / demo sessions
-    if (token.startsWith("demo_") || !isSupabaseConfigured()) {
+    if (!isSupabaseConfigured()) {
       return NextResponse.json(
         {
           success: true,
-          message: "Demo workout plans retrieved successfully",
+          message: "Workout plans retrieved successfully",
           data: {
             plans: [],
           },

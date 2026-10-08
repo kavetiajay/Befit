@@ -17,12 +17,11 @@ export async function GET(request: Request) {
     const authHeader = request.headers.get("Authorization")!;
     const token = authHeader.substring(7).trim();
 
-    // Support offline / demo sessions
-    if (token.startsWith("demo_") || !isSupabaseConfigured()) {
+    if (!isSupabaseConfigured()) {
       return NextResponse.json(
         {
           success: true,
-          message: "Demo notifications retrieved successfully",
+          message: "Notifications retrieved successfully",
           data: {
             notifications: [],
           },

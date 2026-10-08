@@ -24,12 +24,11 @@ export async function GET(request: Request) {
     const startDateParam = searchParams.get("startDate") || searchParams.get("start_date");
     const endDateParam = searchParams.get("endDate") || searchParams.get("end_date");
 
-    // Support offline / demo sessions
-    if (token.startsWith("demo_") || !isSupabaseConfigured()) {
+    if (!isSupabaseConfigured()) {
       return NextResponse.json(
         {
           success: true,
-          message: "Demo attendance retrieved successfully",
+          message: "Attendance retrieved successfully",
           data: {
             attendance: [],
           },
