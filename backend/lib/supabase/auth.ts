@@ -1,16 +1,16 @@
 import { createClient, User } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
-import { supabase, supabaseAdmin } from "./client";
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!;
+import { supabase, supabaseAdmin, supabaseUrl, supabaseAnonKey, supabaseSecretKey } from "./client";
 
 /**
  * Creates a stateless, request-specific Supabase client using the user's JWT access token.
  * This is thread-safe and prevents session leakage between concurrent server-side requests.
  */
 export function getRequestClient(token: string) {
-  return createClient(supabaseUrl, supabaseAnonKey, {
+  const effectiveUrl = supabaseUrl || "https://placeholder-project.supabase.co";
+  const effectiveKey = supabaseAnonKey || supabaseSecretKey || "placeholder-key";
+
+  return createClient(effectiveUrl, effectiveKey, {
     global: {
       headers: {
         Authorization: `Bearer ${token}`,

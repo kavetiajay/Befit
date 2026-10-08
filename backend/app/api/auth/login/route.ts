@@ -40,7 +40,11 @@ export async function POST(request: Request) {
       let message = authError?.message || "Invalid email or password.";
       if (authError?.message?.includes("Email not confirmed")) {
         message = "Please confirm your email address before logging in.";
-      } else if (authError?.message?.includes("Invalid login credentials")) {
+      } else if (
+        authError?.message?.includes("Invalid login credentials") ||
+        authError?.message?.includes("invalid_grant") ||
+        authError?.message?.includes("invalid_credentials")
+      ) {
         message = "Invalid email or password.";
       }
 

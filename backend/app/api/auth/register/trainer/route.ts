@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
-import { supabase, supabaseAdmin } from "@/lib/supabase/client";
+import { supabaseAdmin } from "@/lib/supabase/client";
 
 export async function POST(request: Request) {
+  let createdAuthUserId: string | null = null;
+
   try {
     const body = await request.json();
     const {
@@ -60,34 +62,63 @@ export async function POST(request: Request) {
       );
     }
 
-    // 3. Create the user in Supabase Auth
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email: email.trim().toLowerCase(),
+    // 3. Verify server-side Supabase Admin client configuration
+    if (!supabaseAdmin) {
+      console.error("Trainer registration failed: Server-side SUPABASE_SECRET_KEY is not configured.");
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Database configuration error: Server-side admin credentials are not configured. Please ensure SUPABASE_SECRET_KEY is set in your environment.",
+        },
+        { status: 503 }
+      );
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+
+    // 4. Create the Auth user using the server-side Supabase Admin API
+    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+      email: normalizedEmail,
       password,
+      email_confirm: true,
+      user_metadata: {
+        role: "trainer",
+        full_name: fullName.trim(),
+      },
     });
 
-    if (authError) {
+    if (authError || !authData?.user) {
+      const authErrMsg = authError?.message || "Failed to create authentication user.";
+      console.error("Supabase Admin Auth user creation error for trainer:", authErrMsg);
+
+      if (
+        authErrMsg.toLowerCase().includes("already registered") ||
+        authErrMsg.toLowerCase().includes("already exists") ||
+        authErrMsg.toLowerCase().includes("unique")
+      ) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "An account with this email address already exists. Please log in instead.",
+          },
+          { status: 409 }
+        );
+      }
+
       return NextResponse.json(
-        { success: false, message: authError.message },
-        { status: authError.status || 400 }
+        { success: false, message: authErrMsg },
+        { status: authError?.status || 400 }
       );
     }
 
     const authUser = authData.user;
-    if (!authUser || !authUser.id) {
-      return NextResponse.json(
-        { success: false, message: "Failed to create user in authentication system." },
-        { status: 500 }
-      );
-    }
+    createdAuthUserId = authUser.id;
 
-    const userId = authUser.id;
-
-    // 4. Create public.profiles record with role 'trainer'
+    // 5. Create corresponding public.profiles record with role 'trainer'
     const profilePayload = {
-      id: userId,
+      id: createdAuthUserId,
       full_name: fullName.trim(),
-      email: email.trim().toLowerCase(),
+      email: normalizedEmail,
       role: "trainer",
       phone: phone || null,
       dob: dob || null,
@@ -96,32 +127,23 @@ export async function POST(request: Request) {
       emergency_contact: emergencyContact || null,
     };
 
-    // Privileged server-side admin client is required to insert 'trainer' profiles under RLS
-    if (!supabaseAdmin) {
-      console.error("Trainer registration failed: Server-side SUPABASE_SECRET_KEY is not configured.");
-      return NextResponse.json(
-        { success: false, message: "Server configuration error: SUPABASE_SECRET_KEY is not configured." },
-        { status: 500 }
-      );
-    }
-
     const { error: profileError } = await supabaseAdmin
       .from("profiles")
       .insert(profilePayload);
 
     if (profileError) {
-      console.error("Profile synchronization failed for trainer:", profileError);
+      console.error("Profile synchronization failed for trainer:", profileError.message);
 
-      // Rollback Auth user if profile creation fails to prevent inconsistent data
+      // Rollback Auth user if profile creation fails to prevent orphan account
       try {
-        await supabaseAdmin.auth.admin.deleteUser(userId);
-        console.log(`Successfully rolled back Auth user ${userId} after profile failure.`);
+        await supabaseAdmin.auth.admin.deleteUser(createdAuthUserId);
+        console.log(`Successfully rolled back Auth user ${createdAuthUserId} after profile creation failure.`);
       } catch (rollbackErr) {
         console.error("Failed to delete orphaned Auth user on rollback:", rollbackErr);
       }
 
       return NextResponse.json(
-        { success: false, message: "User created but profile synchronization failed: " + profileError.message },
+        { success: false, message: "User account created but profile synchronization failed: " + profileError.message },
         { status: 500 }
       );
     }
@@ -132,7 +154,7 @@ export async function POST(request: Request) {
         message: "Trainer registered successfully.",
         data: {
           user: {
-            id: userId,
+            id: createdAuthUserId,
             email: authUser.email,
             fullName: fullName.trim(),
             role: "trainer",
@@ -143,9 +165,21 @@ export async function POST(request: Request) {
     );
   } catch (error) {
     console.error("Trainer registration exception caught:", error);
+
+    // Rollback orphaned Auth user if an unexpected exception occurred after creation
+    if (createdAuthUserId && supabaseAdmin) {
+      try {
+        await supabaseAdmin.auth.admin.deleteUser(createdAuthUserId);
+        console.log(`Rollback completed for Auth user ${createdAuthUserId} after exception.`);
+      } catch (rollbackErr) {
+        console.error("Rollback failed during exception handling:", rollbackErr);
+      }
+    }
+
     return NextResponse.json(
       { success: false, message: "An unexpected server error occurred: " + (error instanceof Error ? error.message : String(error)) },
       { status: 500 }
     );
   }
 }
+
